@@ -18,8 +18,8 @@ const Login = () => {
     try {
       const endpoint =
         role === "admin"
-          ? "http://localhost:5000/api/auth/login"
-          : "http://localhost:5000/api/subadmins/login";
+          ? "https://labourpro-backend.onrender.com/api/auth/login"
+          : "https://labourpro-backend.onrender.com/api/subadmins/login";
 
       const res = await axios.post(endpoint, form);
 

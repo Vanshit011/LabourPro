@@ -21,7 +21,7 @@ const Profile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/admin/me", {
+        const res = await axios.get("https://labourpro-backend.onrender.com/api/admin/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setAdmin(res.data);
@@ -46,7 +46,7 @@ const Profile = () => {
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     try {
-      await axios.put("http://localhost:5000/api/admin/update", form, {
+      await axios.put("https://labourpro-backend.onrender.com/api/admin/update", form, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMessage("✅ Profile updated successfully");
@@ -59,7 +59,7 @@ const Profile = () => {
     e.preventDefault();
     try {
       await axios.put(
-        "http://localhost:5000/api/admin/change-password",
+        "https://labourpro-backend.onrender.com/api/admin/change-password",
         passwords,
         {
           headers: { Authorization: `Bearer ${token}` },

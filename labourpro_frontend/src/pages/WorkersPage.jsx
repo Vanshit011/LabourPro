@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Sidebar from "../components/Sidebar";
 
-const API_URL = "http://localhost:5000/api/worker";
+const API_URL = "https://labourpro-backend.onrender.com/api/worker";
 
 const WorkersPage = () => {
   const [workers, setWorkers] = useState([]);

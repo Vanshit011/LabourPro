@@ -28,7 +28,7 @@ const RegisterPaid = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/register-paid", {
+      const res = await axios.post("https://labourpro-backend.onrender.com/api/auth/register-paid", {
         ...form,
         planType,
         amount,

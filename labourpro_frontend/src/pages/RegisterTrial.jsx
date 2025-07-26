@@ -18,7 +18,7 @@ const RegisterTrial = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/register-trial", form);
+      const res = await axios.post("https://labourpro-backend.onrender.com/api/auth/register-trial", form);
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("admin", JSON.stringify(res.data.admin));
       navigate("/dashboard");
