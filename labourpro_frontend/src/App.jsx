@@ -1,0 +1,82 @@
+import { Routes, Route, useLocation } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
+
+// Public Pages
+import Home from "./pages/Home";
+import About from "./pages/About";
+import Pricing from "./pages/Pricing";
+import Contact from "./pages/Contact";
+import Login from "./pages/Login";
+
+// Registration Pages
+import RegisterTrial from "./pages/RegisterTrial";
+import RegisterPaid from "./pages/RegisterPaid";
+
+// Dashboard + Route Protection
+import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
+// import SubAdminPage from "./pages/SubAdminPage";
+import WorkersPage from "./pages/WorkersPage";
+import ProtectedRoute from "./routes/ProtectedRoute";
+
+function App() {
+  const location = useLocation();
+
+  // Define paths where Navbar and Footer should be hidden
+  const hideLayout = ["/dashboard", "/dashboard/profile", "/dashboard/subadmins", "/dashboard/workers"]; // you can add more later like "/admin", "/subadmin" etc.
+  const shouldHide = hideLayout.includes(location.pathname);
+
+  return (
+    <>
+      {!shouldHide && <Navbar />}
+
+      <div className="min-h-[80vh]">
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/login" element={<Login />} />
+
+          {/* Registration Routes */}
+          <Route path="/register-trial" element={<RegisterTrial />} />
+          <Route path="/register-paid" element={<RegisterPaid />} />
+
+          {/* Protected Route */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+        
+          <Route
+            path="/dashboard/workers"
+            element={
+              <ProtectedRoute>
+                <WorkersPage />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+
+      </div>
+
+      {!shouldHide && <Footer />}
+    </>
+  );
+}
+
+export default App;
