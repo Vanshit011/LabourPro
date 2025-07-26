@@ -8,17 +8,17 @@ import About from "./pages/About";
 import Pricing from "./pages/Pricing";
 import Contact from "./pages/Contact";
 import Login from "./pages/Login";
+import ScrollToTop from "./components/ScrollToTop";
 
 // Registration Pages
 import RegisterTrial from "./pages/RegisterTrial";
 import RegisterPaid from "./pages/RegisterPaid";
 
 // Dashboard + Route Protection
+import ProtectedRoute from "./routes/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
-// import SubAdminPage from "./pages/SubAdminPage";
 import WorkersPage from "./pages/WorkersPage";
-import ProtectedRoute from "./routes/ProtectedRoute";
 
 function App() {
   const location = useLocation();
@@ -30,7 +30,7 @@ function App() {
   return (
     <>
       {!shouldHide && <Navbar />}
-
+ <ScrollToTop />
       <div className="min-h-[80vh]">
         <Routes>
           {/* Public Routes */}

@@ -17,7 +17,6 @@ const Profile = () => {
 
   const token = localStorage.getItem("token");
 
-  // Fetch admin profile
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -31,7 +30,7 @@ const Profile = () => {
           companyName: res.data.companyName,
         });
       } catch (err) {
-        setMessage("Failed to load profile");
+        setMessage("❌ Failed to load profile");
       }
     };
     fetchProfile();
@@ -72,77 +71,87 @@ const Profile = () => {
     }
   };
 
-  if (!admin) return <p className="text-center mt-8">Loading profile...</p>;
+  if (!admin) return <p className="p-6">Loading Profile...</p>;
 
   return (
     <div className="flex min-h-screen">
       <Sidebar />
-      <main className="flex-1 bg-gray-100 p-6">
-        <div className="max-w-3xl mx-auto bg-white p-6 rounded shadow">
-          <h2 className="text-2xl font-bold mb-4">👤 My Profile</h2>
+      <main className="flex-1 p-12 bg-gray-100">
+        <div className="max-w-3xl mx-auto bg-white rounded shadow p-6 border">
+          <h1 className="text-3xl font-bold mb-6">👤 My Profile</h1>
 
           {message && (
-            <p className="mb-4 text-sm text-blue-600 font-semibold">
+            <div className="mb-4 px-4 py-2 bg-blue-50 text-blue-700 rounded border border-blue-200">
               {message}
-            </p>
+            </div>
           )}
 
-          {/* Profile Form */}
+          {/* Profile Update Form */}
           <form onSubmit={handleUpdateProfile} className="space-y-4 mb-8">
-            <input
-              type="text"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              placeholder="Name"
-              className="w-full p-3 border rounded"
-              required
-            />
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              placeholder="Email"
-              className="w-full p-3 border rounded"
-              required
-            />
-            <input
-              type="text"
-              name="companyName"
-              value={form.companyName}
-              onChange={handleChange}
-              placeholder="Company Name"
-              className="w-full p-3 border rounded"
-              required
-            />
-            <button className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+            <div>
+              <label className="block text-sm font-medium mb-1">Name</label>
+              <input
+                type="text"
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                className="w-full p-3 border rounded"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Email</label>
+              <input
+                type="email"
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                className="w-full p-3 border rounded"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Company Name</label>
+              <input
+                type="text"
+                name="companyName"
+                value={form.companyName}
+                onChange={handleChange}
+                className="w-full p-3 border rounded"
+                required
+              />
+            </div>
+            <button className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">
               Update Profile
             </button>
           </form>
 
-          {/* Password Change Form */}
-          <h3 className="text-xl font-semibold mb-2">🔒 Change Password</h3>
+          {/* Change Password */}
+          <h2 className="text-xl font-semibold mb-4">🔐 Change Password</h2>
           <form onSubmit={handleChangePassword} className="space-y-4">
-            <input
-              type="password"
-              name="oldPassword"
-              value={passwords.oldPassword}
-              onChange={handlePasswordChange}
-              placeholder="Old Password"
-              className="w-full p-3 border rounded"
-              required
-            />
-            <input
-              type="password"
-              name="newPassword"
-              value={passwords.newPassword}
-              onChange={handlePasswordChange}
-              placeholder="New Password"
-              className="w-full p-3 border rounded"
-              required
-            />
-            <button className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700">
+            <div>
+              <label className="block text-sm font-medium mb-1">Old Password</label>
+              <input
+                type="password"
+                name="oldPassword"
+                value={passwords.oldPassword}
+                onChange={handlePasswordChange}
+                className="w-full p-3 border rounded"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">New Password</label>
+              <input
+                type="password"
+                name="newPassword"
+                value={passwords.newPassword}
+                onChange={handlePasswordChange}
+                className="w-full p-3 border rounded"
+                required
+              />
+            </div>
+            <button className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition">
               Change Password
             </button>
           </form>

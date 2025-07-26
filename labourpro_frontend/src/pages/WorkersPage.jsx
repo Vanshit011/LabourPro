@@ -83,15 +83,15 @@ const WorkersPage = () => {
   return (
     <div className="flex">
       <Sidebar />
-      <main className="flex-1 md:ml-64 p-6 bg-gray-100 min-h-screen">
-        <h2 className="text-2xl font-bold mb-6">Manage Workers</h2>
+      <main className="flex-1 md:ml-64 p-12 bg-gray-50 min-h-screen">
+        <h2 className="text-3xl font-semibold mb-6 text-gray-800">Manage Workers</h2>
 
         {/* Add/Edit Form */}
         <form
           onSubmit={handleSubmit}
-          className="bg-white p-4 rounded shadow mb-6 max-w-2xl"
+          className="bg-white rounded-2xl shadow-md p-6 mb-8 max-w-3xl"
         >
-          <h3 className="text-xl font-semibold mb-4">
+          <h3 className="text-xl font-semibold mb-4 text-gray-700">
             {editId ? "Edit Worker" : "Add New Worker"}
           </h3>
 
@@ -103,7 +103,7 @@ const WorkersPage = () => {
               value={formData.name}
               onChange={handleChange}
               required
-              className="p-2 border rounded"
+              className="p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <input
               type="text"
@@ -112,7 +112,7 @@ const WorkersPage = () => {
               value={formData.contact}
               onChange={handleChange}
               required
-              className="p-2 border rounded"
+              className="p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <input
               type="text"
@@ -121,7 +121,7 @@ const WorkersPage = () => {
               value={formData.role}
               onChange={handleChange}
               required
-              className="p-2 border rounded"
+              className="p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <input
               type="number"
@@ -130,14 +130,14 @@ const WorkersPage = () => {
               value={formData.salary}
               onChange={handleChange}
               required
-              className="p-2 border rounded"
+              className="p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          <div className="mt-4 flex gap-3">
+          <div className="mt-5 flex gap-4">
             <button
               type="submit"
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              className="bg-blue-600 text-white px-6 py-2 rounded-xl hover:bg-blue-700 transition"
             >
               {editId ? "Update Worker" : "Add Worker"}
             </button>
@@ -158,36 +158,36 @@ const WorkersPage = () => {
 
         {/* Worker List */}
         {loading ? (
-          <p>Loading workers...</p>
+          <p className="text-gray-600">Loading workers...</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {workers.map((worker) => (
               <div
                 key={worker._id}
-                className="bg-white p-4 rounded shadow border"
+                className="bg-white p-5 rounded-xl shadow border border-gray-200"
               >
-                <p>
-                  <strong>Name:</strong> {worker.name}
+                <p className="text-lg font-medium text-gray-800">
+                  {worker.name}
                 </p>
-                <p>
+                <p className="text-sm text-gray-600 mt-1">
                   <strong>Phone:</strong> {worker.contact}
                 </p>
-                <p>
+                <p className="text-sm text-gray-600">
                   <strong>Role:</strong> {worker.role}
                 </p>
-                <p>
+                <p className="text-sm text-gray-600 mb-3">
                   <strong>Salary:</strong> ₹{worker.salary}
                 </p>
-                <div className="mt-3 flex gap-2">
+                <div className="flex gap-2">
                   <button
                     onClick={() => handleEdit(worker)}
-                    className="bg-yellow-400 text-white px-3 py-1 rounded"
+                    className="bg-yellow-400 text-white px-3 py-1 rounded hover:bg-yellow-500 transition"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleDelete(worker._id)}
-                    className="bg-red-600 text-white px-3 py-1 rounded"
+                    className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition"
                   >
                     Delete
                   </button>

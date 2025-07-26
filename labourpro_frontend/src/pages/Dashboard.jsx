@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import Sidebar from "../components/Sidebar"; // Assuming you saved the sidebar component here
+import Sidebar from "../components/Sidebar";
 
 const Dashboard = () => {
   const [admin, setAdmin] = useState(null);
@@ -22,25 +22,51 @@ const Dashboard = () => {
     fetchAdmin();
   }, []);
 
-  if (!admin) return <p className="p-6">Loading Dashboard...</p>;
+  if (!admin)
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <p className="text-lg font-semibold text-gray-600 animate-pulse">Loading Dashboard...</p>
+      </div>
+    );
 
   const daysLeft = Math.ceil(
     (new Date(admin.subscriptionExpiry) - new Date()) / (1000 * 60 * 60 * 24)
   );
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-gray-100">
       <Sidebar />
-      <main className="flex-1 p-6 bg-gray-100">
-        <h1 className="text-3xl font-bold mb-4">👋 Welcome, {admin.name}</h1>
-        <div className="bg-white shadow p-6 rounded border max-w-xl">
-          <p><strong>Company ID:</strong> {admin.companyId}</p>
-          <p><strong>Email:</strong> {admin.email}</p>
-          <p><strong>Plan Type:</strong> {admin.planType}</p>
-          <p><strong>Subscription Expiry:</strong> {new Date(admin.subscriptionExpiry).toLocaleDateString()}</p>
-          <p className={`mt-2 font-semibold ${daysLeft <= 0 ? 'text-red-600' : 'text-green-600'}`}>
+      <main className="flex-1 p-12 sm:p-13">
+        <h1 className="text-3xl sm:text-4xl font-bold mb-6 text-blue-700">
+          👋 Welcome, {admin.name}
+        </h1>
+
+        <div className="bg-white border shadow-md rounded-2xl p-6 sm:p-8 max-w-xl space-y-4">
+          <div className="flex justify-between">
+            <span className="text-gray-600 font-medium">Company ID:</span>
+            <span className="text-gray-900 font-semibold">{admin.companyId}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600 font-medium">Email:</span>
+            <span className="text-gray-900 font-semibold">{admin.email}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600 font-medium">Plan Type:</span>
+            <span className="text-blue-600 font-bold uppercase">{admin.planType}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-600 font-medium">Expiry Date:</span>
+            <span className="text-gray-900 font-semibold">
+              {new Date(admin.subscriptionExpiry).toLocaleDateString()}
+            </span>
+          </div>
+          <div
+            className={`text-center font-bold text-lg py-2 rounded-md ${
+              daysLeft <= 0 ? "text-red-600 bg-red-100" : "text-green-700 bg-green-100"
+            }`}
+          >
             {daysLeft <= 0 ? "🚫 Subscription Expired" : `✅ ${daysLeft} day(s) left`}
-          </p>
+          </div>
         </div>
       </main>
     </div>
