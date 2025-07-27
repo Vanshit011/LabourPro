@@ -1,23 +1,41 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import axios from "axios";
 
-const RegisterTrial = () => {
+const RegisterPaid = () => {
+  const [params] = useSearchParams();
   const navigate = useNavigate();
+
+  // Extract plan details from URL
+  const planType = params.get("plan");
+  const amount = params.get("amount");
+  const razorpayOrderId = params.get("order_id");
+  const razorpayPaymentId = params.get("payment_id");
+
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
-    companyName: ""
+    companyName: "",
   });
+
   const [error, setError] = useState("");
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("https://labourpro-backend.onrender.com/api/auth/register-trial", form);
+      const res = await axios.post("https://labourpro-backend.onrender.com/api/auth/register-paid", {
+        ...form,
+        planType,
+        amount,
+        razorpayOrderId,
+        razorpayPaymentId,
+      });
+
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("admin", JSON.stringify(res.data.admin));
       navigate("/dashboard");
@@ -27,53 +45,56 @@ const RegisterTrial = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
-        <h2 className="text-3xl font-semibold text-center text-blue-700 mb-6">
-          Start Your 14-Day Free Trial
-        </h2>
-        {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            name="name"
-            placeholder="Full Name"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            onChange={handleChange}
-            required
-          />
-          <input
-            name="email"
-            type="email"
-            placeholder="Email Address"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            onChange={handleChange}
-            required
-          />
-          <input
-            name="password"
-            type="password"
-            placeholder="Create Password"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            onChange={handleChange}
-            required
-          />
-          <input
-            name="companyName"
-            placeholder="Company Name"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            onChange={handleChange}
-            required
-          />
-          <button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition duration-300"
-          >
-            Register & Start Free Trial
-          </button>
-        </form>
+    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded shadow">
+      <h2 className="text-2xl font-bold mb-4 text-center">Complete Your Registration</h2>
+
+      <div className="mb-4 text-gray-700">
+        <p><strong>Plan:</strong> {planType}</p>
+        <p><strong>Amount:</strong> ₹{amount}</p>
+        <p><strong>Payment ID:</strong> {razorpayPaymentId}</p>
       </div>
+
+      {error && <p className="text-red-600">{error}</p>}
+
+      <form onSubmit={handleSubmit}>
+        <input
+          name="name"
+          placeholder="Name"
+          className="input"
+          onChange={handleChange}
+          required
+        />
+        <input
+          name="email"
+          placeholder="Email"
+          className="input"
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          className="input"
+          onChange={handleChange}
+          required
+        />
+        <input
+          name="companyName"
+          placeholder="Company Name"
+          className="input"
+          onChange={handleChange}
+          required
+        />
+        <button
+          type="submit"
+          className="w-full bg-green-600 text-white py-2 rounded mt-4"
+        >
+          Register & Access Dashboard
+        </button>
+      </form>
     </div>
   );
 };
 
-export default RegisterTrial;
+export default RegisterPaid;
