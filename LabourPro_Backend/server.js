@@ -16,10 +16,9 @@ require("./config/db")();
 // Routes
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
-app.use("/api/subadmins", require("./routes/subAdminRoutes"));
 app.use("/api/worker", require("./routes/workerRoutes"));
 app.use("/api/attendance", require("./routes/attendanceRoutes"));
-// app.use("/api/salary", require("./routes/salaryRoutes"));
+app.use("/api/salary", require("./routes/salaryRoutes"));
 // app.use("/api/loan", require("./routes/loanRoutes"));
 // app.use("/api/notifications", require("./routes/notificationRoutes"));
 // app.use("/api/subscription", require("./routes/subscriptionRoutes"));

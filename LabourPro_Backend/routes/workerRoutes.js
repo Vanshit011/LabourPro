@@ -1,16 +1,17 @@
 const express = require("express");
 const router = express.Router();
 const {
-  addWorker,
-  getWorkers,
-  updateWorker,
-  deleteWorker,
+    addWorker,
+    getWorkers,
+    updateWorker,
+    deleteWorker,
 } = require("../controllers/workerController");
-const { protect } = require("../middlewares/auth");
+const { protect, isAdmin } = require("../middlewares/auth");
 
-router.post("/", protect, addWorker);
-router.get("/", protect, getWorkers);
-router.put("/:id", protect, updateWorker);
-router.delete("/:id", protect, deleteWorker);
+// All routes protected by authMiddleware (JWT)
+router.post("/add", protect, isAdmin, addWorker);
+router.get("/", protect, isAdmin, getWorkers);
+router.put("/:id", protect, isAdmin, updateWorker);
+router.delete("/:id", protect, isAdmin, deleteWorker);
 
 module.exports = router;

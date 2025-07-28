@@ -1,4 +1,6 @@
 const razorpay = require("../utils/razorpayInstance");
+// const Company = require("../models/Company");
+// const crypto = require("crypto");
 
 const createOrder = async (req, res) => {
   try {
@@ -21,6 +23,9 @@ const createOrder = async (req, res) => {
   }
 };
 
+
+
+
 module.exports = {
-  createOrder,
+  createOrder
 };

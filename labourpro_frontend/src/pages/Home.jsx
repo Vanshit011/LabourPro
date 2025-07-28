@@ -35,6 +35,8 @@ const Home = () => {
           >
             🚀 Start Free Trial
           </a>
+       
+
           <a
             href="/pricing"
             className="border border-white text-white px-8 py-3 rounded-full hover:bg-white hover:text-blue-600 transition"

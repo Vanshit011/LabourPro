@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Sidebar from "../components/Sidebar";
+import { Menu } from "lucide-react"; // Optional icon
 
 const Profile = () => {
   const [admin, setAdmin] = useState(null);
@@ -14,15 +15,19 @@ const Profile = () => {
     newPassword: "",
   });
   const [message, setMessage] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Toggle state
 
   const token = localStorage.getItem("token");
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await axios.get("https://labourpro-backend.onrender.com/api/admin/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await axios.get(
+          "https://labourpro-backend.onrender.com/api/admin/me",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
         setAdmin(res.data);
         setForm({
           name: res.data.name,
@@ -45,9 +50,13 @@ const Profile = () => {
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     try {
-      await axios.put("https://labourpro-backend.onrender.com/api/admin/update", form, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.put(
+        "https://labourpro-backend.onrender.com/api/admin/update",
+        form,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       setMessage("✅ Profile updated successfully");
     } catch (err) {
       setMessage("❌ Profile update failed");
@@ -74,10 +83,28 @@ const Profile = () => {
   if (!admin) return <p className="p-6">Loading Profile...</p>;
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar />
-      <main className="flex-1 p-12 bg-gray-100">
-        <div className="max-w-3xl mx-auto bg-white rounded shadow p-6 border">
+    <div className="flex h-screen">
+      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+
+      {/* Overlay for mobile when sidebar is open */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-40 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Main content */}
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-100 relative">
+        {/* Mobile toggle button */}
+        <button
+          onClick={() => setSidebarOpen(true)}
+          className="md:hidden fixed top-4 left-4 z-50 bg-white border p-2 rounded shadow"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+
+        <div className="max-w-3xl mx-auto bg-white rounded shadow p-6 border mt-12 md:mt-0">
           <h1 className="text-3xl font-bold mb-6">👤 My Profile</h1>
 
           {message && (
@@ -116,9 +143,8 @@ const Profile = () => {
                 type="text"
                 name="companyName"
                 value={form.companyName}
-                onChange={handleChange}
-                className="w-full p-3 border rounded"
-                required
+                disabled
+                className="w-full p-3 border rounded bg-gray-100 text-gray-600 cursor-not-allowed"
               />
             </div>
             <button className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">
@@ -156,7 +182,7 @@ const Profile = () => {
             </button>
           </form>
         </div>
-      </main>
+      </div>
     </div>
   );
 };

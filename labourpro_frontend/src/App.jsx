@@ -18,19 +18,18 @@ import RegisterPaid from "./pages/RegisterPaid";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
-import WorkersPage from "./pages/WorkersPage";
 
 function App() {
   const location = useLocation();
 
   // Define paths where Navbar and Footer should be hidden
-  const hideLayout = ["/dashboard", "/dashboard/profile", "/dashboard/subadmins", "/dashboard/workers"]; // you can add more later like "/admin", "/subadmin" etc.
+  const hideLayout = ["/dashboard", "/dashboard/profile", "/dashboard/subadmins", "/dashboard/workers", "/dashboard/renew-plan"]; // you can add more later like "/admin", "/subadmin" etc.
   const shouldHide = hideLayout.includes(location.pathname);
 
   return (
     <>
       {!shouldHide && <Navbar />}
- <ScrollToTop />
+      <ScrollToTop />
       <div className="min-h-[80vh]">
         <Routes>
           {/* Public Routes */}
@@ -65,10 +64,11 @@ function App() {
             path="/dashboard/workers"
             element={
               <ProtectedRoute>
-                <WorkersPage />
+
               </ProtectedRoute>
             }
           />
+
         </Routes>
 
       </div>

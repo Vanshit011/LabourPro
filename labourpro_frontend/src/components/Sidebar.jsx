@@ -26,7 +26,7 @@ const Sidebar = () => {
     { name: "Salaries", path: "/salaries", icon: <Wallet size={18} /> },
     { name: "Loans", path: "/loans", icon: <Wallet size={18} /> },
     { name: "Notifications", path: "/notifications", icon: <Bell size={18} /> },
-    { name: "Renew Plan", path: "/renew", icon: <Repeat2 size={18} /> },
+    { name: "Renew Plan", path: "/dashboard/renew-plan", icon: <Repeat2 size={18} /> },
   ];
 
   const handleLogout = () => {

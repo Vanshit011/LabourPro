@@ -6,31 +6,30 @@ const attendanceSchema = new mongoose.Schema({
     ref: "Worker",
     required: true,
   },
-  date: {
-    type: String, // Store as YYYY-MM-DD for uniqueness
-    required: true,
-  },
-  status: {
-    type: String,
-    enum: ["Present", "Absent"],
-    required: true,
-  },
-  entryTime: {
-    type: String, // "09:00"
-  },
-  exitTime: {
-    type: String, // "18:00"
-  },
-  hoursWorked: {
-    type: Number,
-    default: 0,
-  },
   companyId: {
     type: String,
     required: true,
   },
-}, { timestamps: true });
-
-attendanceSchema.index({ workerId: 1, date: 1 }, { unique: true });
+  date: {
+    type: String,
+    required: true,
+  },
+  entryTime: {
+    type: String,
+    required: true,
+  },
+  exitTime: {
+    type: String,
+    required: true,
+  },
+  totalHours: {
+    type: Number,
+    required: true,
+  },
+  dailyRoj: {
+    type: Number,
+    required: true,
+  },
+});
 
 module.exports = mongoose.model("Attendance", attendanceSchema);

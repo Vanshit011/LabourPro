@@ -1,60 +1,70 @@
 const Worker = require("../models/Worker");
 
+// ✅ Add Worker
 exports.addWorker = async (req, res) => {
   try {
-    const { name, contact, role, salary } = req.body;
-    const companyId = req.user.companyId;
+    const { name, number, role, rojPerHour } = req.body;
+    const companyId = req.user.companyId; // assuming auth middleware sets req.user
 
-    if (!name || !role) return res.status(400).json({ message: "Name and role are required" });
+    const worker = new Worker({
+      name,
+      number,
+      role,
+      rojPerHour,
+      companyId,
+    });
 
-    const worker = await Worker.create({ name, contact, role, salary, companyId });
-    res.status(201).json({ message: "Worker added", worker });
-  } catch (err) {
-    res.status(500).json({ message: "Failed to add worker" });
+    await worker.save();
+
+    res.status(201).json({ message: "Worker added successfully", worker });
+  } catch (error) {
+    console.error("Error adding worker:", error); // ✅ log full error
+    res.status(500).json({ error: error.message });
   }
 };
 
+
+// ✅ Get All Workers (for company)
 exports.getWorkers = async (req, res) => {
   try {
     const companyId = req.user.companyId;
     const workers = await Worker.find({ companyId });
-    res.json(workers);
+    res.status(200).json(workers);
   } catch (err) {
-    res.status(500).json({ message: "Failed to fetch workers" });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
+// ✅ Update Worker
 exports.updateWorker = async (req, res) => {
   try {
-    const { name, contact, role, salary } = req.body;
     const { id } = req.params;
     const companyId = req.user.companyId;
-
-    const worker = await Worker.findOneAndUpdate(
+    const updated = await Worker.findOneAndUpdate(
       { _id: id, companyId },
-      { name, contact, role, salary },
+      req.body,
       { new: true }
     );
 
-    if (!worker) return res.status(404).json({ message: "Worker not found" });
+    if (!updated) return res.status(404).json({ message: "Worker not found" });
 
-    res.json({ message: "Worker updated", worker });
+    res.status(200).json({ message: "Worker updated", worker: updated });
   } catch (err) {
-    res.status(500).json({ message: "Failed to update worker" });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
+// ✅ Delete Worker
 exports.deleteWorker = async (req, res) => {
   try {
     const { id } = req.params;
     const companyId = req.user.companyId;
-
     const deleted = await Worker.findOneAndDelete({ _id: id, companyId });
 
     if (!deleted) return res.status(404).json({ message: "Worker not found" });
 
-    res.json({ message: "Worker deleted" });
+    res.status(200).json({ message: "Worker deleted" });
   } catch (err) {
-    res.status(500).json({ message: "Failed to delete worker" });
+    res.status(500).json({ message: "Server error" });
   }
 };
