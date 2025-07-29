@@ -13,7 +13,7 @@ const Workers = () => {
 
     const fetchWorkers = async () => {
         try {
-            const res = await axios.get("http://localhost:5000/api/worker", {
+            const res = await axios.get("https://labourpro-backend.onrender.com/api/worker", {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setWorkers(res.data);
@@ -26,12 +26,12 @@ const Workers = () => {
         e.preventDefault();
         try {
             if (editingId) {
-                await axios.put(`http://localhost:5000/api/worker/${editingId}`, form, {
+                await axios.put(`https://labourpro-backend.onrender.com/api/worker/${editingId}`, form, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 setEditingId(null);
             } else {
-                await axios.post("http://localhost:5000/api/worker/add", form, {
+                await axios.post("https://labourpro-backend.onrender.com/api/worker/add", form, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
             }
@@ -55,7 +55,7 @@ const Workers = () => {
     const handleDelete = async (id) => {
         if (!window.confirm("Are you sure you want to delete this worker?")) return;
         try {
-            await axios.delete(`http://localhost:5000/api/worker/${id}`, {
+            await axios.delete(`https://labourpro-backend.onrender.com/api/worker/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             fetchWorkers();
