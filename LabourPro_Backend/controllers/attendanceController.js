@@ -1,112 +1,102 @@
 const Attendance = require("../models/Attendance");
 const Worker = require("../models/Worker");
-
-const calculateHoursAndRoj = (entry, exit, rojPerHour) => {
-  const [eH, eM] = entry.split(":").map(Number);
-  const [xH, xM] = exit.split(":").map(Number);
-
-  const entryMinutes = eH * 60 + eM;
-  const exitMinutes = xH * 60 + xM;
-
-  const totalMinutes = exitMinutes - entryMinutes;
-  const totalHours = totalMinutes / 60;
-  const roj = Math.round(totalHours * rojPerHour);
-
-  return { totalHours, roj };
-};
+const moment = require("moment");
 
 exports.addAttendance = async (req, res) => {
   try {
-    const { worker, entryTime, exitTime } = req.body;
+    const { worker: workerId, entryTime, exitTime } = req.body;
     const companyId = req.user.companyId;
 
-    if (!worker || !entryTime || !exitTime) {
-      return res.status(400).json({ message: "All fields are required" });
+    // 1. Find the worker
+    const worker = await Worker.findById(workerId);
+    if (!worker) {
+      return res.status(404).json({ error: "Worker not found" });
     }
 
-    const start = new Date(`1970-01-01T${entryTime}`);
-    const end = new Date(`1970-01-01T${exitTime}`);
+    // 2. Parse times
+    const entry = moment(entryTime, "HH:mm");
+    const exit = moment(exitTime, "HH:mm");
 
-    const diffMs = end - start;
-    const totalHours = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
-
-    if (isNaN(totalHours) || totalHours <= 0) {
-      return res.status(400).json({ message: "Invalid entry/exit time" });
+    if (!entry.isValid() || !exit.isValid()) {
+      return res.status(400).json({ error: "Invalid time format" });
     }
 
-    // Fetch worker rojRate
-    const workerData = await Worker.findOne({ _id: worker, companyId });
-    if (!workerData) {
-      return res.status(404).json({ message: "Worker not found" });
+    const totalHours = parseFloat(exit.diff(entry, "hours", true).toFixed(2));
+    const rojPerHour = parseFloat(worker.rojPerHour);
+
+    if (isNaN(totalHours) || isNaN(rojPerHour)) {
+      return res.status(400).json({ error: "Invalid hours or roj/hour" });
     }
 
-    const dailyRoj = parseFloat((workerData.rojRate * totalHours).toFixed(2));
+    const dailyRoj = parseFloat((totalHours * rojPerHour).toFixed(2));
 
+    // 3. Create attendance
     const attendance = new Attendance({
-      worker,
+      companyId,
+      worker: workerId,
       entryTime,
       exitTime,
       totalHours,
       dailyRoj,
-      date: new Date().toISOString().split("T")[0], // YYYY-MM-DD
-      companyId,
+      date: new Date(), // today by default
     });
 
     await attendance.save();
-    res.status(201).json({ message: "Attendance recorded", attendance });
+    res.status(201).json(attendance);
+
   } catch (error) {
-    console.error("❌ Error in addAttendance:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error("Error in addAttendance:", error.message);
+    res.status(500).json({ error: "Server error" });
   }
 };
-
 
 exports.getAllAttendance = async (req, res) => {
   try {
-    const companyId = req.user?.companyId;
+    const companyId = req.user.companyId;
 
-    const attendanceRecords = await Attendance.find({ companyId })
-      .populate("workerId", "name role rojPerHour") // only include needed fields
-      .sort({ date: -1 }); // latest first
+    const attendance = await Attendance.find({ companyId }).populate("worker", "name role");
 
-    res.status(200).json({ attendance: attendanceRecords });
+    res.json({ attendance });
   } catch (err) {
-    console.error("❌ Error in getAllAttendance:", err.message);
-    res.status(500).json({ message: "Server error", error: err.message });
+    console.error("Error in getAllAttendance:", err);
+    res.status(500).json({ error: "Error fetching attendance" });
   }
 };
-
-// Get all Attendance (per worker)
-exports.getAttendanceByWorker = async (req, res) => {
+// Update attendance by ID
+exports.updateAttendanceById = async (req, res) => {
   try {
-    const { workerId } = req.params;
-    const records = await Attendance.find({ workerId }).populate("workerId");
-    res.status(200).json(records);
-  } catch (err) {
-    res.status(500).json({ message: "Failed to fetch records" });
-  }
-};
+    const { entryTime, exitTime, totalHours, dailyRoj } = req.body;
 
-// Update Attendance
-exports.updateAttendance = async (req, res) => {
+    const updated = await Attendance.findByIdAndUpdate(
+      req.params.id,
+      {
+        entryTime,
+        exitTime,
+        totalHours,
+        dailyRoj,
+      },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Attendance record not found' });
+    }
+
+    res.status(200).json(updated);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to update attendance', error: err.message });
+  }
+}
+// Delete attendance by ID
+exports.deleteAttendanceById = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { entryTime, exitTime } = req.body;
+    const deleted = await Attendance.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ message: 'Attendance record not found' });
+    }
 
-    const attendance = await Attendance.findById(id).populate("workerId");
-    if (!attendance) return res.status(404).json({ message: "Record not found" });
-
-    const { totalHours, roj } = calculateHoursAndRoj(entryTime, exitTime, attendance.workerId.rojPerHour);
-
-    attendance.entryTime = entryTime;
-    attendance.exitTime = exitTime;
-    attendance.totalHours = totalHours;
-    attendance.dailyRoj = roj;
-
-    await attendance.save();
-
-    res.status(200).json({ message: "Attendance updated", attendance });
+    res.status(200).json({ message: 'Attendance record deleted successfully' });
   } catch (err) {
-    res.status(500).json({ message: "Update failed" });
+    res.status(500).json({ message: 'Failed to delete attendance', error: err.message });
   }
-};
+}

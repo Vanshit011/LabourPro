@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Sidebar from "../components/Sidebar";
 
@@ -9,181 +9,213 @@ const AttendancePage = () => {
         exitTime: "",
     });
     const [workers, setWorkers] = useState([]);
-    const [attendances, setAttendances] = useState([]); // ✅ default as empty array
-    const [editingId, setEditingId] = useState(null);
-
-    const token = localStorage.getItem("token");
+    const [attendance, setAttendance] = useState([]);
+    const [selectedDate, setSelectedDate] = useState(
+        new Date().toISOString().split("T")[0]
+    );
+    const [token, setToken] = useState(localStorage.getItem("token"));
 
     const fetchWorkers = async () => {
         try {
             const res = await axios.get("http://localhost:5000/api/worker", {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            setWorkers(res.data);
+            console.log("Full response from worker API:", res.data);
+
+            // Try both keys depending on backend response
+            if (res.data.workers) {
+                setWorkers(res.data.workers);
+            } else if (res.data.worker) {
+                setWorkers(res.data.worker);
+            } else if (Array.isArray(res.data)) {
+                setWorkers(res.data);
+            } else {
+                console.warn("Unexpected worker data format:", res.data);
+                setWorkers([]);
+            }
         } catch (error) {
-            console.error("Error fetching workers", error);
+            console.error("❌ Error fetching workers:", error);
         }
     };
 
-    const fetchAttendances = async () => {
+
+    // Fetch attendance
+    const fetchAllAttendance = async () => {
         try {
             const res = await axios.get("http://localhost:5000/api/attendance", {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            console.log("Attendance data:", res.data);
-            setAttendances(Array.isArray(res.data.attendance) ? res.data.attendance : []);
+
+            console.log("✅ All attendance data:", res.data.attendance);
+            setAttendance(res.data.attendance || []);
         } catch (error) {
-            console.error("Error fetching attendances", error);
+            console.error("❌ Error fetching all attendance:", error.response?.data || error.message);
         }
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const attendanceData = {
-                workerId: form.worker, // ✅ renamed
-                entryTime: form.entryTime,
-                exitTime: form.exitTime,
-            };
-
-            if (editingId) {
-                await axios.put(
-                    `http://localhost:5000/api/attendance/${editingId}`,
-                    attendanceData,
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
-            } else {
-                await axios.post(
-                    "http://localhost:5000/api/attendance",
-                    attendanceData,
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
-            }
-
-            setForm({ worker: "", entryTime: "", exitTime: "" });
-            setEditingId(null);
-            fetchAttendances();
-        } catch (error) {
-            console.error("Error saving attendance", error);
-        }
-    };
-
-
-    const fetchById = async (id) => {
-        try {
-            const res = await axios.get(
-                `http://localhost:5000/api/attendance/${id}`,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            setForm({
-                worker: res.data.worker,
-                entryTime: res.data.entryTime,
-                exitTime: res.data.exitTime || "",
-            });
-        } catch (error) {
-            console.error("Error fetching by ID", error);
-        }
-    };
 
     useEffect(() => {
         fetchWorkers();
-        fetchAttendances();
+        fetchAllAttendance();
     }, []);
 
+
+    // Handle form change
+    const handleChange = (e) => {
+        setForm({ ...form, [e.target.name]: e.target.value });
+    };
+
+    // Submit attendance
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const response = await axios.post("http://localhost:5000/api/attendance", form, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            console.log("✅ Attendance saved:", response.data); // 👈 show full API response
+
+            setForm({ worker: "", entryTime: "", exitTime: "" });
+            fetchAllAttendance();
+        } catch (error) {
+            console.error("❌ Error saving attendance:", error.response?.data || error.message);
+        }
+    };
+
+    
     return (
-        <div className="flex">
-            <Sidebar />
-            <div className="flex-1 p-6 overflow-auto">
-                <h2 className="text-xl font-semibold mb-4">Attendance</h2>
-                <form
-                    onSubmit={handleSubmit}
-                    className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-4 shadow rounded mb-6"
-                >
-                    <select
-                        value={form.worker}
-                        onChange={(e) => setForm({ ...form, worker: e.target.value })}
-                        required
-                        className="border p-2 rounded"
-                    >
-                        <option value="">Select Worker</option>
-                        {workers.map((w) => (
-                            <option key={w._id} value={w._id}>
-                                {w.name}
-                            </option>
-                        ))}
-                    </select>
+        <div className="flex h-screen">
+            {/* Sidebar (fixed height) */}
+            <div className="w-64 bg-gray-100">
+                <Sidebar />
+            </div>
+
+            {/* Main Content Area (scrollable) */}
+            <div className="flex-1 overflow-y-auto p-6">
+                <h1 className="text-xl font-bold mb-4">Attendance Management</h1>
+
+                {/* Date Filter */}
+                <div className="mb-6">
+                    <label className="block mb-1 text-sm font-medium">Select Date</label>
                     <input
-                        type="datetime-local"
-                        value={form.entryTime}
-                        onChange={(e) => setForm({ ...form, entryTime: e.target.value })}
-                        required
-                        className="border p-2 rounded"
+                        type="date"
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        className="border p-2 rounded w-64"
                     />
-                    <input
-                        type="datetime-local"
-                        value={form.exitTime}
-                        onChange={(e) => setForm({ ...form, exitTime: e.target.value })}
-                        className="border p-2 rounded"
-                    />
+                </div>
+
+                {/* Attendance Form */}
+                <form onSubmit={handleSubmit} className="mb-8 space-y-4">
+                    <div>
+                        <label className="block mb-1 text-sm font-medium">Select Worker</label>
+                        <select
+                            name="worker"
+                            value={form.worker}
+                            onChange={handleChange}
+                            className="border rounded p-2 w-full"
+                        >
+                            <option value="">Select Worker</option>
+                            {workers.map((w) => (
+                                <option key={w._id} value={w._id}>
+                                    {w.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="flex gap-4">
+                        <div>
+                            <label className="block mb-1 text-sm font-medium">Entry Time</label>
+                            <input
+                                type="time"
+                                name="entryTime"
+                                value={form.entryTime}
+                                onChange={handleChange}
+                                className="border p-2 rounded w-40"
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block mb-1 text-sm font-medium">Exit Time</label>
+                            <input
+                                type="time"
+                                name="exitTime"
+                                value={form.exitTime}
+                                onChange={handleChange}
+                                className="border p-2 rounded w-40"
+                                required
+                            />
+                        </div>
+                    </div>
+
                     <button
                         type="submit"
-                        className="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700"
+                        className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
                     >
-                        {editingId ? "Update" : "Add"}
+                        Save Attendance
                     </button>
                 </form>
 
-                <div className="overflow-x-auto mt-4">
-                    <table className="w-full text-sm border rounded">
-                        <thead className="bg-gray-100 text-left">
-                            <tr>
-                                <th className="p-2">Worker</th>
-                                <th className="p-2">Entry Time</th>
-                                <th className="p-2">Exit Time</th>
-                                <th className="p-2">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {Array.isArray(attendances) && attendances.length > 0 ? (
-                                attendances.map((att) => (
-                                    <tr key={att._id} className="border-t">
-                                        <td className="p-2">{att.worker?.name || "N/A"}</td>
-                                        <td className="p-2">
-                                            {att.entryTime
-                                                ? new Date(att.entryTime).toLocaleString()
-                                                : "-"}
-                                        </td>
-                                        <td className="p-2">
-                                            {att.exitTime
-                                                ? new Date(att.exitTime).toLocaleString()
-                                                : "-"}
-                                        </td>
-                                        <td className="p-2">
-                                            <button
-                                                onClick={() => {
-                                                    fetchById(att._id);
-                                                    setEditingId(att._id);
-                                                }}
-                                                className="px-2 py-1 text-sm bg-yellow-200 text-yellow-800 rounded"
-                                            >
-                                                Edit
-                                            </button>
+                {/* Attendance List */}
+                <div>
+                    <h2 className="text-lg font-semibold mb-3">
+                        Attendance on {selectedDate}
+                    </h2>
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full table-auto border-collapse border">
+                            <thead>
+                                <tr className="bg-gray-100">
+                                    <th className="border p-2">Worker Name</th>
+                                    <th className="border p-2">Role</th>
+                                    <th className="border p-2">Entry Time</th>
+                                    <th className="border p-2">Exit Time</th>
+                                    <th className="border p-2">Hours Worked</th>
+                                    <th className="border p-2">Daily Roj</th>
+                                    <th className="border p-2">Actions</th> {/* new column */}
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {attendance.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="6" className="text-center py-4">
+                                            No attendance records found.
                                         </td>
                                     </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan="4" className="p-4 text-center text-gray-500">
-                                        No attendance records found.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                                ) : (
+                                    attendance.map((a) => (
+                                        <tr key={a._id}>
+                                            <td className="border p-2">{a.worker?.name}</td>
+                                            <td className="border p-2">{a.worker?.role}</td>
+                                            <td className="border p-2">{a.entryTime}</td>
+                                            <td className="border p-2">{a.exitTime}</td>
+                                            <td className="border p-2">{a.totalHours} hrs</td>
+                                            <td className="border p-2">₹{a.dailyRoj}</td>
+                                            <td className="border p-2 flex gap-2 justify-center">
+                                                <button
+                                                    onClick={() => handleEdit(a)}
+                                                    className="bg-yellow-400 hover:bg-yellow-500 text-black px-3 py-1 rounded text-sm"
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(a._id)}
+                                                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-
             </div>
         </div>
+
     );
 };
 
