@@ -1,11 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const attendanceController = require("../controllers/attendanceController");
+const {addAttendance,getAllAttendance,getAttendanceByWorker,updateAttendance} = require("../controllers/attendanceController");
 const {protect,isAdmin} = require("../middlewares/auth");
 
-router.post("/", protect,isAdmin, attendanceController.addAttendance);
-router.get("/", protect,isAdmin, attendanceController.getAllAttendance);
-router.get("/:workerId", protect,isAdmin, attendanceController.getAttendanceByWorker);
-router.put("/:id", protect,isAdmin, attendanceController.updateAttendance);
+router.post("/", protect,isAdmin, addAttendance);
+router.get("/", protect,isAdmin, getAllAttendance);
+router.get("/:workerId", protect,isAdmin, getAttendanceByWorker);
+router.put("/:id", protect,isAdmin, updateAttendance);
 
 module.exports = router;

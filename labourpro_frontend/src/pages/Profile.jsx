@@ -97,12 +97,7 @@ const Profile = () => {
       {/* Main content */}
       <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-100 relative">
         {/* Mobile toggle button */}
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="md:hidden fixed top-4 left-4 z-50 bg-white border p-2 rounded shadow"
-        >
-          <Menu className="w-6 h-6" />
-        </button>
+       
 
         <div className="max-w-3xl mx-auto bg-white rounded shadow p-6 border mt-12 md:mt-0">
           <h1 className="text-3xl font-bold mb-6">👤 My Profile</h1>

@@ -22,7 +22,7 @@ const Sidebar = () => {
     { name: "Dashboard", path: "/dashboard", icon: <LayoutDashboard size={18} /> },
     { name: "Profile", path: "/dashboard/profile", icon: <User size={18} /> },
     { name: "Workers", path: "/dashboard/workers", icon: <Users size={18} /> },
-    { name: "Attendance", path: "/attendance", icon: <Calendar size={18} /> },
+    { name: "Attendance", path: "/dashboard/attendance", icon: <Calendar size={18} /> },
     { name: "Salaries", path: "/salaries", icon: <Wallet size={18} /> },
     { name: "Loans", path: "/loans", icon: <Wallet size={18} /> },
     { name: "Notifications", path: "/notifications", icon: <Bell size={18} /> },

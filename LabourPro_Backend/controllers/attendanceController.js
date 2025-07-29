@@ -15,37 +15,51 @@ const calculateHoursAndRoj = (entry, exit, rojPerHour) => {
   return { totalHours, roj };
 };
 
-// Add Attendance
 exports.addAttendance = async (req, res) => {
   try {
-    const { workerId, date, entryTime, exitTime } = req.body;
-    const companyId = req.user?.companyId;
+    const { worker, entryTime, exitTime } = req.body;
+    const companyId = req.user.companyId;
 
-    // console.log("Incoming body:", req.body);
-    // console.log("Auth user:", req.user);
+    if (!worker || !entryTime || !exitTime) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
 
-    const worker = await Worker.findById(workerId);
-    if (!worker) return res.status(404).json({ message: "Worker not found" });
+    const start = new Date(`1970-01-01T${entryTime}`);
+    const end = new Date(`1970-01-01T${exitTime}`);
 
-    const { totalHours, roj } = calculateHoursAndRoj(entryTime, exitTime, worker.rojPerHour);
-    // console.log("Calculated Hours:", totalHours, "ROJ:", roj);
+    const diffMs = end - start;
+    const totalHours = parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
 
-    const attendance = await Attendance.create({
-      workerId,
-      companyId,
-      date,
+    if (isNaN(totalHours) || totalHours <= 0) {
+      return res.status(400).json({ message: "Invalid entry/exit time" });
+    }
+
+    // Fetch worker rojRate
+    const workerData = await Worker.findOne({ _id: worker, companyId });
+    if (!workerData) {
+      return res.status(404).json({ message: "Worker not found" });
+    }
+
+    const dailyRoj = parseFloat((workerData.rojRate * totalHours).toFixed(2));
+
+    const attendance = new Attendance({
+      worker,
       entryTime,
       exitTime,
       totalHours,
-      dailyRoj: roj,
+      dailyRoj,
+      date: new Date().toISOString().split("T")[0], // YYYY-MM-DD
+      companyId,
     });
 
-    res.status(201).json({ message: "Attendance added", attendance });
-  } catch (err) {
-    console.error("❌ Error in addAttendance:", err.message, err.stack);
-    res.status(500).json({ message: "Server error", error: err.message });
+    await attendance.save();
+    res.status(201).json({ message: "Attendance recorded", attendance });
+  } catch (error) {
+    console.error("❌ Error in addAttendance:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
 
 exports.getAllAttendance = async (req, res) => {
   try {
