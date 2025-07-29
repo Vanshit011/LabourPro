@@ -82,16 +82,16 @@ const AttendancePage = () => {
         }
     };
 
-    
+
     return (
-        <div className="flex h-screen">
-            {/* Sidebar (fixed height) */}
-            <div className="w-64 bg-gray-100">
+        <div className="flex flex-col md:flex-row h-screen">
+            {/* Sidebar (fixed for desktop, collapsible for mobile) */}
+            <div className="md:w-64 w-full bg-gray-100">
                 <Sidebar />
             </div>
 
-            {/* Main Content Area (scrollable) */}
-            <div className="flex-1 overflow-y-auto p-6">
+            {/* Main Content Area */}
+            <div className="flex-1 overflow-y-auto p-4 md:p-6">
                 <h1 className="text-xl font-bold mb-4">Attendance Management</h1>
 
                 {/* Date Filter */}
@@ -101,7 +101,7 @@ const AttendancePage = () => {
                         type="date"
                         value={selectedDate}
                         onChange={(e) => setSelectedDate(e.target.value)}
-                        className="border p-2 rounded w-64"
+                        className="border p-2 rounded w-full max-w-xs"
                     />
                 </div>
 
@@ -124,26 +124,26 @@ const AttendancePage = () => {
                         </select>
                     </div>
 
-                    <div className="flex gap-4">
-                        <div>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="flex-1">
                             <label className="block mb-1 text-sm font-medium">Entry Time</label>
                             <input
                                 type="time"
                                 name="entryTime"
                                 value={form.entryTime}
                                 onChange={handleChange}
-                                className="border p-2 rounded w-40"
+                                className="border p-2 rounded w-full"
                                 required
                             />
                         </div>
-                        <div>
+                        <div className="flex-1">
                             <label className="block mb-1 text-sm font-medium">Exit Time</label>
                             <input
                                 type="time"
                                 name="exitTime"
                                 value={form.exitTime}
                                 onChange={handleChange}
-                                className="border p-2 rounded w-40"
+                                className="border p-2 rounded w-full"
                                 required
                             />
                         </div>
@@ -158,63 +158,63 @@ const AttendancePage = () => {
                 </form>
 
                 {/* Attendance List */}
-                <div>
+                <div className="overflow-x-auto">
                     <h2 className="text-lg font-semibold mb-3">
                         Attendance on {selectedDate}
                     </h2>
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full table-auto border-collapse border">
-                            <thead>
-                                <tr className="bg-gray-100">
-                                    <th className="border p-2">Worker Name</th>
-                                    <th className="border p-2">Role</th>
-                                    <th className="border p-2">Entry Time</th>
-                                    <th className="border p-2">Exit Time</th>
-                                    <th className="border p-2">Hours Worked</th>
-                                    <th className="border p-2">Daily Roj</th>
-                                    <th className="border p-2">Actions</th> {/* new column */}
+                    <table className="min-w-full table-auto border-collapse border text-sm">
+                        <thead>
+                            <tr className="bg-gray-100">
+                                <th className="border p-2">Worker Name</th>
+                                <th className="border p-2">Role</th>
+                                <th className="border p-2">Entry Time</th>
+                                <th className="border p-2">Exit Time</th>
+                                <th className="border p-2">Hours Worked</th>
+                                <th className="border p-2">Daily Roj</th>
+                                <th className="border p-2">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {attendance.length === 0 ? (
+                                <tr>
+                                    <td colSpan="7" className="text-center py-4">
+                                        No attendance records found.
+                                    </td>
                                 </tr>
-                            </thead>
-
-                            <tbody>
-                                {attendance.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="6" className="text-center py-4">
-                                            No attendance records found.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    attendance.map((a) => (
-                                        <tr key={a._id}>
-                                            <td className="border p-2">{a.worker?.name}</td>
-                                            <td className="border p-2">{a.worker?.role}</td>
-                                            <td className="border p-2">{a.entryTime}</td>
-                                            <td className="border p-2">{a.exitTime}</td>
-                                            <td className="border p-2">{a.totalHours} hrs</td>
-                                            <td className="border p-2">₹{a.dailyRoj}</td>
-                                            <td className="border p-2 flex gap-2 justify-center">
+                            ) : (
+                                attendance.map((a) => (
+                                    <tr key={a._id}>
+                                        <td className="border p-2">{a.worker?.name}</td>
+                                        <td className="border p-2">{a.worker?.role}</td>
+                                        <td className="border p-2">{a.entryTime}</td>
+                                        <td className="border p-2">{a.exitTime}</td>
+                                        <td className="border p-2">{a.totalHours} hrs</td>
+                                        <td className="border p-2">₹{a.dailyRoj}</td>
+                                        <td className="border p-2">
+                                            <div className="flex flex-col sm:flex-row gap-2 justify-center">
                                                 <button
                                                     onClick={() => handleEdit(a)}
-                                                    className="bg-yellow-400 hover:bg-yellow-500 text-black px-3 py-1 rounded text-sm"
+                                                    className="bg-yellow-400 hover:bg-yellow-500 text-black px-3 py-1 rounded text-xs"
                                                 >
                                                     Edit
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(a._id)}
-                                                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm"
+                                                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
                                                 >
                                                     Delete
                                                 </button>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
+
 
     );
 };
