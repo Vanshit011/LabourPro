@@ -107,21 +107,22 @@ const AttendancePage = () => {
 
                 {/* Attendance Form */}
                 <form onSubmit={handleSubmit} className="mb-8 space-y-4">
-                    <div>
+                    <div className="w-full sm:w-80">
                         <label className="block mb-1 text-sm font-medium">Select Worker</label>
                         <select
                             name="worker"
                             value={form.worker}
                             onChange={handleChange}
-                            className="border rounded p-2 w-full"
+                            className="w-full p-1 text-sm border rounded-md sm:w-64"
                         >
-                            <option value="">Select Worker</option>
+                            <option value="">👷 Select Worker</option>
                             {workers.map((w) => (
                                 <option key={w._id} value={w._id}>
                                     {w.name}
                                 </option>
                             ))}
                         </select>
+
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-4">
