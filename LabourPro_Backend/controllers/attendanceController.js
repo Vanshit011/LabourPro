@@ -63,40 +63,50 @@ exports.getAllAttendance = async (req, res) => {
   }
 };
 // Update attendance by ID
-exports.updateAttendanceById = async (req, res) => {
+exports.updateAttendance = async (req, res) => {
   try {
-    const { entryTime, exitTime, totalHours, dailyRoj } = req.body;
-
-    const updated = await Attendance.findByIdAndUpdate(
-      req.params.id,
-      {
-        entryTime,
-        exitTime,
-        totalHours,
-        dailyRoj,
-      },
-      { new: true }
-    );
-
-    if (!updated) {
-      return res.status(404).json({ message: 'Attendance record not found' });
-    }
+    const { id } = req.params;
+    const updated = await Attendance.findByIdAndUpdate(id, req.body, { new: true });
+    if (!updated) return res.status(404).json({ message: 'Attendance not found' });
 
     res.status(200).json(updated);
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to update attendance', error: err.message });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating attendance', error });
   }
-}
-// Delete attendance by ID
-exports.deleteAttendanceById = async (req, res) => {
-  try {
-    const deleted = await Attendance.findByIdAndDelete(req.params.id);
-    if (!deleted) {
-      return res.status(404).json({ message: 'Attendance record not found' });
-    }
+};
 
-    res.status(200).json({ message: 'Attendance record deleted successfully' });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to delete attendance', error: err.message });
+exports.deleteAttendance = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await Attendance.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ message: 'Attendance not found' });
+
+    res.status(200).json({ message: 'Attendance deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting attendance', error });
   }
-}
+};
+
+// GET /api/attendance?date=YYYY-MM-DD
+exports.getAttendanceByDate = async (req, res) => {
+  try {
+    const { date } = req.query; // Format: 2025-07-30
+    const companyId = req.user.companyId;
+
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(date);
+    end.setHours(23, 59, 59, 999);
+
+    const attendance = await Attendance.find({
+      companyId,
+      date: { $gte: start, $lte: end },
+    }).populate("worker");
+
+    res.json({ attendance });
+  } catch (error) {
+    console.error("Error:", error);
+    res.status(500).json({ error: "Failed to get attendance by date" });
+  }
+};

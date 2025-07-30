@@ -10,9 +10,11 @@ const AttendancePage = () => {
     });
     const [workers, setWorkers] = useState([]);
     const [attendance, setAttendance] = useState([]);
-    const [selectedDate, setSelectedDate] = useState(
-        new Date().toISOString().split("T")[0]
-    );
+    const [selectedDate, setSelectedDate] = useState(() => {
+        const today = new Date();
+        return today.toISOString().split("T")[0]; // Format: YYYY-MM-DD
+    });
+
     const [token, setToken] = useState(localStorage.getItem("token"));
 
     const fetchWorkers = async () => {
@@ -20,7 +22,7 @@ const AttendancePage = () => {
             const res = await axios.get("http://localhost:5000/api/worker", {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            console.log("Full response from worker API:", res.data);
+            // console.log("Full response from worker API:", res.data);
 
             // Try both keys depending on backend response
             if (res.data.workers) {
@@ -42,22 +44,41 @@ const AttendancePage = () => {
     // Fetch attendance
     const fetchAllAttendance = async () => {
         try {
-            const res = await axios.get("http://localhost:5000/api/attendance", {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-
-            console.log("✅ All attendance data:", res.data.attendance);
+            const res = await axios.get(
+                `http://localhost:5000/api/attendance/date?date=${selectedDate}`,
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                }
+            );
             setAttendance(res.data.attendance || []);
         } catch (error) {
-            console.error("❌ Error fetching all attendance:", error.response?.data || error.message);
+            console.error("Error fetching attendance by date:", error.response?.data || error.message);
         }
     };
 
 
+
     useEffect(() => {
         fetchWorkers();
-        fetchAllAttendance();
     }, []);
+
+    useEffect(() => {
+        fetchAllAttendance();
+    }, [selectedDate]);
+
+    const handleDelete = async (id) => {
+        try {
+            const token = localStorage.getItem("token");
+            await axios.delete(`http://localhost:5000/api/attendance/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            toast.success("Attendance deleted");
+            fetchAllAttendance(); // 👈 This updates the list
+        } catch (err) {
+            toast.error("Error deleting attendance");
+            console.error(err);
+        }
+    };
 
 
     // Handle form change
@@ -73,7 +94,7 @@ const AttendancePage = () => {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
-            console.log("✅ Attendance saved:", response.data); // 👈 show full API response
+            // console.log("✅ Attendance saved:", response.data); // 👈 show full API response
 
             setForm({ worker: "", entryTime: "", exitTime: "" });
             fetchAllAttendance();
@@ -160,9 +181,16 @@ const AttendancePage = () => {
 
                 {/* Attendance List */}
                 <div className="overflow-x-auto">
-                    <h2 className="text-lg font-semibold mb-3">
-                        Attendance on {selectedDate}
-                    </h2>
+                    <div className="flex items-center justify-between mb-4 flex-col sm:flex-row gap-2">
+                        <h2 className="text-lg font-semibold">Attendance on {selectedDate}</h2>
+                        <input
+                            type="date"
+                            value={selectedDate}
+                            onChange={(e) => setSelectedDate(e.target.value)}
+                            className="border px-3 py-1 rounded-md w-full sm:w-auto"
+                        />
+                    </div>
+
                     <table className="min-w-full table-auto border-collapse border text-sm">
                         <thead>
                             <tr className="bg-gray-100">
@@ -192,20 +220,20 @@ const AttendancePage = () => {
                                         <td className="border p-2">{a.totalHours} hrs</td>
                                         <td className="border p-2">₹{a.dailyRoj}</td>
                                         <td className="border p-2">
-                                            <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                                                <button
-                                                    onClick={() => handleEdit(a)}
-                                                    className="bg-yellow-400 hover:bg-yellow-500 text-black px-3 py-1 rounded text-xs"
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(a._id)}
-                                                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
-                                                >
-                                                    Delete
-                                                </button>
-                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    if (
+                                                        window.confirm(
+                                                            "Are you sure you want to delete this attendance record?"
+                                                        )
+                                                    ) {
+                                                        handleDelete(a._id);
+                                                    }
+                                                }}
+                                                className="bg-red-500 text-white px-2 py-1 rounded text-sm"
+                                            >
+                                                Delete
+                                            </button>
                                         </td>
                                     </tr>
                                 ))
