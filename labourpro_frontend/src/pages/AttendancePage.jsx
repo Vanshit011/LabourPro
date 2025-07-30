@@ -19,7 +19,7 @@ const AttendancePage = () => {
 
     const fetchWorkers = async () => {
         try {
-            const res = await axios.get("http://localhost:5000/api/worker", {
+            const res = await axios.get("https://labourpro-backend.onrender.com/api/worker", {
                 headers: { Authorization: `Bearer ${token}` },
             });
             // console.log("Full response from worker API:", res.data);
@@ -45,7 +45,7 @@ const AttendancePage = () => {
     const fetchAllAttendance = async () => {
         try {
             const res = await axios.get(
-                `http://localhost:5000/api/attendance/date?date=${selectedDate}`,
+                `https://labourpro-backend.onrender.com/api/attendance/date?date=${selectedDate}`,
                 {
                     headers: { Authorization: `Bearer ${token}` },
                 }
@@ -69,7 +69,7 @@ const AttendancePage = () => {
     const handleDelete = async (id) => {
         try {
             const token = localStorage.getItem("token");
-            await axios.delete(`http://localhost:5000/api/attendance/${id}`, {
+            await axios.delete(`https://labourpro-backend.onrender.com/api/attendance/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             toast.success("Attendance deleted");
@@ -90,7 +90,7 @@ const AttendancePage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post("http://localhost:5000/api/attendance", form, {
+            const response = await axios.post("https://labourpro-backend.onrender.com/api/attendance", form, {
                 headers: { Authorization: `Bearer ${token}` },
             });
 
