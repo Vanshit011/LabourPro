@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Sidebar from "../components/Sidebar";
-// import { Menu } from "lucide-react";
 
 const Workers = () => {
     const [workers, setWorkers] = useState([]);
@@ -69,106 +68,116 @@ const Workers = () => {
     }, []);
 
     return (
-        <div className="flex flex-col md:flex-row min-h-screen bg-gray-50 ">
+        <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
             <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
-            {/* Overlay for mobile when sidebar is open */}
             {sidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-black bg-opacity-40 z-40 md:hidden "
+                    className="fixed inset-0 bg-black bg-opacity-40 z-40 md:hidden"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}
 
+            <div className="flex-1 pt-14 md:p-8">
+                <div className="max-w-6xl mx-auto">
+                    <h2 className="text-3xl font-bold mb-6 text-gray-800">👷 Manage Workers</h2>
 
-            {/* Main content */}
-            <div className="flex-1 pt-14 md:p-6">
-                <h2 className="text-2xl font-bold mb-4">👷 Manage Workers</h2>
+                    {/* Form Card */}
+                    <div className="bg-white rounded-2xl shadow p-6 mb-8">
+                        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <input
+                                type="text"
+                                placeholder="Worker Name"
+                                value={form.name}
+                                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                                className="border p-2 rounded-md w-full"
+                                required
+                            />
+                            <input
+                                type="text"
+                                placeholder="Phone Number"
+                                value={form.number}
+                                onChange={(e) => setForm({ ...form, number: e.target.value })}
+                                className="border p-2 rounded-md w-full"
+                                required
+                            />
+                            <input
+                                type="text"
+                                placeholder="Worker Role"
+                                value={form.role}
+                                onChange={(e) => setForm({ ...form, role: e.target.value })}
+                                className="border p-2 rounded-md w-full"
+                                required
+                            />
+                            <input
+                                type="number"
+                                placeholder="Roj Per Hour"
+                                value={form.rojPerHour}
+                                onChange={(e) => setForm({ ...form, rojPerHour: e.target.value })}
+                                className="border p-2 rounded-md w-full"
+                                required
+                            />
+                            <div className="col-span-full">
+                                <button
+                                    type="submit"
+                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md"
+                                >
+                                    {editingId ? "Update Worker" : "Add Worker"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
 
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <input
-                        type="text"
-                        placeholder="Worker Name"
-                        value={form.name}
-                        onChange={(e) => setForm({ ...form, name: e.target.value })}
-                        className="border p-2 rounded"
-                        required
-                    />
-                    <input
-                        type="text"
-                        placeholder="Phone Number"
-                        value={form.number}
-                        onChange={(e) => setForm({ ...form, number: e.target.value })}
-                        className="border p-2 rounded"
-                        required
-                    />
-                    <input
-                        type="text"
-                        placeholder="Worker Role"
-                        value={form.role}
-                        onChange={(e) => setForm({ ...form, role: e.target.value })}
-                        className="border p-2 rounded"
-                        required
-                    />
-                    <input
-                        type="number"
-                        placeholder="Roj Per Hour"
-                        value={form.rojPerHour}
-                        onChange={(e) => setForm({ ...form, rojPerHour: e.target.value })}
-                        className="border p-2 rounded"
-                        required
-                    />
-                    <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold p-2 rounded col-span-full">
-                        {editingId ? "Update Worker" : "Add Worker"}
-                    </button>
-                </form>
-
-                {/* Worker Table */}
-                <div className="overflow-auto rounded border border-gray-300">
-                    <table className="min-w-full table-auto text-center text-sm">
-                        <thead className="bg-gray-100 text-gray-600">
-                            <tr>
-                                <th className="p-2 border">Name</th>
-                                <th className="p-2 border">Number</th>
-                                <th className="p-2 border">Role</th>
-                                <th className="p-2 border">Roj/Hour</th>
-                                <th className="p-2 border">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {Array.isArray(workers) && workers.length > 0 ? (
-                                workers.map((w) => (
-                                    <tr key={w._id} className="border-t hover:bg-gray-50">
-                                        <td className="p-2">{w.name}</td>
-                                        <td className="p-2">{w.number}</td>
-                                        <td className="p-2">{w.role}</td>
-                                        <td className="p-2">₹{w.rojPerHour}</td>
-                                        <td className="p-2 space-x-2">
-                                            <button
-                                                onClick={() => handleEdit(w)}
-                                                className="text-blue-500 hover:underline"
-                                            >
-                                                Edit
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(w._id)}
-                                                className="text-red-500 hover:underline"
-                                            >
-                                                Delete
-                                            </button>
-                                        </td>
+                    {/* Table Card */}
+                    {/* Table Card */}
+                    <div className="bg-white rounded-2xl shadow p-4 border border-gray-200">
+                        <div className="w-full overflow-x-auto max-h-[500px] overflow-y-auto">
+                            <table className="min-w-full table-auto text-sm text-center">
+                                <thead className="bg-gray-100 text-gray-700 sticky top-0">
+                                    <tr>
+                                        <th className="p-3 border">Name</th>
+                                        <th className="p-3 border">Number</th>
+                                        <th className="p-3 border">Role</th>
+                                        <th className="p-3 border">Roj/Hour</th>
+                                        <th className="p-3 border">Actions</th>
                                     </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan="5" className="text-center p-4 text-gray-400">
-                                        No workers found.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                                </thead>
+                                <tbody>
+                                    {Array.isArray(workers) && workers.length > 0 ? (
+                                        workers.map((w) => (
+                                            <tr key={w._id} className="border-t hover:bg-gray-50 transition-all">
+                                                <td className="p-3 whitespace-nowrap">{w.name}</td>
+                                                <td className="p-3 whitespace-nowrap">{w.number}</td>
+                                                <td className="p-3 whitespace-nowrap">{w.role}</td>
+                                                <td className="p-3 whitespace-nowrap">₹{w.rojPerHour}</td>
+                                                <td className="p-3 space-x-2 whitespace-nowrap">
+                                                    <button
+                                                        onClick={() => handleEdit(w)}
+                                                        className="text-blue-600 hover:underline font-medium"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(w._id)}
+                                                        className="text-red-600 hover:underline font-medium"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan="5" className="text-center p-5 text-gray-400">
+                                                No workers found.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
