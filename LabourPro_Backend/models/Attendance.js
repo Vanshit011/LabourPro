@@ -1,27 +1,43 @@
 const mongoose = require("mongoose");
 
 const attendanceSchema = new mongoose.Schema({
-  companyId: {
-    type: String,
-    ref: "Company",
-    required: true,
-  },
-  worker: {
+  workerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Worker",
     required: true,
   },
-  date: {
+  workerName: {
     type: String,
-    required: true, // Format: YYYY-MM-DD
+    required: true,
   },
-  entryTime: String,  // Format: HH:mm
-  exitTime: String,   // Format: HH:mm
-  totalHours: Number,
-  dailyRoj: {
+  entryTime: {
+    type: String,
+    required: true,
+  },
+  exitTime: {
+    type: String,
+    required: true,
+  },
+  totalHours: {
     type: Number,
     required: true,
-  }
+  },
+  rojRate: {
+    type: Number,
+    required: true,
+  },
+  totalRojEarned: {
+    type: Number,
+    required: true,
+  },
+  date: {
+    type: String, // format: YYYY-MM-DD
+    required: true,
+  },
+  companyId: {
+    type: String,
+    required: true,
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model("Attendance", attendanceSchema);

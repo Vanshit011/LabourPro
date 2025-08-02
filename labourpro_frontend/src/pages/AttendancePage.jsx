@@ -1,251 +1,160 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import Sidebar from "../components/Sidebar";
+import ViewAttendanceByDate from "../components/ViewAttendanceByDate";
+
+// Helper to get today's date in yyyy-mm-dd format
+const getToday = () => {
+  const today = new Date();
+  return today.toISOString().split("T")[0];
+};
 
 const AttendancePage = () => {
-    const [form, setForm] = useState({
-        worker: "",
+  const [workers, setWorkers] = useState([]);
+  const [form, setForm] = useState({
+    workerId: "",
+    date: getToday(), // default to today
+    entryTime: "",
+    exitTime: "",
+  });
+
+  const fetchWorkers = async () => {
+    try {
+      const res = await axios.get("http://localhost:5000/api/worker", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      setWorkers(res.data || []);
+    } catch (err) {
+      console.error("Error fetching workers", err);
+      setWorkers([]);
+    }
+  };
+
+  const handleChange = (e) => {
+    setForm((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post(
+        "http://localhost:5000/api/attendance",
+        form,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      // Reset form with date still set to today
+      setForm({
+        workerId: "",
+        date: getToday(),
         entryTime: "",
         exitTime: "",
-    });
-    const [workers, setWorkers] = useState([]);
-    const [attendance, setAttendance] = useState([]);
-    const [selectedDate, setSelectedDate] = useState(() => {
-        const today = new Date();
-        return today.toISOString().split("T")[0]; // Format: YYYY-MM-DD
-    });
+      });
 
-    const [token, setToken] = useState(localStorage.getItem("token"));
+      // Show temporary popup
+      const popup = document.createElement("div");
+      popup.innerText = "✅ Attendance added successfully!";
+      popup.className =
+        "fixed top-5 right-5 bg-green-600 text-white px-4 py-2 rounded shadow z-50";
+      document.body.appendChild(popup);
+      setTimeout(() => {
+        document.body.removeChild(popup);
+      }, 2000);
+    } catch (err) {
+      console.error("Error saving attendance", err);
+      alert("❌ Failed to save attendance");
+    }
+  };
 
-    const fetchWorkers = async () => {
-        try {
-            const res = await axios.get("https://labourpro-backend.onrender.com/api/worker", {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            // console.log("Full response from worker API:", res.data);
+  useEffect(() => {
+    fetchWorkers();
+  }, []);
 
-            // Try both keys depending on backend response
-            if (res.data.workers) {
-                setWorkers(res.data.workers);
-            } else if (res.data.worker) {
-                setWorkers(res.data.worker);
-            } else if (Array.isArray(res.data)) {
-                setWorkers(res.data);
-            } else {
-                console.warn("Unexpected worker data format:", res.data);
-                setWorkers([]);
-            }
-        } catch (error) {
-            console.error("❌ Error fetching workers:", error);
-        }
-    };
-
-
-    // Fetch attendance
-    const fetchAllAttendance = async () => {
-        try {
-            const res = await axios.get(
-                `https://labourpro-backend.onrender.com/api/attendance/date?date=${selectedDate}`,
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                }
-            );
-            setAttendance(res.data.attendance || []);
-        } catch (error) {
-            console.error("Error fetching attendance by date:", error.response?.data || error.message);
-        }
-    };
-
-
-
-    useEffect(() => {
-        fetchWorkers();
-    }, []);
-
-    useEffect(() => {
-        fetchAllAttendance();
-    }, [selectedDate]);
-
-    const handleDelete = async (id) => {
-        try {
-            const token = localStorage.getItem("token");
-            await axios.delete(`https://labourpro-backend.onrender.com/api/attendance/${id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            toast.success("Attendance deleted");
-            fetchAllAttendance(); // 👈 This updates the list
-        } catch (err) {
-            toast.error("Error deleting attendance");
-            console.error(err);
-        }
-    };
-
-
-    // Handle form change
-    const handleChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
-    };
-
-    // Submit attendance
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const response = await axios.post("https://labourpro-backend.onrender.com/api/attendance", form, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-
-            // console.log("✅ Attendance saved:", response.data); // 👈 show full API response
-
-            setForm({ worker: "", entryTime: "", exitTime: "" });
-            fetchAllAttendance();
-        } catch (error) {
-            console.error("❌ Error saving attendance:", error.response?.data || error.message);
-        }
-    };
-
-
-    return (
-        <div className="flex flex-col md:flex-row h-screen">
-            {/* Sidebar (fixed for desktop, collapsible for mobile) */}
-            <div className="md:w-64 w-full bg-gray-100">
-                <Sidebar />
-            </div>
-
-            {/* Main Content Area */}
-            <div className="flex-1 overflow-y-auto p-4 md:p-6">
-                <h1 className="text-xl font-bold mb-4">Attendance Management</h1>
-
-                {/* Date Filter */}
-                <div className="mb-6">
-                    <label className="block mb-1 text-sm font-medium">Select Date</label>
-                    <input
-                        type="date"
-                        value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                        className="border p-2 rounded w-full max-w-xs"
-                    />
-                </div>
-
-                {/* Attendance Form */}
-                <form onSubmit={handleSubmit} className="mb-8 space-y-4">
-                    <div className="w-full sm:w-80">
-                        <label className="block mb-1 text-sm font-medium">Select Worker</label>
-                        <select
-                            name="worker"
-                            value={form.worker}
-                            onChange={handleChange}
-                            className="w-full p-1 text-sm border rounded-md sm:w-64"
-                        >
-                            <option value="">👷 Select Worker</option>
-                            {workers.map((w) => (
-                                <option key={w._id} value={w._id}>
-                                    {w.name}
-                                </option>
-                            ))}
-                        </select>
-
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <div className="flex-1">
-                            <label className="block mb-1 text-sm font-medium">Entry Time</label>
-                            <input
-                                type="time"
-                                name="entryTime"
-                                value={form.entryTime}
-                                onChange={handleChange}
-                                className="border p-2 rounded w-full"
-                                required
-                            />
-                        </div>
-                        <div className="flex-1">
-                            <label className="block mb-1 text-sm font-medium">Exit Time</label>
-                            <input
-                                type="time"
-                                name="exitTime"
-                                value={form.exitTime}
-                                onChange={handleChange}
-                                className="border p-2 rounded w-full"
-                                required
-                            />
-                        </div>
-                    </div>
-
-                    <button
-                        type="submit"
-                        className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-                    >
-                        Save Attendance
-                    </button>
-                </form>
-
-                {/* Attendance List */}
-                <div className="overflow-x-auto">
-                    <div className="flex items-center justify-between mb-4 flex-col sm:flex-row gap-2">
-                        <h2 className="text-lg font-semibold">Attendance on {selectedDate}</h2>
-                        <input
-                            type="date"
-                            value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
-                            className="border px-3 py-1 rounded-md w-full sm:w-auto"
-                        />
-                    </div>
-
-                    <table className="min-w-full table-auto border-collapse border text-sm">
-                        <thead>
-                            <tr className="bg-gray-100">
-                                <th className="border p-2">Worker Name</th>
-                                <th className="border p-2">Role</th>
-                                <th className="border p-2">Entry Time</th>
-                                <th className="border p-2">Exit Time</th>
-                                <th className="border p-2">Hours Worked</th>
-                                <th className="border p-2">Daily Roj</th>
-                                <th className="border p-2">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {attendance.length === 0 ? (
-                                <tr>
-                                    <td colSpan="7" className="text-center py-4">
-                                        No attendance records found.
-                                    </td>
-                                </tr>
-                            ) : (
-                                attendance.map((a) => (
-                                    <tr key={a._id}>
-                                        <td className="border p-2">{a.worker?.name}</td>
-                                        <td className="border p-2">{a.worker?.role}</td>
-                                        <td className="border p-2">{a.entryTime}</td>
-                                        <td className="border p-2">{a.exitTime}</td>
-                                        <td className="border p-2">{a.totalHours} hrs</td>
-                                        <td className="border p-2">₹{a.dailyRoj}</td>
-                                        <td className="border p-2">
-                                            <button
-                                                onClick={() => {
-                                                    if (
-                                                        window.confirm(
-                                                            "Are you sure you want to delete this attendance record?"
-                                                        )
-                                                    ) {
-                                                        handleDelete(a._id);
-                                                    }
-                                                }}
-                                                className="bg-red-500 text-white px-2 py-1 rounded text-sm"
-                                            >
-                                                Delete
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+  return (
+    <div className="max-w-xl mx-auto p-4 bg-white shadow rounded mt-10">
+      <h2 className="text-xl font-semibold mb-4">Add Attendance</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Worker */}
+        <div>
+          <label className="block text-sm font-medium">Select Worker</label>
+          <select
+            name="workerId"
+            value={form.workerId}
+            onChange={handleChange}
+            className="w-full border p-2 rounded"
+            required
+          >
+            <option value="">-- Select Worker --</option>
+            {workers && workers.length > 0 ? (
+              workers.map((w) => (
+                <option key={w._id} value={w._id}>
+                  {w.name}
+                </option>
+              ))
+            ) : (
+              <option disabled>No workers found</option>
+            )}
+          </select>
         </div>
 
+        {/* Date */}
+        <div>
+          <label className="block text-sm font-medium">Date</label>
+          <input
+            type="date"
+            name="date"
+            value={form.date}
+            onChange={handleChange}
+            className="w-full border p-2 rounded"
+            required
+          />
+        </div>
 
-    );
+        {/* Entry Time */}
+        <div>
+          <label className="block text-sm font-medium">Entry Time</label>
+          <input
+            type="time"
+            name="entryTime"
+            value={form.entryTime}
+            onChange={handleChange}
+            className="w-full border p-2 rounded"
+            required
+          />
+        </div>
+
+        {/* Exit Time */}
+        <div>
+          <label className="block text-sm font-medium">Exit Time</label>
+          <input
+            type="time"
+            name="exitTime"
+            value={form.exitTime}
+            onChange={handleChange}
+            className="w-full border p-2 rounded"
+            required
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
+          Submit Attendance
+        </button>
+      </form>
+
+      {/* View attendance table below */}
+      <ViewAttendanceByDate />
+    </div>
+  );
 };
 
 export default AttendancePage;

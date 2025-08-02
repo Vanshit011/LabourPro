@@ -18,7 +18,7 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/worker", require("./routes/workerRoutes"));
 app.use("/api/attendance", require("./routes/attendanceRoutes.js"));
-app.use("/api/salary", require("./routes/salaryRoutes"));
+// app.use("/api/salary", require("./routes/salaryRoutes"));
 // app.use("/api/loan", require("./routes/loanRoutes"));
 // app.use("/api/notifications", require("./routes/notificationRoutes"));
 // app.use("/api/subscription", require("./routes/subscriptionRoutes"));
