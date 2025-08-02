@@ -7,7 +7,6 @@ const ViewAttendanceByDate = () => {
   const [records, setRecords] = useState([]);
   const [editData, setEditData] = useState(null);
 
-  // Set today's date on mount
   useEffect(() => {
     const today = new Date().toISOString().split("T")[0];
     setSelectedDate(today);
@@ -73,16 +72,16 @@ const ViewAttendanceByDate = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-4">
-      <h2 className="text-2xl font-semibold mb-4">View Attendance by Date</h2>
+    <div className="max-w-6xl mx-auto p-4">
+      <h2 className="text-2xl font-bold mb-4 text-center">View Attendance by Date</h2>
 
       {/* Date Picker */}
-      <div className="flex items-center gap-4 mb-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
         <input
           type="date"
           value={selectedDate}
           onChange={(e) => setSelectedDate(e.target.value)}
-          className="border px-3 py-2 rounded"
+          className="border px-3 py-2 rounded w-full sm:w-auto"
         />
         <button
           onClick={() => fetchAttendanceByDate()}
@@ -93,60 +92,62 @@ const ViewAttendanceByDate = () => {
       </div>
 
       {/* Attendance Table */}
-      {records.length > 0 ? (
-        <table className="w-full border mt-4">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="p-2 border">Worker Name</th>
-              <th className="p-2 border">Date</th>
-              <th className="p-2 border">Entry Time</th>
-              <th className="p-2 border">Exit Time</th>
-              <th className="p-2 border">Total Hours</th>
-              <th className="p-2 border">Today Roj</th>
-              <th className="p-2 border">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {records.map((rec, i) => (
-              <tr key={i}>
-                <td className="p-2 border">{rec.workerName || "N/A"}</td>
-                <td className="p-2 border">{rec.date}</td>
-                <td className="p-2 border">{rec.entryTime}</td>
-                <td className="p-2 border">{rec.exitTime}</td>
-                <td className="p-2 border">{rec.totalHours || "N/A"}</td>
-                <td className="p-2 border">{rec.totalRojEarned || "N/A"}</td>
-                <td className="p-2 border flex gap-2">
-                  <button
-                    onClick={() => handleEdit(rec._id)}
-                    className="text-blue-600 hover:underline"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(rec._id)}
-                    className="text-red-600 hover:underline"
-                  >
-                    Delete
-                  </button>
-                </td>
+      <div className="overflow-x-auto">
+        {records.length > 0 ? (
+          <table className="w-full border mt-4 text-sm sm:text-base">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="p-2 border">Worker Name</th>
+                <th className="p-2 border">Date</th>
+                <th className="p-2 border">Entry Time</th>
+                <th className="p-2 border">Exit Time</th>
+                <th className="p-2 border">Total Hours</th>
+                <th className="p-2 border">Today Roj</th>
+                <th className="p-2 border">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        selectedDate && <p className="text-gray-600 mt-4">No records found.</p>
-      )}
+            </thead>
+            <tbody>
+              {records.map((rec, i) => (
+                <tr key={i} className="text-center">
+                  <td className="p-2 border">{rec.workerName || "N/A"}</td>
+                  <td className="p-2 border">{rec.date}</td>
+                  <td className="p-2 border">{rec.entryTime}</td>
+                  <td className="p-2 border">{rec.exitTime}</td>
+                  <td className="p-2 border">{rec.totalHours || "N/A"}</td>
+                  <td className="p-2 border">{rec.totalRojEarned || "N/A"}</td>
+                  <td className="p-2 border space-x-2">
+                    <button
+                      onClick={() => handleEdit(rec)}
+                      className="text-blue-600 hover:underline"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(rec._id)}
+                      className="text-red-600 hover:underline"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          selectedDate && <p className="text-gray-600 mt-4">No records found.</p>
+        )}
+      </div>
 
       {/* Edit Modal */}
       {editData && (
         <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded shadow-md w-96">
+          <div className="bg-white p-6 rounded shadow-md w-[90%] sm:w-96">
             <h3 className="text-xl font-semibold mb-4">Edit Attendance</h3>
             <div className="mb-2">
               <label className="block text-sm mb-1">Entry Time</label>
               <input
                 type="time"
-                value={editData.entryTime}
+                value={editData.entryTime || ""}
                 onChange={(e) =>
                   setEditData({ ...editData, entryTime: e.target.value })
                 }
@@ -157,7 +158,7 @@ const ViewAttendanceByDate = () => {
               <label className="block text-sm mb-1">Exit Time</label>
               <input
                 type="time"
-                value={editData.exitTime}
+                value={editData.exitTime || ""}
                 onChange={(e) =>
                   setEditData({ ...editData, exitTime: e.target.value })
                 }

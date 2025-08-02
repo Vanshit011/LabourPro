@@ -77,13 +77,15 @@ const updateAttendance = async (req, res) => {
     const { id } = req.params;
     const { workerId, date, entryTime, exitTime } = req.body;
 
-    if (!entryTime || !exitTime) {
-      return res.status(400).json({ error: "Entry and Exit time are required" });
+    if (!workerId || !date || !entryTime || !exitTime) {
+      return res.status(400).json({ error: "All fields are required" });
     }
 
-    // Calculate total hours and roj
+    // Parse entry and exit into Date objects
     const start = new Date(`${date}T${entryTime}`);
     const end = new Date(`${date}T${exitTime}`);
+
+    // Calculate total hours and roj
     const totalHours = Math.max(0, Math.abs((end - start) / 36e5)); // in hours
     const roj = totalHours * 50;
 
@@ -100,9 +102,11 @@ const updateAttendance = async (req, res) => {
       { new: true }
     );
 
-    if (!updated) return res.status(404).json({ error: "Attendance not found" });
+    if (!updated) {
+      return res.status(404).json({ error: "Attendance not found" });
+    }
 
-    res.status(200).json(updated);
+    res.status(200).json({ message: "Attendance updated", attendance: updated });
   } catch (err) {
     console.error("Update Attendance Error:", err);
     res.status(500).json({ error: "Server error while updating attendance" });
