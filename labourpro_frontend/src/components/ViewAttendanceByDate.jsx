@@ -10,8 +10,14 @@ const ViewAttendanceByDate = () => {
   useEffect(() => {
     const today = new Date().toISOString().split("T")[0];
     setSelectedDate(today);
-    fetchAttendanceByDate(today);
   }, []);
+
+  useEffect(() => {
+    if (selectedDate) {
+      fetchAttendanceByDate(selectedDate);
+    }
+  }, [selectedDate]);
+
 
   const fetchAttendanceByDate = async (dateOverride) => {
     const date = dateOverride || selectedDate;

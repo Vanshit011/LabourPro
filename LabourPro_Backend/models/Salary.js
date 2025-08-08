@@ -1,29 +1,9 @@
-// models/Salary.js
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-const salarySchema = new mongoose.Schema({
-  workerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Worker",
-    required: true,
-  },
-  companyId: {
-    type: String,
-    ref: "Company",
-    required: true,
-  },
-  month: {
-    type: String, // Format: "2025-07"
-    required: true,
-  },
-  totalHours: {
-    type: Number,
-    required: true,
-  },
-  totalRoj: {
-    type: Number,
-    required: true,
-  },
+const SalarySchema = new mongoose.Schema({
+  workerId: { type: mongoose.Schema.Types.ObjectId, required: true, ref: 'Worker', unique: true },
+  rojRate: { type: Number, required: true },  // wage per roj/hour/day as per your system
+  // You can add more fields like baseSalary, bonuses, etc.
 });
 
-module.exports = mongoose.model("Salary", salarySchema);
+module.exports = mongoose.model('Salary', SalarySchema);

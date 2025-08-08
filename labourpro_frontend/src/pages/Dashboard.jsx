@@ -14,6 +14,7 @@ const Dashboard = () => {
             Authorization: `Bearer ${token}`,
           },
         });
+        // console.log("Admin data loaded:", res.data);
         setAdmin(res.data);
       } catch (err) {
         console.error("Error loading admin data", err);
@@ -45,6 +46,10 @@ const Dashboard = () => {
           <div className="flex justify-between">
             <span className="text-gray-600 font-medium">Company ID:</span>
             <span className="text-gray-900 font-semibold">{admin.companyId}</span>
+          </div>
+           <div className="flex justify-between">
+            <span className="text-gray-600 font-medium">Company name:</span>
+            <span className="text-gray-900 font-semibold">{admin.companyName}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-600 font-medium">Email:</span>

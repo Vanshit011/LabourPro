@@ -3,14 +3,22 @@ const Worker = require("../models/Worker");
 // ✅ Add Worker
 exports.addWorker = async (req, res) => {
   try {
-    const { name, number, role, rojPerHour } = req.body;
-    const companyId = req.user.companyId; // assuming auth middleware sets req.user
+    const { name, number, role, rojPerHour, email, password } = req.body;
+    const companyId = req.user.companyId;
+
+    // Check if email already exists
+    const existingWorker = await Worker.findOne({ email });
+    if (existingWorker) {
+      return res.status(400).json({ error: "Email already in use" });
+    }
 
     const worker = new Worker({
       name,
       number,
       role,
       rojPerHour,
+      email,
+      password,
       companyId,
     });
 
@@ -18,10 +26,11 @@ exports.addWorker = async (req, res) => {
 
     res.status(201).json({ message: "Worker added successfully", worker });
   } catch (error) {
-    console.error("Error adding worker:", error); // ✅ log full error
+    console.error("Error adding worker:", error);
     res.status(500).json({ error: error.message });
   }
 };
+
 
 
 // ✅ Get All Workers (for company)

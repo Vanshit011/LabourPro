@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import ViewAttendanceByDate from "../components/ViewAttendanceByDate";
 import Sidebar from "../components/Sidebar";
+import MonthlySalaryView from "../components/MonthlySalaryView";
 
 const getToday = () => {
   const today = new Date();
@@ -178,6 +179,11 @@ const AttendancePage = () => {
           {/* Attendance Viewer */}
           <div className="bg-white shadow-md rounded-xl p-6 overflow-x-auto">
             <ViewAttendanceByDate />
+          </div>
+
+          {/* Monthly Salary Summary */}
+          <div>
+            <MonthlySalaryView />
           </div>
         </div>
       </main>

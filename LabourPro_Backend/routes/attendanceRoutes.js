@@ -8,7 +8,7 @@ router.get("/", protect, isAdmin, getAttendanceByDate);
 router.put("/:id", protect, isAdmin, updateAttendance);     // Edit attendance
 router.delete("/:id", protect, isAdmin, deleteAttendance);  // Delete attendance
 
-router.get("/monthly", protect, isAdmin, getMonthlySalary);
-
+// Add monthly salary summary route
+router.get('/monthly-salary',  protect, isAdmin, getMonthlySalary);
 
 module.exports = router;

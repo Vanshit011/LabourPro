@@ -1,5 +1,6 @@
 const Attendance = require("../models/Attendance");
 const Worker = require("../models/Worker");
+const mongoose = require('mongoose');
 
 // Add attendance
 
@@ -113,7 +114,6 @@ const updateAttendance = async (req, res) => {
   }
 };
 
-
 const deleteAttendance = async (req, res) => {
   try {
     const attendance = await Attendance.findByIdAndDelete(req.params.id);
@@ -124,40 +124,69 @@ const deleteAttendance = async (req, res) => {
   }
 };
 
-
-// Get monthly salary for a worker
+//get monthly salary summary
 const getMonthlySalary = async (req, res) => {
   try {
-    const { workerId, month } = req.query; // month: "2025-08"
+    const { month, year } = req.query;
     const companyId = req.user.companyId;
 
-    const records = await Attendance.find({
-      workerId,
-      companyId,
-      date: { $regex: `^${month}` } // Matches dates starting with "2025-08"
-    });
+    // console.log("CompanyId from token:", companyId);
 
-    const totalHours = records.reduce((sum, r) => sum + r.totalHours, 0);
-    const totalRoj = records.reduce((sum, r) => sum + r.totalRojEarned, 0);
+    if (!month || !year) {
+      return res.status(400).json({ message: "month and year are required" });
+    }
 
-    res.status(200).json({
-      workerId,
-      month,
-      totalDaysWorked: records.length,
-      totalHours: totalHours.toFixed(2),
-      totalSalary: totalRoj.toFixed(2),
-      records
-    });
+    // if (!mongoose.Types.ObjectId.isValid(companyId)) {
+    //   return res.status(400).json({ message: "Invalid companyId" });
+    // }
+
+    const startDate = new Date(Number(year), Number(month) - 1, 1);
+    const endDate = new Date(Number(year), Number(month), 1);
+
+    const summary = await Attendance.aggregate([
+      {
+        $match: {
+          companyId: companyId,
+          date: { $gte: `${year}-${month.toString().padStart(2, '0')}-01`, $lt: `${year}-${(month + 1).toString().padStart(2, '0')}-01` },
+        },
+      },
+      {
+        $group: {
+          _id: "$workerId",
+          workerName: { $first: "$workerName" },
+          totalHours: { $sum: "$totalHours" },
+          totalRojEarned: { $sum: "$totalRojEarned" },
+          daysWorked: { $sum: 1 },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          workerId: "$_id",
+          workerName: 1,
+          totalHours: 1,
+          totalRojEarned: 1,
+          daysWorked: 1,
+        },
+      },
+      {
+        $sort: { workerName: 1 },
+      },
+    ]);
+
+    return res.json({ month, year, summary });
   } catch (error) {
-    console.error("Get Monthly Salary Error:", error);
-    res.status(500).json({ message: "Server error" });
+    console.error("Monthly Salary API Error:", error.message, error.stack);
+    return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 module.exports = {
   addAttendance,
   getAttendanceByDate,
   updateAttendance,
   deleteAttendance,
-  getMonthlySalary
+  getMonthlySalary,
+  
 };
