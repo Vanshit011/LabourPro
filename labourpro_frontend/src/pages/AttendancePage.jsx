@@ -21,7 +21,7 @@ const AttendancePage = () => {
 
   const fetchWorkers = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/worker", {
+      const res = await axios.get("https://labourpro-backend.onrender.com/api/worker", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -43,7 +43,7 @@ const AttendancePage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:5000/api/attendance", form, {
+      await axios.post("https://labourpro-backend.onrender.com/api/attendance", form, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },

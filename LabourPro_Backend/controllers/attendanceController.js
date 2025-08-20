@@ -76,40 +76,49 @@ const getAttendanceByDate = async (req, res) => {
 const updateAttendance = async (req, res) => {
   try {
     const { id } = req.params;
-    const { workerId, date, entryTime, exitTime } = req.body;
+    const { entryTime, exitTime } = req.body;
 
-    if (!workerId || !date || !entryTime || !exitTime) {
-      return res.status(400).json({ error: "All fields are required" });
+    if (!entryTime || !exitTime) {
+      return res.status(400).json({ error: "Entry and Exit times are required" });
     }
 
-    // Parse entry and exit into Date objects
-    const start = new Date(`${date}T${entryTime}`);
-    const end = new Date(`${date}T${exitTime}`);
-
-    // Calculate total hours and roj
-    const totalHours = Math.max(0, Math.abs((end - start) / 36e5)); // in hours
-    const roj = totalHours * 50;
-
-    const updated = await Attendance.findByIdAndUpdate(
-      id,
-      {
-        worker: workerId,
-        date,
-        entryTime,
-        exitTime,
-        totalHours,
-        roj,
-      },
-      { new: true }
-    );
-
-    if (!updated) {
+    // Find the attendance record
+    const existing = await Attendance.findById(id).populate("worker");
+    if (!existing) {
       return res.status(404).json({ error: "Attendance not found" });
     }
 
-    res.status(200).json({ message: "Attendance updated", attendance: updated });
+    // Use the existing date
+    const date = existing.date;
+
+    // Parse times
+    const start = new Date(`${date}T${entryTime}`);
+    const end = new Date(`${date}T${exitTime}`);
+
+    // Calculate total hours
+    const totalHours = Math.max(0, Math.abs((end - start) / 36e5));
+
+    // Rate per hour → from worker if available, otherwise default 50
+    const rojPerHour = existing.rojPerHour || 50;
+
+    // Calculate roj earned
+    const roj = totalHours * rojPerHour;
+
+    // Update fields
+    existing.entryTime = entryTime;
+    existing.exitTime = exitTime;
+    existing.totalHours = totalHours;
+    existing.roj = roj;
+
+    // Save
+    const updated = await existing.save();
+
+    res.status(200).json({
+      message: "Attendance updated successfully",
+      attendance: updated,
+    });
   } catch (err) {
-    console.error("Update Attendance Error:", err);
+    console.error("Update Attendance Error:", err.message, err.stack);
     res.status(500).json({ error: "Server error while updating attendance" });
   }
 };
@@ -139,15 +148,21 @@ const getMonthlySalary = async (req, res) => {
     // if (!mongoose.Types.ObjectId.isValid(companyId)) {
     //   return res.status(400).json({ message: "Invalid companyId" });
     // }
+    const monthStr = month.toString().padStart(2, "0");
 
-    const startDate = new Date(Number(year), Number(month) - 1, 1);
-    const endDate = new Date(Number(year), Number(month), 1);
+    // handle rollover (Dec → Jan next year)
+    const nextMonth = (Number(month) % 12) + 1;
+    const nextMonthYear = Number(month) === 12 ? Number(year) + 1 : Number(year);
+    const nextMonthStr = nextMonth.toString().padStart(2, "0");
 
     const summary = await Attendance.aggregate([
       {
         $match: {
-          companyId: companyId,
-          date: { $gte: `${year}-${month.toString().padStart(2, '0')}-01`, $lt: `${year}-${(month + 1).toString().padStart(2, '0')}-01` },
+          companyId,
+          date: {
+            $gte: `${year}-${monthStr}-01`,
+            $lt: `${nextMonthYear}-${nextMonthStr}-01`,
+          },
         },
       },
       {
@@ -188,5 +203,5 @@ module.exports = {
   updateAttendance,
   deleteAttendance,
   getMonthlySalary,
-  
+
 };

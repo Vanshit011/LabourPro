@@ -19,7 +19,7 @@ const MonthlySalaryView = () => {
         try {
             const token = localStorage.getItem("token");
             const res = await axios.get(
-                `http://localhost:5000/api/attendance/monthly-salary?month=${month}&year=${year}`,
+                `https://labourpro-backend.onrender.com/api/attendance/monthly-salary?month=${month}&year=${year}`,
                 {
                     headers: { Authorization: `Bearer ${token}` },
                 }

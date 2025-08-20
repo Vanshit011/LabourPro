@@ -24,7 +24,7 @@ const ViewAttendanceByDate = () => {
     if (!date) return;
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/attendance?date=${date}`,
+        `https://labourpro-backend.onrender.com/api/attendance?date=${date}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -41,7 +41,7 @@ const ViewAttendanceByDate = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/attendance/${id}`, {
+      await axios.delete(`https://labourpro-backend.onrender.com/api/attendance/${id}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
@@ -61,7 +61,7 @@ const ViewAttendanceByDate = () => {
     try {
       const { _id, entryTime, exitTime } = editData;
       await axios.put(
-        `http://localhost:5000/api/attendance/${_id}`,
+        `https://labourpro-backend.onrender.com/api/attendance/${_id}`,
         { entryTime, exitTime },
         {
           headers: {
