@@ -3,7 +3,9 @@ const Subscription = require("../models/Subscription");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { v4: uuidv4 } = require("uuid");
+const { encryptPassword, decryptPassword } = require("../utils/cryptoUtil");
 
+// ------------------ Trial Registration ------------------
 exports.registerTrial = async (req, res) => {
   try {
     const { name, email, password, companyName } = req.body;
@@ -17,14 +19,14 @@ exports.registerTrial = async (req, res) => {
       return res.status(400).json({ message: "Email already registered" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
     const companyId = uuidv4();
     const subscriptionExpiry = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000); // 14 days
+    const encryptedPassword = encryptPassword(password);
 
     const admin = await Admin.create({
       name,
       email,
-      password: hashedPassword,
+      password: encryptedPassword,
       companyName,
       companyId,
       isTrial: true,
@@ -55,6 +57,7 @@ exports.registerTrial = async (req, res) => {
   }
 };
 
+// ------------------ Paid Registration ------------------
 exports.registerPaid = async (req, res) => {
   try {
     const {
@@ -77,16 +80,15 @@ exports.registerPaid = async (req, res) => {
       return res.status(400).json({ message: "Email already registered" });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
     const companyId = uuidv4();
-
     const days = planType === "yearly" ? 365 : 30;
     const subscriptionExpiry = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+    const encryptedPassword = encryptPassword(password);
 
     const admin = await Admin.create({
       name,
       email,
-      password: hashedPassword,
+      password: encryptedPassword,
       companyName,
       companyId,
       isTrial: false,
@@ -127,6 +129,7 @@ exports.registerPaid = async (req, res) => {
   }
 };
 
+// ------------------ Admin Login ------------------
 exports.loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -138,9 +141,10 @@ exports.loginAdmin = async (req, res) => {
     if (!admin)
       return res.status(404).json({ message: "Admin not found" });
 
-    const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch)
+    const decryptedPassword = decryptPassword(admin.password);
+    if (decryptedPassword !== password) {
       return res.status(401).json({ message: "Invalid password" });
+    }
 
     const now = new Date();
     if (admin.subscriptionExpiry && admin.subscriptionExpiry < now) {

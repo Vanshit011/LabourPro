@@ -14,4 +14,17 @@ router.get("/", protect, isAdmin, getWorkers);
 router.put("/:id", protect, isAdmin, updateWorker);
 router.delete("/:id", protect, isAdmin, deleteWorker);
 
+//manager routes
+const {
+    addManager,
+    getManager,
+    updateManager,
+    deleteManager,
+} = require("../controllers/workerController");
+
+router.post("/addManager", protect, isAdmin, addManager);
+router.get("/getManager", protect, isAdmin, getManager);
+router.put("/updateManager/:id", protect, isAdmin, updateManager);
+router.delete("/deleteManager/:id", protect, isAdmin, deleteManager);
+
 module.exports = router;
