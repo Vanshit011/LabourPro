@@ -5,6 +5,10 @@ const {
     getWorkers,
     updateWorker,
     deleteWorker,
+    addManager,
+    getManager,
+    updateManager,
+    deleteManager,
 } = require("../controllers/workerController");
 const { protect, isAdmin } = require("../middlewares/auth");
 
@@ -15,13 +19,6 @@ router.put("/:id", protect, isAdmin, updateWorker);
 router.delete("/:id", protect, isAdmin, deleteWorker);
 
 //manager routes
-const {
-    addManager,
-    getManager,
-    updateManager,
-    deleteManager,
-} = require("../controllers/workerController");
-
 router.post("/addManager", protect, isAdmin, addManager);
 router.get("/getManager", protect, isAdmin, getManager);
 router.put("/updateManager/:id", protect, isAdmin, updateManager);

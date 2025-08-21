@@ -86,7 +86,7 @@ const Workers = () => {
     // =============== Manager APIs ==================
     const fetchManagers = async () => {
         try {
-            const res = await axios.get("https://labourpro-backend.onrender.com/api/manager", {
+            const res = await axios.get("http://localhost:5000/api/worker/getManager", {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setManagers(res.data);
@@ -99,8 +99,8 @@ const Workers = () => {
         e.preventDefault();
         try {
             const url = editingManagerId
-                ? `https://labourpro-backend.onrender.com/api/manager/${editingManagerId}`
-                : "https://labourpro-backend.onrender.com/api/manager/add";
+                ? `http://localhost:5000/api/worker/updateManager/${editingManagerId}`
+                : "http://localhost:5000/api/worker/addManager";
             const method = editingManagerId ? axios.put : axios.post;
             await method(url, managerForm, { headers: { Authorization: `Bearer ${token}` } });
 
@@ -127,7 +127,7 @@ const Workers = () => {
     const deleteManager = async (id) => {
         if (!window.confirm("Delete this manager?")) return;
         try {
-            await axios.delete(`https://labourpro-backend.onrender.com/api/manager/${id}`, {
+            await axios.delete(`http://localhost:5000/api/worker/deleteManager/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             fetchManagers();
