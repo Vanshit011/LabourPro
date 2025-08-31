@@ -7,8 +7,6 @@ dotenv.config();
 const app = express();
 
 // Middleware
-const cors = require("cors");
-
 const allowedOrigins = [
   "http://localhost:5173",   // local dev
   "https://labourpro.netlify.app" // deployed frontend
