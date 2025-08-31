@@ -44,7 +44,7 @@ const ManagerSalary = () => {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(
-        `http://localhost:5000/api/salary/${managerId}/${month}/${year}`,
+        `https://labourpro-backend.onrender.com/api/salary/${managerId}/${month}/${year}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -64,7 +64,7 @@ const ManagerSalary = () => {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.post(
-        "http://localhost:5000/api/salary/add",
+        "https://labourpro-backend.onrender.com/api/salary/add",
         { managerId, month, year, baseSalary, advance, loanTaken, loanPaid },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -82,7 +82,7 @@ const ManagerSalary = () => {
 
       const token = localStorage.getItem("token");
       const res = await axios.put(
-        `http://localhost:5000/api/salary/${salaryData._id}/update`,
+        `https://labourpro-backend.onrender.com/api/salary/${salaryData._id}/update`,
         { [field]: value },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -103,7 +103,7 @@ const ManagerSalary = () => {
 
       const token = localStorage.getItem("token");
       const res = await axios.put(
-        `http://localhost:5000/api/salary/${salaryData._id}/update`,
+        `https://labourpro-backend.onrender.com/api/salary/${salaryData._id}/update`,
         { baseSalary, advance, loanTaken, loanPaid },
         { headers: { Authorization: `Bearer ${token}` } }
       );
