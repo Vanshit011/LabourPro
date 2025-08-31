@@ -1,10 +1,9 @@
-// routes/salaryRoutes.js
 const express = require("express");
 const router = express.Router();
-const { generateMonthlySalary, getAllSalaries } = require("../controllers/salaryController");
-const {protect,isAdmin} = require("../middlewares/auth");
+const salaryController = require("../controllers/salaryController");
 
-router.get("/generate/:month", protect,isAdmin, generateMonthlySalary); // e.g., /generate/2025-07
-router.get("/", protect,isAdmin, getAllSalaries);
+router.post("/add", salaryController.addSalary); // Add Salary
+router.put("/:id/update", salaryController.updateSalary); // Update Salary
+router.get("/:managerId/:month/:year", salaryController.getSalary); // Get Salary
 
 module.exports = router;

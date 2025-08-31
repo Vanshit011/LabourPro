@@ -21,10 +21,10 @@ const Sidebar = () => {
   const links = [
     { name: "Dashboard", path: "/dashboard", icon: <LayoutDashboard size={18} /> },
     { name: "Profile", path: "/dashboard/profile", icon: <User size={18} /> },
-    { name: "Workers", path: "/dashboard/workers", icon: <Users size={18} /> },
-    { name: "Attendance", path: "/dashboard/attendance", icon: <Calendar size={18} /> },
-    { name: "Salaries", path: "/salaries", icon: <Wallet size={18} /> },
-    { name: "Loans", path: "/loans", icon: <Wallet size={18} /> },
+    { name: "Worker & Manager", path: "/dashboard/Worker&Manager", icon: <Users size={18} /> },
+    { name: "Worker Attendance", path: "/dashboard/WorkerAttendance", icon: <Calendar size={18} /> },
+    { name: "Manager Salaries & Loans", path: "/dashboard/ManagerSalaries&Loans", icon: <Wallet size={18} /> },
+    { name: "Worker Salaries & Loans", path: "/Worker Salaries & Loans", icon: <Wallet size={18} /> },
     { name: "Notifications", path: "/notifications", icon: <Bell size={18} /> },
     { name: "Renew Plan", path: "/dashboard/renew-plan", icon: <Repeat2 size={18} /> },
   ];

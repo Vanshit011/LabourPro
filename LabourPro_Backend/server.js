@@ -7,21 +7,26 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173",  // React dev server
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"], // 👈 allow Authorization
+    methods: ["GET", "POST", "PUT", "DELETE"],
+  })
+);
 app.use(express.json());
 
 // DB connection
 require("./config/db")();
+require("./cron/salaryCron");
 
 // Routes
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
 app.use("/api/worker", require("./routes/workerRoutes"));
 app.use("/api/attendance", require("./routes/attendanceRoutes.js"));
-// app.use("/api/salary", require("./routes/salaryRoutes"));
-// app.use("/api/loan", require("./routes/loanRoutes"));
-// app.use("/api/notifications", require("./routes/notificationRoutes"));
-// app.use("/api/subscription", require("./routes/subscriptionRoutes"));
+app.use("/api/salary", require("./routes/salaryRoutes.js"));
 app.use("/api/razorpay", require("./routes/paymentRoutes.js"));
 
 // Start server

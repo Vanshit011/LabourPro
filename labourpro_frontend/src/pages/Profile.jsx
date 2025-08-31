@@ -80,7 +80,12 @@ const Profile = () => {
     }
   };
 
-  if (!admin) return <p className="p-6">Loading Profile...</p>;
+  if (!admin)
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <p className="text-lg font-semibold text-gray-600 animate-pulse">Loading profile...</p>
+      </div>
+    );
 
   return (
     <div className="flex h-screen">

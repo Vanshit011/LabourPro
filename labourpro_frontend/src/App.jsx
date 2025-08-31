@@ -20,12 +20,13 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import Workers from "./pages/Workers";
 import Attendance from "./pages/AttendancePage";
+import ManagerSalary from "./pages/ManagerSalary";
 
 function App() {
   const location = useLocation();
 
   // Define paths where Navbar and Footer should be hidden
-  const hideLayout = ["/dashboard", "/dashboard/profile", "/dashboard/subadmins", "/dashboard/workers", "/dashboard/attendance","/dashboard/renew-plan"]; // you can add more later like "/admin", "/subadmin" etc.
+  const hideLayout = ["/dashboard", "/dashboard/profile", "/dashboard/subadmins", "/dashboard/Worker&Manager", "/dashboard/WorkerAttendance", "/dashboard/ManagerSalaries&Loans", "/dashboard/renew-plan"]; // you can add more later like "/admin", "/subadmin" etc.
   const shouldHide = hideLayout.includes(location.pathname);
 
   return (
@@ -63,22 +64,29 @@ function App() {
             }
           />
           <Route
-            path="/dashboard/workers"
+            path="/dashboard/Worker&Manager"
             element={
               <ProtectedRoute>
                 <Workers />
               </ProtectedRoute>
             }
           />
-            <Route
-            path="/dashboard/attendance"
+          <Route
+            path="/dashboard/WorkerAttendance"
             element={
               <ProtectedRoute>
                 <Attendance />
               </ProtectedRoute>
             }
           />
-
+          <Route
+            path="/dashboard/managerSalaries&Loans"
+            element={
+              <ProtectedRoute>
+                <ManagerSalary />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
 
       </div>

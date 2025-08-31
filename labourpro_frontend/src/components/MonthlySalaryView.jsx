@@ -38,7 +38,7 @@ const MonthlySalaryView = () => {
     }, [month, year]);
 
     return (
-        <div className="max-w-4xl mx-auto p-6 bg-white rounded-xl shadow-lg  font-sans text-gray-800 text-center">
+        <div className="max-w-5xl mx-auto p-6 bg-white rounded-xl shadow-lg  font-sans text-gray-800 text-center">
             {/* Title */}
             <h2 className="text-2xl font-bold mb-6 flex items-center justify-center gap-2">
                 <span className="text-3xl">📅</span> View Monthly Salary
@@ -95,10 +95,10 @@ const MonthlySalaryView = () => {
                     <table className="min-w-full bg-white">
                         <thead className="bg-blue-100 text-blue-800 font-semibold text-sm">
                             <tr>
-                                <th className="py-3 px-6 text-center">Worker Name</th>
-                                <th className="py-3 px-6 text-center">Total Hours Worked</th>
-                                <th className="py-3 px-6 text-center">Total Earned</th>
-                                <th className="py-3 px-6 text-center">Days Worked</th>
+                                <th className="py-3 px-6 border text-center">Worker Name</th>
+                                <th className="py-3 px-6 border text-center">Total Hours Worked</th>
+                                <th className="py-3 px-6 border text-center">Total Earned</th>
+                                <th className="py-3 px-6 border text-center">Days Worked</th>
                             </tr>
                         </thead>
                         <tbody>

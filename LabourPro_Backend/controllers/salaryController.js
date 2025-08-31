@@ -1,65 +1,89 @@
-// controllers/salaryController.js
-const Attendance = require("../models/Attendance");
-const Salary = require("../models/Salary");
-const Worker = require("../models/Worker");
+const ManagerSalary = require("../models/ManagerSalary");
+const Manager = require("../models/Manager");
 
-exports.generateMonthlySalary = async (req, res) => {
-    try {
-        const companyId = req.user.companyId;
-        const { month } = req.params; // Format: "2025-07"
+// POST /api/salaries/add
+const addSalary = async (req, res) => {
+  try {
+    const { managerId, month, year } = req.body;
 
-        const startDate = new Date(`${month}-01`);
-        const endDate = new Date(`${month}-31`);
-
-        const attendances = await Attendance.find({
-            companyId,
-            date: { $gte: startDate, $lte: endDate },
-        });
-
-        const salaryMap = new Map();
-
-        attendances.forEach((attendance) => {
-            const key = attendance.workerId.toString();
-            if (!salaryMap.has(key)) {
-                salaryMap.set(key, { totalHours: 0, totalRoj: 0 });
-            }
-            const data = salaryMap.get(key);
-            data.totalHours += attendance.totalHours;
-            data.totalRoj += attendance.dailyRoj;
-        });
-
-        const salaries = [];
-        for (let [workerId, data] of salaryMap) {
-            const salary = await Salary.findOneAndUpdate(
-                { workerId, companyId, month },
-                { totalHours: data.totalHours, totalRoj: data.totalRoj },
-                { new: true, upsert: true }
-            );
-            salaries.push(salary);
-        }
-
-        res.status(200).json({ message: "Salaries generated", salaries });
-    } catch (err) {
-        console.error("Salary generation error:", err);
-        res.status(500).json({ message: "Server error", error: err.message });
+    // ✅ Fetch Manager details
+    const manager = await Manager.findById(managerId);
+    if (!manager) {
+      return res.status(404).json({ error: "Manager not found" });
     }
+
+    const companyId = manager.companyId;
+    const baseSalary = manager.salary;
+
+    // ✅ Prevent duplicate salary for same month
+    const exists = await ManagerSalary.findOne({ managerId, month, year });
+    if (exists) {
+      return res.status(400).json({ error: "Salary already exists for this month" });
+    }
+
+    // ✅ Get last month's salary (loan carry forward)
+    const lastSalary = await ManagerSalary.findOne({ managerId }).sort({ year: -1, month: -1 });
+
+    let carryForwardLoan = 0;
+    if (lastSalary) {
+      // Previous month’s remaining loan = oldRemaining - paid
+      const adjustedRemaining = lastSalary.loanRemaining ;
+      carryForwardLoan = adjustedRemaining > 0 ? adjustedRemaining : 0;
+    }
+
+    // ✅ Create new salary
+    const newSalary = new ManagerSalary({
+      companyId,
+      managerId,
+      month,
+      year,
+      baseSalary,
+      advance: 0,
+      loanTaken: 0,
+      loanPaid: 0,
+      loanRemaining: carryForwardLoan,
+      finalSalary: baseSalary , // reduce from salary
+    });
+
+    await newSalary.save();
+
+    res.json({ message: "Salary added successfully", salary: newSalary });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
-exports.getAllSalaries = async (req, res) => {
-    try {
-        const companyId = req.user.companyId;
+// PUT /salary/:id/update
+const updateSalary = async (req, res) => {
+  try {
+    const { advance, loanTaken, loanPaid } = req.body;
 
-        const salaries = await Salary.find({ companyId }).populate("workerId");
+    let salary = await ManagerSalary.findById(req.params.id);
+    if (!salary) return res.status(404).json({ error: "Salary entry not found" });
 
-        const totalPaid = salaries.reduce((sum, s) => sum + s.totalRoj, 0);
+    salary.advance += advance || 0;
+    salary.loanTaken += loanTaken || 0;
+    salary.loanPaid += loanPaid || 0;
 
-        res.status(200).json({
-            totalPaid, // 💰 Total salary paid
-            count: salaries.length,
-            salaries,
-        });
-    } catch (err) {
-        console.error("Get salaries error:", err);
-        res.status(500).json({ message: "Server error", error: err.message });
-    }
+    // Calculate loan remaining
+    salary.loanRemaining = (salary.loanRemaining + salary.loanTaken) - salary.loanPaid;
+
+    // Calculate final salary
+    salary.finalSalary = salary.baseSalary - salary.advance - salary.loanPaid;
+
+    await salary.save();
+
+    res.json({ message: "Salary updated successfully", salary });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
+
+// GET /salary/:managerId/:month/:year
+const getSalary = async (req, res) => {
+  const { managerId, month, year } = req.params;
+  const salary = await ManagerSalary.findOne({ managerId, month, year });
+  res.json(salary);
+};
+
+module.exports = { addSalary,getSalary, updateSalary };
