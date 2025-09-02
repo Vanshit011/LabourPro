@@ -27,30 +27,46 @@ const Workers = () => {
       setWorkers(res.data);
     } catch (err) {
       console.error("❌ Error fetching workers:", err.response?.data || err.message);
+      alert("❌ Failed to fetch workers. Check console for details.");
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("Submitting form data:", form); // Log data before sending for debugging
+
     try {
       if (editingId) {
         await axios.put(
           `https://labourpro-backend.onrender.com/api/worker/${editingId}`,
           form,
-          { headers: { Authorization: `Bearer ${token}` } }
+          { 
+            headers: { 
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json' // Explicitly set JSON
+            } 
+          }
         );
+        alert("✅ Worker updated successfully!");
         setEditingId(null);
       } else {
         await axios.post(
           "https://labourpro-backend.onrender.com/api/worker/add",
           form,
-          { headers: { Authorization: `Bearer ${token}` } }
+          { 
+            headers: { 
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json' // Explicitly set JSON
+            } 
+          }
         );
+        alert("✅ Worker added successfully!");
       }
       setForm({ name: "", number: "", role: "", rojPerHour: "", email: "", password: "" });
       fetchWorkers();
     } catch (err) {
       console.error("❌ Submit error:", err.response?.data || err.message);
+      alert("❌ Failed to add/update worker: " + (err.response?.data?.error || "Check console for details."));
     }
   };
 
@@ -60,8 +76,8 @@ const Workers = () => {
       number: worker.number,
       role: worker.role,
       rojPerHour: worker.rojPerHour,
-      password: worker.password,
       email: worker.email,
+      password: worker.password,
     });
     setEditingId(worker._id);
   };
@@ -73,9 +89,11 @@ const Workers = () => {
         `https://labourpro-backend.onrender.com/api/worker/${id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      alert("✅ Worker deleted successfully!");
       fetchWorkers();
     } catch (err) {
       console.error("❌ Delete error:", err.response?.data || err.message);
+      alert("❌ Failed to delete worker. Check console for details.");
     }
   };
 
@@ -191,7 +209,7 @@ const Workers = () => {
                         <td className="p-3 border space-x-2 whitespace-nowrap">
                           <button
                             onClick={() => handleEdit(w)}
-                            className="text-blue-600  hover:underline font-medium"
+                            className="text-blue-600 hover:underline font-medium"
                           >
                             Edit
                           </button>

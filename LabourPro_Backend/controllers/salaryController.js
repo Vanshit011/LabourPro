@@ -1,7 +1,7 @@
-const ManagerSalary = require("../models/ManagerSalary");
 const Manager = require("../models/Manager");
+const ManagerSalary = require("../models/ManagerSalary");
 
-// POST /api/salaries/add
+// POST /salary/add
 const addSalary = async (req, res) => {
   try {
     const { managerId, month, year } = req.body;
@@ -27,7 +27,7 @@ const addSalary = async (req, res) => {
     let carryForwardLoan = 0;
     if (lastSalary) {
       // Previous month’s remaining loan = oldRemaining - paid
-      const adjustedRemaining = lastSalary.loanRemaining ;
+      const adjustedRemaining = lastSalary.loanRemaining;
       carryForwardLoan = adjustedRemaining > 0 ? adjustedRemaining : 0;
     }
 
@@ -42,7 +42,7 @@ const addSalary = async (req, res) => {
       loanTaken: 0,
       loanPaid: 0,
       loanRemaining: carryForwardLoan,
-      finalSalary: baseSalary , // reduce from salary
+      finalSalary: baseSalary, // reduce from salary
     });
 
     await newSalary.save();
@@ -86,4 +86,8 @@ const getSalary = async (req, res) => {
   res.json(salary);
 };
 
-module.exports = { addSalary,getSalary, updateSalary };
+module.exports = {
+  addSalary,
+  updateSalary,
+  getSalary,
+};

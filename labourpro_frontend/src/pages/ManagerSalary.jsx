@@ -5,8 +5,8 @@ import Sidebar from "../components/Sidebar";
 const ManagerSalary = () => {
   const [managers, setManagers] = useState([]);
   const [managerId, setManagerId] = useState("");
-  const [month, setMonth] = useState("");
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [month, setMonth] = useState(new Date().getMonth() + 1); // Auto-set to current month (1-12)
+  const [year, setYear] = useState(new Date().getFullYear()); // Auto-set to current year
   const [salaryData, setSalaryData] = useState(null);
 
   const [baseSalary, setBaseSalary] = useState("");
@@ -49,69 +49,82 @@ const ManagerSalary = () => {
       );
 
       setSalaryData(res.data);
-      setBaseSalary(res.data.baseSalary || "");
-      setAdvance(res.data.advance || "");
-      setLoanTaken(res.data.loanTaken || "");
-      setLoanPaid(res.data.loanPaid || "");
+      setBaseSalary(res.data.baseSalary?.toString() || "");
+      setAdvance(res.data.advance?.toString() || "");
+      setLoanTaken(res.data.loanTaken?.toString() || "");
+      setLoanPaid(res.data.loanPaid?.toString() || "");
     } catch (err) {
       setSalaryData(null);
+      setBaseSalary("");
+      setAdvance("");
+      setLoanTaken("");
+      setLoanPaid("");
       console.warn("⚠️ No salary found for this manager/month/year");
     }
   };
 
-  // ✅ Add new salary
+  // ✅ Add new salary (manual, if no record exists for selected month/year)
   const handleAddSalary = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const res = await axios.post(
-        "https://labourpro-backend.onrender.com/api/salary/add",
-        { managerId, month, year, baseSalary, advance, loanTaken, loanPaid },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      alert("✅ Salary Added");
-      setSalaryData(res.data);
-    } catch (err) {
-      console.error("❌ Error adding salary:", err.response?.data || err.message);
-    }
-  };
-
-  // ✅ Update only one field (onBlur)
-  const handleFieldUpdate = async (field, value) => {
-    try {
-      if (!salaryData?._id) return;
-
-      const token = localStorage.getItem("token");
-      const res = await axios.put(
-        `https://labourpro-backend.onrender.com/api/salary/${salaryData._id}/update`,
-        { [field]: value },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      setSalaryData(res.data.salary);
-    } catch (err) {
-      console.error("❌ Error updating field:", err.response?.data || err.message);
-    }
-  };
-
-  // ✅ Update full salary
-  const handleUpdateSalary = async () => {
-    try {
-      if (!salaryData?._id) {
-        alert("⚠️ No salary to update. Add salary first!");
+      if (salaryData) {
+        alert("⚠️ Salary already exists for this month/year.");
         return;
       }
 
       const token = localStorage.getItem("token");
+      const res = await axios.post(
+        "https://labourpro-backend.onrender.com/api/salary/add",
+        { managerId, month, year },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert("✅ Salary Added");
+      setSalaryData(res.data.salary);
+      fetchSalary(); // Refresh display
+    } catch (err) {
+      console.error("❌ Error adding salary:", err.response?.data || err.message);
+      alert("❌ " + (err.response?.data?.error || "Error adding salary"));
+    }
+  };
+
+  // ✅ Update salary (calculate increments and send to backend)
+  const handleUpdateSalary = async () => {
+    try {
+      if (!salaryData?._id) {
+        alert("⚠️ No salary to update. Add first!");
+        return;
+      }
+
+      // Calculate increments (differences from current values)
+      const advanceIncrement = parseFloat(advance) - (salaryData.advance || 0);
+      const loanTakenIncrement = parseFloat(loanTaken) - (salaryData.loanTaken || 0);
+      const loanPaidIncrement = parseFloat(loanPaid) - (salaryData.loanPaid || 0);
+
+      if (advanceIncrement === 0 && loanTakenIncrement === 0 && loanPaidIncrement === 0) {
+        alert("⚠️ No changes detected.");
+        return;
+      }
+
+      const updates = {
+        advance: advanceIncrement,
+        loanTaken: loanTakenIncrement,
+        loanPaid: loanPaidIncrement
+      };
+
+      const token = localStorage.getItem("token");
       const res = await axios.put(
         `https://labourpro-backend.onrender.com/api/salary/${salaryData._id}/update`,
-        { baseSalary, advance, loanTaken, loanPaid },
+        updates,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       alert("✅ Salary Updated");
       setSalaryData(res.data.salary);
+
+      // Refetch to update display with new totals
+      fetchSalary();
     } catch (err) {
       console.error("❌ Error updating salary:", err.response?.data || err.message);
+      alert("❌ " + (err.response?.data?.error || "Error updating salary"));
     }
   };
 
@@ -130,11 +143,11 @@ const ManagerSalary = () => {
 
       {/* Main Content */}
       <div className="flex-1 p-6 overflow-y-auto">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">💰 Salary Management</h2>
+        <h2 className="text-2xl font-bold pt-7 text-gray-800 mb-6">💰 Salary Management</h2>
 
         {/* Card */}
         <div className="bg-white rounded-xl shadow-lg p-6 space-y-6">
-          {/* Manager */}
+          {/* Manager Dropdown */}
           <div>
             <label className="block font-medium text-gray-700">Manager</label>
             <select
@@ -151,7 +164,7 @@ const ManagerSalary = () => {
             </select>
           </div>
 
-          {/* Month + Year */}
+          {/* Month + Year (editable to view different periods) */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block font-medium text-gray-700">Month</label>
@@ -182,9 +195,8 @@ const ManagerSalary = () => {
               <input
                 type="number"
                 value={baseSalary}
-                onChange={(e) => setBaseSalary(e.target.value)}
-                onBlur={() => handleFieldUpdate("baseSalary", baseSalary)}
-                className="w-full border rounded-lg px-3 py-2 mt-1"
+                readOnly // Not editable
+                className="w-full border rounded-lg px-3 py-2 mt-1 bg-gray-100"
               />
             </div>
 
@@ -194,7 +206,6 @@ const ManagerSalary = () => {
                 type="number"
                 value={advance}
                 onChange={(e) => setAdvance(e.target.value)}
-                onBlur={() => handleFieldUpdate("advance", advance)}
                 className="w-full border rounded-lg px-3 py-2 mt-1"
               />
             </div>
@@ -205,7 +216,6 @@ const ManagerSalary = () => {
                 type="number"
                 value={loanTaken}
                 onChange={(e) => setLoanTaken(e.target.value)}
-                onBlur={() => handleFieldUpdate("loanTaken", loanTaken)}
                 className="w-full border rounded-lg px-3 py-2 mt-1"
               />
             </div>
@@ -216,7 +226,6 @@ const ManagerSalary = () => {
                 type="number"
                 value={loanPaid}
                 onChange={(e) => setLoanPaid(e.target.value)}
-                onBlur={() => handleFieldUpdate("loanPaid", loanPaid)}
                 className="w-full border rounded-lg px-3 py-2 mt-1"
               />
             </div>
