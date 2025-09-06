@@ -1,6 +1,6 @@
 const Attendance = require("../models/Attendance");
 const Worker = require("../models/Worker");
-const mongoose = require('mongoose');
+// const mongoose = require('mongoose');
 
 // Add attendance
 
@@ -76,50 +76,52 @@ const getAttendanceByDate = async (req, res) => {
 const updateAttendance = async (req, res) => {
   try {
     const { id } = req.params;
-    const { entryTime, exitTime } = req.body;
+    const { entryTime, exitTime, totalHours, rojRate, totalRojEarned } = req.body;
 
+    // Basic validation
     if (!entryTime || !exitTime) {
       return res.status(400).json({ error: "Entry and Exit times are required" });
     }
 
-    // Find the attendance record
-    const existing = await Attendance.findById(id).populate("worker");
-    if (!existing) {
+    // Fetch record
+    const attendance = await Attendance.findById(id);
+    if (!attendance) {
       return res.status(404).json({ error: "Attendance not found" });
     }
 
-    // Use the existing date
-    const date = existing.date;
+    // Auto-calculate if not provided
+    let calcHours = totalHours;
+    let calcRate = rojRate || attendance.rojRate || 50; // Default to 50 if missing
+    let calcRoj = totalRojEarned;
 
-    // Parse times
-    const start = new Date(`${date}T${entryTime}`);
-    const end = new Date(`${date}T${exitTime}`);
+    if (!totalHours || !totalRojEarned) {
+      const start = new Date(`${attendance.date}T${entryTime}`);
+      const end = new Date(`${attendance.date}T${exitTime}`);
 
-    // Calculate total hours
-    const totalHours = Math.max(0, Math.abs((end - start) / 36e5));
+      if (isNaN(start) || isNaN(end) || end <= start) {
+        return res.status(400).json({ error: "Invalid time format or exit before entry" });
+      }
 
-    // Rate per hour → from worker if available, otherwise default 50
-    const rojPerHour = existing.rojPerHour || 50;
-
-    // Calculate roj earned
-    const roj = totalHours * rojPerHour;
+      calcHours = (end - start) / (1000 * 60 * 60); // ms to hours
+      calcRoj = calcHours * calcRate;
+    }
 
     // Update fields
-    existing.entryTime = entryTime;
-    existing.exitTime = exitTime;
-    existing.totalHours = totalHours;
-    existing.roj = roj;
+    attendance.entryTime = entryTime;
+    attendance.exitTime = exitTime;
+    attendance.totalHours = calcHours;
+    attendance.rojRate = calcRate;
+    attendance.totalRojEarned = calcRoj;
 
-    // Save
-    const updated = await existing.save();
-
+    // Save and respond
+    const updated = await attendance.save();
     res.status(200).json({
       message: "Attendance updated successfully",
       attendance: updated,
     });
   } catch (err) {
-    console.error("Update Attendance Error:", err.message, err.stack);
-    res.status(500).json({ error: "Server error while updating attendance" });
+    console.error("Update Attendance Error:", err.message, err.stack); // Log for debugging
+    res.status(500).json({ error: "Server error while updating attendance", details: err.message });
   }
 };
 

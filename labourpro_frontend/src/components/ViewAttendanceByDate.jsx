@@ -56,25 +56,50 @@ const ViewAttendanceByDate = () => {
     setEditData({ ...rec });
   };
 
-  const handleUpdate = async () => {
-    try {
-      const { _id, entryTime, exitTime } = editData;
-      await axios.put(
-        `https://labourpro-backend.onrender.com/api/attendance/${_id}`,
-        { entryTime, exitTime },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
+  const handleTimeChange = (e) => {
+    const { name, value } = e.target;
+    setEditData((prev) => {
+      const newData = { ...prev, [name]: value };
+
+      // Auto-calculate totalHours and totalRojEarned if both times are set
+      const entry = name === "entryTime" ? value : newData.entryTime;
+      const exit = name === "exitTime" ? value : newData.exitTime;
+
+      if (entry && exit) {
+        const start = new Date(`2000-01-01T${entry}`);
+        const end = new Date(`2000-01-01T${exit}`);
+        if (!isNaN(start) && !isNaN(end) && end > start) {
+          const hours = (end - start) / (1000 * 60 * 60);
+          newData.totalHours = hours.toFixed(2);
+          const rate = newData.rojRate || 50; // Default rate if not set
+          newData.totalRojEarned = (hours * rate).toFixed(2);
         }
-      );
-      toast.success("Attendance updated");
-      setEditData(null);
-      fetchAttendanceByDate();
-    } catch (err) {
-      toast.error("Failed to update attendance");
-    }
+      }
+
+      return newData;
+    });
   };
+
+ const handleUpdate = async () => {
+  try {
+    const { _id, entryTime, exitTime, totalHours, rojRate, totalRojEarned } = editData;
+    await axios.put(
+      `https://labourpro-backend.onrender.com/api/attendance/${_id}`,
+      { entryTime, exitTime, totalHours, rojRate, totalRojEarned },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    toast.success("Attendance updated");
+    setEditData(null);
+    fetchAttendanceByDate();
+  } catch (err) {
+    toast.error("Failed to update attendance");
+  }
+};
+
 
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-6 bg-white rounded-2xl shadow-lg">
@@ -154,9 +179,8 @@ const ViewAttendanceByDate = () => {
               <input
                 type="time"
                 value={editData.entryTime || ""}
-                onChange={(e) =>
-                  setEditData({ ...editData, entryTime: e.target.value })
-                }
+                onChange={handleTimeChange}
+                name="entryTime"
                 className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
               />
             </div>
@@ -165,10 +189,38 @@ const ViewAttendanceByDate = () => {
               <input
                 type="time"
                 value={editData.exitTime || ""}
-                onChange={(e) =>
-                  setEditData({ ...editData, exitTime: e.target.value })
-                }
+                onChange={handleTimeChange}
+                name="exitTime"
                 className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Total Hours</label>
+              <input
+                type="number"
+                value={editData.totalHours || ""}
+                onChange={(e) => setEditData({ ...editData, totalHours: e.target.value })}
+                className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                readOnly // Make read-only if auto-calculated
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Roj Rate</label>
+              <input
+                type="number"
+                value={editData.rojRate || ""}
+                onChange={(e) => setEditData({ ...editData, rojRate: e.target.value })}
+                className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Total Roj Earned</label>
+              <input
+                type="number"
+                value={editData.totalRojEarned || ""}
+                onChange={(e) => setEditData({ ...editData, totalRojEarned: e.target.value })}
+                className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                readOnly // Make read-only if auto-calculated
               />
             </div>
             <div className="flex justify-end gap-3">

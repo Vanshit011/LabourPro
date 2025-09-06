@@ -49,6 +49,9 @@ const AttendancePage = () => {
         },
       });
 
+      // trigger event for salary update
+      window.dispatchEvent(new Event("attendanceUpdated"));
+
       setForm({
         workerId: "",
         date: getToday(),

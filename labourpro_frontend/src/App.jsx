@@ -21,7 +21,7 @@ import Profile from "./pages/Profile";
 import Workers from "./pages/Workers";
 import Attendance from "./pages/AttendancePage";
 import ManagerSalary from "./pages/ManagerSalary";
-
+import WorkerSalary from "./pages/WorkerSalary";
 import ContactRenewPlan from "./pages/ContactRemewPlan";
 
 function App() {
@@ -35,6 +35,7 @@ function App() {
     "/dashboard/Worker&Manager",
     "/dashboard/WorkerAttendance",
     "/dashboard/ManagerSalaries&Loans",
+    "/dashboard/WorkerSalaries&Loans",
     "/dashboard/contactRenewPlan"
   ];
   const shouldHide = hideLayout.includes(location.pathname);
@@ -94,6 +95,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ManagerSalary />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/WorkerSalaries&Loans"
+            element={
+              <ProtectedRoute>
+                <WorkerSalary />
               </ProtectedRoute>
             }
           />

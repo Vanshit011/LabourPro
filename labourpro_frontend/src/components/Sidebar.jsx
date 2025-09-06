@@ -24,7 +24,7 @@ const Sidebar = () => {
     { name: "Worker & Manager", path: "/dashboard/Worker&Manager", icon: <Users size={18} /> },
     { name: "Worker Attendance", path: "/dashboard/WorkerAttendance", icon: <Calendar size={18} /> },
     { name: "Manager Salaries & Loans", path: "/dashboard/ManagerSalaries&Loans", icon: <Wallet size={18} /> },
-    { name: "Worker Salaries & Loans", path: "/Worker Salaries & Loans", icon: <Wallet size={18} /> },
+    { name: "Worker Salaries & Loans", path: "/dashboard/WorkerSalaries&Loans", icon: <Wallet size={18} /> },
     { name: "Notifications", path: "/notifications", icon: <Bell size={18} /> },
     { name: "Renew Plan", path: "/dashboard/contactRenewPlan", icon: <Repeat2 size={18} /> },
   ];
