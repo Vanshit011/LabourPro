@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 
@@ -17,7 +17,6 @@ const ViewAttendanceByDate = () => {
       fetchAttendanceByDate(selectedDate);
     }
   }, [selectedDate]);
-
 
   const fetchAttendanceByDate = async (dateOverride) => {
     const date = dateOverride || selectedDate;
@@ -78,44 +77,46 @@ const ViewAttendanceByDate = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h2 className="text-3xl font-bold text-center mb-6">📅 View Attendance by Date</h2>
+    <div className="max-w-7xl mx-auto p-4 md:p-6 bg-white rounded-2xl shadow-lg">
+      <h2 className="text-3xl font-bold text-center mb-6 flex items-center justify-center gap-2">
+        <span className="text-3xl">📅</span> View Attendance by Date
+      </h2>
 
-      <div className="flex flex-col sm:flex-row items-center gap-3 mb-6 justify-center">
+      <div className="flex flex-col sm:flex-row items-center gap-4 mb-8 justify-center">
         <input
           type="date"
           value={selectedDate}
           onChange={(e) => setSelectedDate(e.target.value)}
-          className="border border-gray-300 px-4 py-2 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full sm:w-auto border border-gray-300 px-4 py-2 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
         />
         <button
           onClick={() => fetchAttendanceByDate()}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md shadow transition-all"
+          className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow transition duration-200"
         >
           View
         </button>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto rounded-lg shadow-md border border-gray-200">
         {records.length > 0 ? (
-          <table className="w-full table-auto border-collapse border shadow-sm rounded-lg overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-blue-100 text-blue-900">
               <tr>
                 {["Worker Name", "Date", "Entry", "Exit", "Hours", "Roj", "Actions"].map((h) => (
-                  <th key={h} className="px-4 py-3 text-sm font-semibold border">{h}</th>
+                  <th key={h} className="px-4 py-3 text-sm font-semibold text-left">{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="bg-white">
+            <tbody className="bg-white divide-y divide-gray-200">
               {records.map((rec, i) => (
-                <tr key={i} className="text-center border-b hover:bg-gray-50 transition">
-                  <td className="px-4 py-2 border">{rec.workerName || "N/A"}</td>
-                  <td className="px-4 py-2 border">{rec.date}</td>
-                  <td className="px-4 py-2 border">{rec.entryTime}</td>
-                  <td className="px-4 py-2 border">{rec.exitTime}</td>
-                  <td className="px-4 py-2 border">{rec.totalHours || "N/A"}</td>
-                  <td className="px-4 py-2 border">{rec.totalRojEarned || "N/A"}</td>
-                  <td className="px-4 py-2 border space-x-2">
+                <tr key={i} className="hover:bg-gray-50 transition duration-200">
+                  <td className="px-4 py-3 text-left">{rec.workerName || "N/A"}</td>
+                  <td className="px-4 py-3 text-left">{rec.date}</td>
+                  <td className="px-4 py-3 text-left">{rec.entryTime}</td>
+                  <td className="px-4 py-3 text-left">{rec.exitTime}</td>
+                  <td className="px-4 py-3 text-left">{rec.totalHours || "N/A"}</td>
+                  <td className="px-4 py-3 text-left">{rec.totalRojEarned || "N/A"}</td>
+                  <td className="px-4 py-3 text-left space-x-2">
                     <button
                       onClick={() => handleEdit(rec)}
                       className="text-blue-600 hover:underline font-medium"
@@ -135,47 +136,51 @@ const ViewAttendanceByDate = () => {
           </table>
         ) : (
           selectedDate && (
-            <p className="text-center text-gray-600 mt-8">No records found for selected date.</p>
+            <p className="text-center text-lg text-gray-600 p-6 bg-gray-50 rounded-lg">
+              No records found for selected date.
+            </p>
           )
         )}
       </div>
 
       {editData && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-[90%] sm:w-96 animate-fadeIn">
-            <h3 className="text-xl font-bold mb-4">✏️ Edit Attendance</h3>
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md mx-4 animate-fadeIn">
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <span>✏️</span> Edit Attendance
+            </h3>
             <div className="mb-4">
-              <label className="block text-sm mb-1">Entry Time</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Entry Time</label>
               <input
                 type="time"
                 value={editData.entryTime || ""}
                 onChange={(e) =>
                   setEditData({ ...editData, entryTime: e.target.value })
                 }
-                className="w-full border px-3 py-2 rounded-md shadow-sm"
+                className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
               />
             </div>
             <div className="mb-4">
-              <label className="block text-sm mb-1">Exit Time</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Exit Time</label>
               <input
                 type="time"
                 value={editData.exitTime || ""}
                 onChange={(e) =>
                   setEditData({ ...editData, exitTime: e.target.value })
                 }
-                className="w-full border px-3 py-2 rounded-md shadow-sm"
+                className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
               />
             </div>
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-3">
               <button
                 onClick={() => setEditData(null)}
-                className="px-4 py-2 border rounded-md text-gray-700"
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 transition duration-200"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpdate}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-200 shadow"
               >
                 Save
               </button>

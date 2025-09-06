@@ -96,75 +96,89 @@ const Managers = () => {
   }, [token]);
 
   return (
-    <div className="md:flex-row min-h-screen bg-gray-50 overflow-y-auto">
-      {/* <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+    <div className="flex min-h-screen bg-gray-50">
 
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-40 z-40 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )} */}
 
-      <div className="pt-3">
+      {/* Main Content */}
+      <div className="flex-1 pt-5 overflow-y-auto">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold mb-6 text-gray-800">💼 Manage Managers</h2>
+          <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center">
+            <span className="mr-2">💼</span> Manage Managers
+          </h2>
 
           {/* Manager Form */}
-          <div className="bg-white rounded-2xl shadow p-6 mb-8">
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
             <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input
-                type="text"
-                placeholder="Manager Name"
-                value={managerForm.name}
-                onChange={(e) => setManagerForm({ ...managerForm, name: e.target.value })}
-                className="border p-2 rounded-md w-full"
-                required
-              />
-              <input
-                type="text"
-                placeholder="Phone Number"
-                value={managerForm.number}
-                onChange={(e) => setManagerForm({ ...managerForm, number: e.target.value })}
-                className="border p-2 rounded-md w-full"
-                required
-              />
-              <input
-                type="text"
-                placeholder="Manager Role"
-                value={managerForm.role}
-                onChange={(e) => setManagerForm({ ...managerForm, role: e.target.value })}
-                className="border p-2 rounded-md w-full"
-                required
-              />
-              <input
-                type="number"
-                placeholder="Salary"
-                value={managerForm.salary}
-                onChange={(e) => setManagerForm({ ...managerForm, salary: e.target.value })}
-                className="border p-2 rounded-md w-full"
-                required
-              />
-              <input
-                type="email"
-                placeholder="Email"
-                value={managerForm.email}
-                onChange={(e) => setManagerForm({ ...managerForm, email: e.target.value })}
-                className="border p-2 rounded-md w-full"
-                required
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                value={managerForm.password}
-                onChange={(e) => setManagerForm({ ...managerForm, password: e.target.value })}
-                className="border p-2 rounded-md w-full"
-                required={!editingManagerId}
-              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Manager Name</label>
+                <input
+                  type="text"
+                  placeholder="Manager Name"
+                  value={managerForm.name}
+                  onChange={(e) => setManagerForm({ ...managerForm, name: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                <input
+                  type="text"
+                  placeholder="Phone Number"
+                  value={managerForm.number}
+                  onChange={(e) => setManagerForm({ ...managerForm, number: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Manager Role</label>
+                <input
+                  type="text"
+                  placeholder="Manager Role"
+                  value={managerForm.role}
+                  onChange={(e) => setManagerForm({ ...managerForm, role: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Salary</label>
+                <input
+                  type="number"
+                  placeholder="Salary"
+                  value={managerForm.salary}
+                  onChange={(e) => setManagerForm({ ...managerForm, salary: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={managerForm.email}
+                  onChange={(e) => setManagerForm({ ...managerForm, email: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={managerForm.password}
+                  onChange={(e) => setManagerForm({ ...managerForm, password: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  required={!editingManagerId}
+                />
+              </div>
               <div className="col-span-full">
                 <button
                   type="submit"
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-md"
+                  className="w-full bg-blue-600 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-700 transition duration-200"
                 >
                   {editingManagerId ? "Update Manager" : "Add Manager"}
                 </button>
@@ -173,7 +187,7 @@ const Managers = () => {
           </div>
 
           {/* Managers Table */}
-          <div className="bg-white rounded-2xl shadow p-4 border border-gray-200">
+          <div className="bg-white rounded-2xl shadow-lg p-4 border border-gray-200">
             <div className="w-full overflow-x-auto max-h-[500px] overflow-y-auto">
               <table className="min-w-full table-auto text-sm text-center">
                 <thead className="bg-blue-100 text-blue-900 sticky top-0">
@@ -182,7 +196,7 @@ const Managers = () => {
                     <th className="p-3 border">Number</th>
                     <th className="p-3 border">Role</th>
                     <th className="p-3 border">Email</th>
-                    <th className="p-3 border">password</th>
+                    <th className="p-3 border">Password</th>
                     <th className="p-3 border">Salary</th>
                     <th className="p-3 border">Actions</th>
                   </tr>

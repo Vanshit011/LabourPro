@@ -22,18 +22,28 @@ import Workers from "./pages/Workers";
 import Attendance from "./pages/AttendancePage";
 import ManagerSalary from "./pages/ManagerSalary";
 
+import ContactRenewPlan from "./pages/ContactRemewPlan";
+
 function App() {
   const location = useLocation();
 
   // Define paths where Navbar and Footer should be hidden
-  const hideLayout = ["/dashboard", "/dashboard/profile", "/dashboard/subadmins", "/dashboard/Worker&Manager", "/dashboard/WorkerAttendance", "/dashboard/ManagerSalaries&Loans", "/dashboard/renew-plan"]; // you can add more later like "/admin", "/subadmin" etc.
+  const hideLayout = [
+    // "/login",
+    "/dashboard",
+    "/dashboard/profile",
+    "/dashboard/Worker&Manager",
+    "/dashboard/WorkerAttendance",
+    "/dashboard/ManagerSalaries&Loans",
+    "/dashboard/contactRenewPlan"
+  ];
   const shouldHide = hideLayout.includes(location.pathname);
 
   return (
-    <>
+   <>
       {!shouldHide && <Navbar />}
       <ScrollToTop />
-      <div className="min-h-[80vh]">
+      <main className="flex-grow container mx-auto">
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Home />} />
@@ -46,7 +56,7 @@ function App() {
           <Route path="/register-trial" element={<RegisterTrial />} />
           <Route path="/register-paid" element={<RegisterPaid />} />
 
-          {/* Protected Route */}
+          {/* Protected Routes */}
           <Route
             path="/dashboard"
             element={
@@ -87,10 +97,16 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/dashboard/contactRenewPlan"
+            element={
+              <ProtectedRoute>
+                <ContactRenewPlan />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
-
-      </div>
-
+      </main>
       {!shouldHide && <Footer />}
     </>
   );

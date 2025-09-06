@@ -45,54 +45,79 @@ const RegisterPaid = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-white rounded shadow">
-      <h2 className="text-2xl font-bold mb-4 text-center">Complete Your Registration</h2>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-12">
+      <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 shadow-2xl">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold text-gray-800 flex items-center justify-center gap-2">
+            <span className="text-blue-600 text-4xl">📝</span> Complete Registration
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">Finish setting up your paid account</p>
+        </div>
 
-      <div className="mb-4 text-gray-700">
-        <p><strong>Plan:</strong> {planType}</p>
-        <p><strong>Amount:</strong> ₹{amount}</p>
-        <p><strong>Payment ID:</strong> {razorpayPaymentId}</p>
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg shadow-inner">
+          <p className="text-sm text-gray-700"><strong>Plan:</strong> {planType}</p>
+          <p className="text-sm text-gray-700"><strong>Amount:</strong> ₹{amount}</p>
+          <p className="text-sm text-gray-700"><strong>Payment ID:</strong> {razorpayPaymentId}</p>
+        </div>
+
+        {error && (
+          <p className="mb-4 text-center text-sm text-red-600 bg-red-50 p-2 rounded-lg">{error}</p>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <input
+              name="name"
+              placeholder="Enter your name"
+              value={form.name}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input
+              name="email"
+              placeholder="Enter your email"
+              value={form.email}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <input
+              type="password"
+              name="password"
+              placeholder="Create a password"
+              value={form.password}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+            <input
+              name="companyName"
+              placeholder="Enter your company name"
+              value={form.companyName}
+              onChange={handleChange}
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white shadow-md hover:bg-green-700 transition duration-300 ease-in-out"
+          >
+            Register & Access Dashboard
+          </button>
+        </form>
       </div>
-
-      {error && <p className="text-red-600">{error}</p>}
-
-      <form onSubmit={handleSubmit}>
-        <input
-          name="name"
-          placeholder="Name"
-          className="input"
-          onChange={handleChange}
-          required
-        />
-        <input
-          name="email"
-          placeholder="Email"
-          className="input"
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          className="input"
-          onChange={handleChange}
-          required
-        />
-        <input
-          name="companyName"
-          placeholder="Company Name"
-          className="input"
-          onChange={handleChange}
-          required
-        />
-        <button
-          type="submit"
-          className="w-full bg-green-600 text-white py-2 rounded mt-4"
-        >
-          Register & Access Dashboard
-        </button>
-      </form>
     </div>
   );
 };

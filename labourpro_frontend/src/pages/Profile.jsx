@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Sidebar from "../components/Sidebar";
-import { Menu } from "lucide-react"; // Optional icon
 
 const Profile = () => {
   const [admin, setAdmin] = useState(null);
@@ -82,102 +81,104 @@ const Profile = () => {
 
   if (!admin)
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex justify-center items-center min-h-screen bg-gray-50">
         <p className="text-lg font-semibold text-gray-600 animate-pulse">Loading profile...</p>
       </div>
     );
 
   return (
-    <div className="flex h-screen">
+    <div className="flex min-h-screen bg-gray-50">
+      {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
       {/* Overlay for mobile when sidebar is open */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-40 z-40 md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Main content */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-100 relative">
-        {/* Mobile toggle button */}
-       
-
-        <div className="max-w-3xl mx-auto bg-white rounded shadow p-6 border mt-12 md:mt-0">
-          <h1 className="text-3xl font-bold mb-6">👤 My Profile</h1>
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 relative">
+        <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-lg p-6 md:p-8 space-y-8">
+          <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
+            <span className="text-blue-600 text-4xl">👤</span> My Profile
+          </h1>
 
           {message && (
-            <div className="mb-4 px-4 py-2 bg-blue-50 text-blue-700 rounded border border-blue-200">
-              {message}
+            <div className="mb-4 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg border border-blue-200 flex items-center gap-2">
+              <span>{message}</span>
             </div>
           )}
 
           {/* Profile Update Form */}
-          <form onSubmit={handleUpdateProfile} className="space-y-4 mb-8">
+          <form onSubmit={handleUpdateProfile} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium mb-1">Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
               <input
                 type="text"
                 name="name"
                 value={form.name}
                 onChange={handleChange}
-                className="w-full p-3 border rounded"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <input
                 type="email"
                 name="email"
                 value={form.email}
                 onChange={handleChange}
-                className="w-full p-3 border rounded"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Company Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
               <input
                 type="text"
                 name="companyName"
                 value={form.companyName}
                 disabled
-                className="w-full p-3 border rounded bg-gray-100 text-gray-600 cursor-not-allowed"
+                className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
               />
             </div>
-            <button className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">
+            <button className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-300 shadow">
               Update Profile
             </button>
           </form>
 
           {/* Change Password */}
-          <h2 className="text-xl font-semibold mb-4">🔐 Change Password</h2>
-          <form onSubmit={handleChangePassword} className="space-y-4">
+          <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
+            <span className="text-blue-600 text-3xl">🔐</span> Change Password
+          </h2>
+          <form onSubmit={handleChangePassword} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium mb-1">Old Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Old Password</label>
               <input
                 type="password"
                 name="oldPassword"
                 value={passwords.oldPassword}
                 onChange={handlePasswordChange}
-                className="w-full p-3 border rounded"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">New Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
               <input
                 type="password"
                 name="newPassword"
                 value={passwords.newPassword}
                 onChange={handlePasswordChange}
-                className="w-full p-3 border rounded"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
                 required
               />
             </div>
-            <button className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition">
+            <button className="w-full bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition duration-300 shadow">
               Change Password
             </button>
           </form>

@@ -75,22 +75,24 @@ const AttendancePage = () => {
   }, []);
 
   return (
-    <div className="flex h-screen bg-gray-100 overflow-hidden">
+    <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+
+      {/* Overlay for mobile */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-40 z-40 md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Main content with scroll */}
-      <main className="flex-1 overflow-y-auto px-4 py-6 md:px-8 max-h-screen">
+      <main className="flex-1 overflow-y-auto p-4 md:p-6">
         <div className="max-w-5xl mx-auto space-y-8">
-          <div className="bg-white shadow-lg rounded-xl p-6">
-            <h2 className="text-2xl font-bold text-center text-blue-700 mb-6">
-              Add Worker Attendance
+          <div className="bg-white shadow-lg rounded-2xl p-6">
+            <h2 className="text-3xl font-bold text-center text-blue-700 mb-6 flex items-center justify-center gap-2">
+              <span className="text-3xl">📝</span> Add Worker Attendance
             </h2>
             <form
               onSubmit={handleSubmit}
@@ -98,14 +100,14 @@ const AttendancePage = () => {
             >
               {/* Worker */}
               <div className="col-span-2">
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Select Worker
                 </label>
                 <select
                   name="workerId"
                   value={form.workerId}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring focus:border-blue-500"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
                   required
                 >
                   <option value="">-- Select Worker --</option>
@@ -123,20 +125,20 @@ const AttendancePage = () => {
 
               {/* Date */}
               <div>
-                <label className="block text-sm font-medium mb-1">Date</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
                 <input
                   type="date"
                   name="date"
                   value={form.date}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring focus:border-blue-500"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
                   required
                 />
               </div>
 
               {/* Entry Time */}
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Entry Time
                 </label>
                 <input
@@ -144,14 +146,14 @@ const AttendancePage = () => {
                   name="entryTime"
                   value={form.entryTime}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring focus:border-blue-500"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
                   required
                 />
               </div>
 
               {/* Exit Time */}
               <div>
-                <label className="block text-sm font-medium mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Exit Time
                 </label>
                 <input
@@ -159,7 +161,7 @@ const AttendancePage = () => {
                   name="exitTime"
                   value={form.exitTime}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 p-2 rounded-lg focus:outline-none focus:ring focus:border-blue-500"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
                   required
                 />
               </div>
@@ -168,7 +170,7 @@ const AttendancePage = () => {
               <div className="col-span-2">
                 <button
                   type="submit"
-                  className="w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition-all duration-300"
+                  className="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition duration-300 shadow"
                 >
                   Submit Attendance
                 </button>
@@ -177,12 +179,12 @@ const AttendancePage = () => {
           </div>
 
           {/* Attendance Viewer */}
-          <div className="bg-white shadow-md rounded-xl p-6 overflow-x-auto">
+          <div className="bg-white shadow-lg rounded-2xl p-6">
             <ViewAttendanceByDate />
           </div>
 
           {/* Monthly Salary Summary */}
-          <div>
+          <div className="bg-white shadow-lg rounded-2xl p-6">
             <MonthlySalaryView />
           </div>
         </div>

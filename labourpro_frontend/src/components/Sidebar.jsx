@@ -26,7 +26,7 @@ const Sidebar = () => {
     { name: "Manager Salaries & Loans", path: "/dashboard/ManagerSalaries&Loans", icon: <Wallet size={18} /> },
     { name: "Worker Salaries & Loans", path: "/Worker Salaries & Loans", icon: <Wallet size={18} /> },
     { name: "Notifications", path: "/notifications", icon: <Bell size={18} /> },
-    { name: "Renew Plan", path: "/dashboard/renew-plan", icon: <Repeat2 size={18} /> },
+    { name: "Renew Plan", path: "/dashboard/contactRenewPlan", icon: <Repeat2 size={18} /> },
   ];
 
   const handleLogout = () => {
@@ -44,9 +44,9 @@ const Sidebar = () => {
   return (
     <>
       {/* Mobile Top Nav */}
-      <div className="fixed top-0 left-0 w-full z-30 flex justify-between items-center bg-blue-600 text-white px-4 py-3 md:hidden shadow">
-        <h1 className="text-lg font-bold">LabourPro</h1>
-        <button onClick={() => setOpen(!open)}>
+      <div className="fixed top-0 left-0 w-full z-30 flex justify-between items-center bg-blue-600 text-white px-4 py-3 md:hidden shadow-lg">
+        <h1 className="text-xl font-bold">LabourPro</h1>
+        <button onClick={() => setOpen(!open)} className="focus:outline-none">
           {open ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
@@ -54,28 +54,28 @@ const Sidebar = () => {
       {/* Overlay */}
       {open && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-40 z-20 md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
           onClick={() => setOpen(false)}
         ></div>
       )}
 
       {/* Sidebar */}
       <div
-        className={`fixed z-30 top-0 left-0 h-full w-64 bg-blue-700 text-white transform ${
+        className={`fixed z-30 top-0 left-0 h-full w-64 bg-blue-800 text-white transform ${
           open ? "translate-x-0" : "-translate-x-full"
-        } transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:block`}
+        } transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:block shadow-xl md:shadow-none`}
       >
-        <div className="p-6 pt-16 md:pt-6">
-          <h2 className="text-2xl font-bold mb-6 hidden md:block">LabourPro</h2>
-          <nav className="space-y-2">
+        <div className="p-6 pt-16 md:pt-6 flex flex-col h-full">
+          <h2 className="text-2xl font-bold mb-8 hidden md:block text-blue-200">LabourPro</h2>
+          <nav className="space-y-2 flex-grow">
             {links.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
-                className={`flex items-center gap-3 px-4 py-2 rounded-lg transition ${
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition duration-200 ${
                   isActive(link.path)
-                    ? "bg-blue-900 font-semibold"
-                    : "hover:bg-blue-800"
+                    ? "bg-blue-900 text-white font-semibold"
+                    : "text-blue-100 hover:bg-blue-700 hover:text-white"
                 }`}
               >
                 {link.icon}
@@ -84,10 +84,10 @@ const Sidebar = () => {
             ))}
           </nav>
 
-          <div className="mt-10">
+          <div className="mt-auto">
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 w-full px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 transition"
+              className="flex items-center gap-3 w-full px-4 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white transition duration-200"
             >
               <LogOut size={18} />
               Logout

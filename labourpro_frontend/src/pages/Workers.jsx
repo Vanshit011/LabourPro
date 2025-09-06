@@ -40,11 +40,11 @@ const Workers = () => {
         await axios.put(
           `https://labourpro-backend.onrender.com/api/worker/${editingId}`,
           form,
-          { 
-            headers: { 
+          {
+            headers: {
               Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json' // Explicitly set JSON
-            } 
+            }
           }
         );
         alert("✅ Worker updated successfully!");
@@ -53,11 +53,11 @@ const Workers = () => {
         await axios.post(
           "https://labourpro-backend.onrender.com/api/worker/add",
           form,
-          { 
-            headers: { 
+          {
+            headers: {
               Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json' // Explicitly set JSON
-            } 
+            }
           }
         );
         alert("✅ Worker added successfully!");
@@ -101,6 +101,16 @@ const Workers = () => {
     fetchWorkers();
   }, []);
 
+  // List of common worker roles
+  const workerRoles = [
+    "forger",
+    "helper",
+    "welder",
+    "cnc operator",
+    "foreman",
+    "manager",
+  ];
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar (fixed on the left) */}
@@ -138,14 +148,19 @@ const Workers = () => {
                 className="border p-2 rounded-md w-full"
                 required
               />
-              <input
-                type="text"
-                placeholder="Worker Role"
+              <select
                 value={form.role}
                 onChange={(e) => setForm({ ...form, role: e.target.value })}
                 className="border p-2 rounded-md w-full"
                 required
-              />
+              >
+                <option value="">Select Worker Role</option>
+                {workerRoles.map((role) => (
+                  <option key={role} value={role}>
+                    {role}
+                  </option>
+                ))}
+              </select>
               <input
                 type="number"
                 placeholder="Roj Per Hour"

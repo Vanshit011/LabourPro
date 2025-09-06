@@ -66,7 +66,7 @@ const updateSalary = async (req, res) => {
     salary.loanPaid += loanPaid || 0;
 
     // Calculate loan remaining
-    salary.loanRemaining = (salary.loanRemaining + salary.loanTaken) - salary.loanPaid;
+    salary.loanRemaining = ( salary.loanTaken) - salary.loanPaid;
 
     // Calculate final salary
     salary.finalSalary = salary.baseSalary - salary.advance - salary.loanPaid;
