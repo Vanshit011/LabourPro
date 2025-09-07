@@ -4,7 +4,6 @@ const { addSalary, updateSalary, getSalary, addWorkerSalary, updateWorkerSalary,
 const Manager = require("../models/Manager");
 
 // manager routes
-
 router.post('/add', addSalary);
 router.put('/:id/update', updateSalary);
 router.get('/:managerId/:month/:year', getSalary);

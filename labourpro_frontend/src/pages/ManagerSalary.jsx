@@ -3,11 +3,6 @@ import axios from "axios";
 import Sidebar from "../components/Sidebar";
 import { jsPDF } from "jspdf";
 
-const monthNames = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
-];
-
 const ManagerSalary = () => {
   const [managers, setManagers] = useState([]);
   const [managerId, setManagerId] = useState("");
@@ -209,83 +204,134 @@ const ManagerSalary = () => {
   };
 
   // ✅ Download PDF
+  const handleDownloadPDF = (salaryData, month, year) => {
+    if (!salaryData) {
+      alert("No salary data available");
+      return;
+    }
 
-const monthNames = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
-];
+    const formatCurrency = (val) =>
+      val !== undefined && val !== null ? `₹${val}` : "-";
 
-const handleDownloadPDF = (salaryData, month, year) => {
-  if (!salaryData) {
-    alert("No salary data available");
-    return;
-  }
+    const personName =
+      salaryData.workerName ||
+      managers.find((m) => m._id === salaryData.managerId)?.name ||
+      "Unknown";
 
-  const doc = new jsPDF("p", "pt", "a4");
-  const pageWidth = doc.internal.pageSize.getWidth();
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
 
-  // ✅ Title / Logo
-  doc.setFontSize(22);
-  doc.setFont("helvetica", "bold");
-  doc.text("LabourPro Salary Slip", pageWidth / 2, 40, { align: "center" });
+    const monthName = monthNames[month - 1] || "Unknown";
 
-  // ✅ Worker / Manager Info
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "normal");
-  doc.text(`Name: ${salaryData.workerName || salaryData.managerName || "-"}`, 40, 80);
-  doc.text(`Month/Year: ${monthNames[month - 1]} ${year}`, 40, 100);
-  doc.text(`ID: ${salaryData.workerId || salaryData.managerId || "-"}`, 40, 120);
+    const doc = new jsPDF("p", "pt", "a4");
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
 
-  // ✅ Table setup
-  const startY = 160;
-  const lineHeight = 30;
-  const col1X = 40;
-  const col2X = 250;
-  const tableWidth = 400;
-  const rowHeight = 25;
+    // Blue and white theme colors
+    const blueColor = [0, 112, 192]; // RGB for blue
+    const lightBlueColor = [240, 248, 255]; // Light blue for accents
+    const grayColor = [128, 128, 128]; // For text
 
-  const fields = [
-    ["Base Salary", salaryData.baseSalary],
-    ["Advance", salaryData.advance],
-    ["Loan Taken", salaryData.loanTaken],
-    ["Loan Paid", salaryData.loanPaid],
-    ["Remaining Loan", (salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)],
-    ["Total Hours Worked", salaryData.totalHours?.toFixed(2)],
-    ["Days Worked", salaryData.daysWorked],
-    ["Final Salary", salaryData.finalSalary],
-  ];
+    // Background (white by default, add subtle blue gradient or border)
+    doc.setFillColor(...lightBlueColor);
+    doc.rect(0, 0, pageWidth, pageHeight, "F"); // Light blue background for entire page
 
-  // ✅ Draw table header
-  doc.setFont("helvetica", "bold");
-  doc.rect(col1X - 5, startY - 20, tableWidth, rowHeight, "S"); // first header row
-  doc.text("Field", col1X, startY - 5);
-  doc.text("Amount", col2X, startY - 5);
+    // Outer border in blue
+    doc.setDrawColor(...blueColor);
+    doc.setLineWidth(2);
+    doc.rect(20, 20, pageWidth - 40, pageHeight - 40); // Border around content
 
-  // ✅ Draw rows
-  doc.setFont("helvetica", "normal");
-  fields.forEach((field, i) => {
-    const y = startY + i * rowHeight;
+    // ✅ Title with LabourPro branding
+    doc.setFontSize(24);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...blueColor);
+    doc.text("LabourPro Salary Slip", pageWidth / 2, 60, { align: "center" });
 
-    // Handle undefined/null values
-    const value = field[1] !== undefined && field[1] !== null ? field[1].toString() : "-";
+    // Subtitle or tagline
+    doc.setFontSize(12);
+    doc.setTextColor(...grayColor);
+    doc.text("Efficient Workforce Management", pageWidth / 2, 80, { align: "center" });
 
-    // Draw row rectangle
-    doc.rect(col1X - 5, y - 15, tableWidth, rowHeight, "S");
+    // ✅ Employee details section
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...blueColor);
+    doc.text("Employee Details", 40, 120);
 
-    // Draw text
-    doc.text(field[0], col1X, y);
-    doc.text(value, col2X, y);
-  });
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0); // Black for details
+    doc.text(`Name: ${personName}`, 60, 150);
+    doc.text(`Month/Year: ${monthName} ${year}`, 60, 175);
+    doc.text(`Manager ID: ${salaryData.workerId || salaryData.managerId || "-"}`, 60, 200);
 
-  // ✅ Footer
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "italic");
-  doc.text("Generated by LabourPro", pageWidth / 2, 750, { align: "center" });
+    // Horizontal line separator
+    doc.setDrawColor(...blueColor);
+    doc.setLineWidth(1);
+    doc.line(40, 220, pageWidth - 40, 220);
 
-  // ✅ Save PDF
-  const fileName = `SalarySlip_${salaryData.workerName || salaryData.managerName || "Unknown"}_${month}_${year}.pdf`;
-  doc.save(fileName);
-};
+    // ✅ Salary fields table
+    const startY = 250;
+    const rowHeight = 30;
+    const col1X = 60;
+    const col2X = 350;
+    const tableWidth = pageWidth - 100;
+
+    const fields = [
+      ["Base Salary", formatCurrency(salaryData.baseSalary) || "-"],
+      ["Advance", formatCurrency(salaryData.advance) || "-"],
+      ["Loan Taken", formatCurrency(salaryData.loanTaken) || "-"],
+      ["Loan Paid", formatCurrency(salaryData.loanPaid) || "-"],
+      ["Remaining Loan", formatCurrency((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)) || "-"],
+      ["Total Hours Worked", salaryData.totalHours?.toFixed(2) || "-"],
+      ["Days Worked", salaryData.daysWorked || "-"],
+      ["Final Salary", formatCurrency(salaryData.finalSalary)],
+    ];
+
+    // Table header
+    doc.setFont("helvetica", "bold");
+    doc.setFillColor(...blueColor);
+    doc.rect(col1X - 20, startY - 25, tableWidth, rowHeight, "F");
+    doc.setTextColor(255, 255, 255); // White text on blue
+    doc.text("Field", col1X, startY - 5);
+    doc.text("Amount", col2X, startY - 5);
+
+    // Table rows
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0);
+    fields.forEach((field, i) => {
+      const y = startY + i * rowHeight;
+
+      // Alternating row shading (white and light blue)
+      if (i % 2 === 0) {
+        doc.setFillColor(255, 255, 255); // White
+      } else {
+        doc.setFillColor(...lightBlueColor); // Light blue
+      }
+      doc.rect(col1X - 20, y - 20, tableWidth, rowHeight, "F");
+
+      // Borders
+      doc.setDrawColor(...blueColor);
+      doc.rect(col1X - 20, y - 20, tableWidth, rowHeight);
+
+      // Text
+      doc.text(field[0], col1X, y);
+      doc.text(field[1]?.toString() || "-", col2X, y);
+    });
+
+    // ✅ Footer
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "italic");
+    doc.setTextColor(...grayColor);
+    doc.text("Generated by LabourPro - All rights reserved", pageWidth / 2, pageHeight - 40, { align: "center" });
+
+    // ✅ Save with proper file name
+    const safeName = personName.replace(/\s+/g, "_");
+    const fileName = `${safeName}_SalarySlip_${monthName}_${year}.pdf`;
+
+    doc.save(fileName);
+  };
 
 
   return (
@@ -393,6 +439,13 @@ const handleDownloadPDF = (salaryData, month, year) => {
 
             {/* Buttons */}
             <div className="flex justify-end gap-4">
+              <button
+                onClick={() => DownloadAllSlips({ month, year })}
+                className="bg-green-600 text-white px-6 py-2 rounded-lg shadow hover:bg-green-700 transition duration-200"
+              >
+                📥 Download All Salary Slips
+              </button>
+
               {!salaryData ? (
                 <button
                   onClick={handleAddSalary}
@@ -408,6 +461,7 @@ const handleDownloadPDF = (salaryData, month, year) => {
                   <span className="mr-2">✏️</span> Update Salary
                 </button>
               )}
+
             </div>
           </div>
 
@@ -426,11 +480,12 @@ const handleDownloadPDF = (salaryData, month, year) => {
                 <p className="bg-gray-50 p-3 rounded-lg"><b>Final Salary:</b> {salaryData.finalSalary}</p>
               </div>
               <button
-                onClick={handleDownloadPDF}
+                onClick={() => handleDownloadPDF(salaryData, month, year)}
                 className="bg-purple-600 text-white px-6 py-2 rounded-lg shadow hover:bg-purple-700 transition duration-200"
               >
                 📄 Download PDF
               </button>
+
 
               {((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)) > 0 && (
                 <p className="mt-4 text-red-600 bg-red-50 p-3 rounded-lg">

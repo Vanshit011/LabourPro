@@ -1,8 +1,8 @@
 const Manager = require("../models/Manager");
 const ManagerSalary = require("../models/ManagerSalary");
 const PDFDocument = require("pdfkit");
-const fs = require("fs");
 const mongoose = require("mongoose");
+
 
 // Manager Salary Controllers
 // POST /salary/add
@@ -130,6 +130,8 @@ const downloadSalaryPDF = async (req, res) => {
     res.status(500).json({ error: "Failed to generate PDF" });
   }
 };
+
+
 
 // Worker Salary Controllers
 // controllers/workerSalaryController.js
