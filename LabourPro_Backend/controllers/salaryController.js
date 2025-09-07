@@ -1,5 +1,7 @@
 const Manager = require("../models/Manager");
 const ManagerSalary = require("../models/ManagerSalary");
+const PDFDocument = require("pdfkit");
+const fs = require("fs");
 const mongoose = require("mongoose");
 
 // Manager Salary Controllers
@@ -86,6 +88,47 @@ const getSalary = async (req, res) => {
   const { managerId, month, year } = req.params;
   const salary = await ManagerSalary.findOne({ managerId, month, year });
   res.json(salary);
+};
+
+// GET /salary/:managerId/:month/:year/download
+const downloadSalaryPDF = async (req, res) => {
+  try {
+    const { managerId, month, year } = req.params;
+
+    const salary = await ManagerSalary.findOne({ managerId, month, year });
+    if (!salary) return res.status(404).json({ error: "Salary not found" });
+
+    const doc = new PDFDocument({ margin: 50 });
+
+    // Set headers for download
+    res.setHeader("Content-Disposition", `attachment; filename=Salary_${month}_${year}.pdf`);
+    res.setHeader("Content-Type", "application/pdf");
+
+    // Pipe PDF to response
+    doc.pipe(res);
+
+    // Add title
+    doc.fontSize(20).text(`Salary Report`, { align: "center" });
+    doc.moveDown();
+    doc.fontSize(14).text(`Worker: ${salary.workerName}`);
+    doc.text(`Month/Year: ${month}/${year}`);
+    doc.text(`Base Salary: ₹${salary.baseSalary}`);
+    doc.text(`Advance: ₹${salary.advance}`);
+    doc.text(`Loan Taken: ₹${salary.loanTaken}`);
+    doc.text(`Loan Paid: ₹${salary.loanPaid}`);
+    doc.text(`Remaining Loan: ₹${(salary.loanTaken || 0) - (salary.loanPaid || 0)}`);
+    doc.text(`Total Hours Worked: ${salary.totalHours}`);
+    doc.text(`Days Worked: ${salary.daysWorked}`);
+    doc.text(`Final Salary: ₹${salary.finalSalary}`);
+    doc.moveDown();
+
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, { align: "right" });
+
+    doc.end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to generate PDF" });
+  }
 };
 
 // Worker Salary Controllers
@@ -246,5 +289,6 @@ module.exports = {
   getSalary,
   addWorkerSalary,
   updateWorkerSalary,
-  getWorkerSalary
+  getWorkerSalary,
+  downloadSalaryPDF
 };

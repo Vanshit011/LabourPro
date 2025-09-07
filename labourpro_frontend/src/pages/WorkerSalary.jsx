@@ -45,6 +45,23 @@ const WorkerSalary = () => {
     }
   }, [workerId, month, year]);
 
+  // ✅ Auto-refresh on attendance added
+  useEffect(() => {
+    const handleAttendanceUpdate = () => {
+      if (workerId && month && year) {
+        fetchSalary();
+        fetchPreviousSalary();
+      }
+    };
+
+    window.addEventListener("attendanceUpdated", handleAttendanceUpdate);
+
+    return () => {
+      window.removeEventListener("attendanceUpdated", handleAttendanceUpdate);
+    };
+  }, [workerId, month, year]);
+
+  // Helper to get previous month/year
   const getPreviousPeriod = () => {
     let prevMonth = month - 1;
     let prevYear = year;
@@ -56,6 +73,7 @@ const WorkerSalary = () => {
   };
 
   const fetchSalary = async () => {
+    if (!workerId) return;
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(
@@ -135,6 +153,9 @@ const WorkerSalary = () => {
         newSalary = updateRes.data.salary;
       }
 
+      // After adding/updating salary
+      window.dispatchEvent(new Event("attendanceUpdated"));
+
       // Clear additional inputs
       setAdditionalAdvance("");
       setAdditionalLoanTaken("");
@@ -186,6 +207,9 @@ const WorkerSalary = () => {
         updates,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      // After adding/updating salary
+      window.dispatchEvent(new Event("attendanceUpdated"));
 
       // Clear additional inputs
       setAdditionalAdvance("");
@@ -344,12 +368,12 @@ const WorkerSalary = () => {
               </div>
               {((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)) > 0 && (
                 <p className="mt-4 text-red-600 bg-red-50 p-3 rounded-lg">
-                  <b>Warning:</b> Remaining loan: { (salaryData.loanTaken || 0) - (salaryData.loanPaid || 0) }. Cannot add new loans until cleared.
+                  <b>Warning:</b> Remaining loan: {(salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)}. Cannot add new loans until cleared.
                 </p>
               )}
               {((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)) < 0 && (
                 <p className="mt-4 text-green-600 bg-green-50 p-3 rounded-lg">
-                  <b>Note:</b> Overpaid by { -((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)) }.
+                  <b>Note:</b> Overpaid by {-((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0))}.
                 </p>
               )}
             </div>

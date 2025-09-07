@@ -20,9 +20,7 @@ const MonthlySalaryView = () => {
       const token = localStorage.getItem("token");
       const res = await axios.get(
         `https://labourpro-backend.onrender.com/api/attendance/monthly-salary?month=${month}&year=${year}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       setSummary(res.data.summary || []);
     } catch (err) {
@@ -33,18 +31,31 @@ const MonthlySalaryView = () => {
     }
   };
 
+  // Fetch salary when month/year changes
   useEffect(() => {
     fetchMonthlySalary();
   }, [month, year]);
 
+  // ✅ Auto-refresh on attendance added
+  useEffect(() => {
+    const handleAttendanceUpdate = () => {
+      fetchMonthlySalary(); // refresh table
+    };
+
+    window.addEventListener("attendanceUpdated", handleAttendanceUpdate);
+
+    return () => {
+      window.removeEventListener("attendanceUpdated", handleAttendanceUpdate);
+    };
+  }, [month, year]);
+
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6 bg-white rounded-2xl shadow-lg font-sans text-gray-800">
-      {/* Title */}
       <h2 className="text-3xl font-bold mb-6 flex items-center justify-center gap-2">
         <span className="text-3xl">📅</span> View Monthly Salary
       </h2>
 
-      {/* Filter Controls */}
+      {/* Filters */}
       <div className="flex flex-col sm:flex-row justify-center items-end gap-4 mb-8">
         <label className="flex flex-col text-sm font-medium text-gray-700 w-full sm:w-auto">
           Month

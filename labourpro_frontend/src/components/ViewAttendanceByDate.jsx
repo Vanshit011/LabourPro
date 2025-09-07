@@ -12,12 +12,6 @@ const ViewAttendanceByDate = () => {
     setSelectedDate(today);
   }, []);
 
-  useEffect(() => {
-    if (selectedDate) {
-      fetchAttendanceByDate(selectedDate);
-    }
-  }, [selectedDate]);
-
   const fetchAttendanceByDate = async (dateOverride) => {
     const date = dateOverride || selectedDate;
     if (!date) return;
@@ -37,6 +31,24 @@ const ViewAttendanceByDate = () => {
       setRecords([]);
     }
   };
+
+  useEffect(() => {
+    if (selectedDate) {
+      fetchAttendanceByDate(selectedDate);
+    }
+  }, [selectedDate]);
+
+  // ✅ Auto-refresh when attendance is added
+  useEffect(() => {
+    const handleAttendanceUpdate = () => {
+      fetchAttendanceByDate();
+    };
+
+    window.addEventListener("attendanceUpdated", handleAttendanceUpdate);
+    return () => {
+      window.removeEventListener("attendanceUpdated", handleAttendanceUpdate);
+    };
+  }, [selectedDate]);
 
   const handleDelete = async (id) => {
     try {
@@ -60,8 +72,6 @@ const ViewAttendanceByDate = () => {
     const { name, value } = e.target;
     setEditData((prev) => {
       const newData = { ...prev, [name]: value };
-
-      // Auto-calculate totalHours and totalRojEarned if both times are set
       const entry = name === "entryTime" ? value : newData.entryTime;
       const exit = name === "exitTime" ? value : newData.exitTime;
 
@@ -71,35 +81,33 @@ const ViewAttendanceByDate = () => {
         if (!isNaN(start) && !isNaN(end) && end > start) {
           const hours = (end - start) / (1000 * 60 * 60);
           newData.totalHours = hours.toFixed(2);
-          const rate = newData.rojRate || 50; // Default rate if not set
+          const rate = newData.rojRate || 50;
           newData.totalRojEarned = (hours * rate).toFixed(2);
         }
       }
-
       return newData;
     });
   };
 
- const handleUpdate = async () => {
-  try {
-    const { _id, entryTime, exitTime, totalHours, rojRate, totalRojEarned } = editData;
-    await axios.put(
-      `https://labourpro-backend.onrender.com/api/attendance/${_id}`,
-      { entryTime, exitTime, totalHours, rojRate, totalRojEarned },
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      }
-    );
-    toast.success("Attendance updated");
-    setEditData(null);
-    fetchAttendanceByDate();
-  } catch (err) {
-    toast.error("Failed to update attendance");
-  }
-};
-
+  const handleUpdate = async () => {
+    try {
+      const { _id, entryTime, exitTime, totalHours, rojRate, totalRojEarned } = editData;
+      await axios.put(
+        `https://labourpro-backend.onrender.com/api/attendance/${_id}`,
+        { entryTime, exitTime, totalHours, rojRate, totalRojEarned },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+      toast.success("Attendance updated");
+      setEditData(null);
+      fetchAttendanceByDate();
+    } catch (err) {
+      toast.error("Failed to update attendance");
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-6 bg-white rounded-2xl shadow-lg">
@@ -199,9 +207,8 @@ const ViewAttendanceByDate = () => {
               <input
                 type="number"
                 value={editData.totalHours || ""}
-                onChange={(e) => setEditData({ ...editData, totalHours: e.target.value })}
+                readOnly
                 className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-                readOnly // Make read-only if auto-calculated
               />
             </div>
             <div className="mb-4">
@@ -218,9 +225,8 @@ const ViewAttendanceByDate = () => {
               <input
                 type="number"
                 value={editData.totalRojEarned || ""}
-                onChange={(e) => setEditData({ ...editData, totalRojEarned: e.target.value })}
+                readOnly
                 className="w-full border border-gray-300 px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-                readOnly // Make read-only if auto-calculated
               />
             </div>
             <div className="flex justify-end gap-3">
