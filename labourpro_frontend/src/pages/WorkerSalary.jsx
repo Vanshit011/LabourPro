@@ -26,7 +26,7 @@ const WorkerSalary = () => {
           "https://labourpro-backend.onrender.com/api/worker",
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        console.log("✅ Fetched workers:", res.data);
+        // console.log("✅ Fetched workers:", res.data);
         setWorkers(res.data);
       } catch (err) {
         console.error("❌ Error fetching workers:", err.response?.data || err.message);
@@ -77,7 +77,7 @@ const WorkerSalary = () => {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(
-        `http://localhost:5000/api/salary/worker/${workerId}/${month}/${year}`,
+        `https://labourpro-backend.onrender.com/api/salary/worker/${workerId}/${month}/${year}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -95,7 +95,7 @@ const WorkerSalary = () => {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(
-        `http://localhost:5000/api/salary/worker/${workerId}/${prevMonth}/${prevYear}`,
+        `https://labourpro-backend.onrender.com/api/salary/worker/${workerId}/${prevMonth}/${prevYear}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setPreviousSalary(res.data);
@@ -123,7 +123,7 @@ const WorkerSalary = () => {
 
       const token = localStorage.getItem("token");
       const res = await axios.post(
-        "http://localhost:5000/api/salary/worker/add",
+        "https://labourpro-backend.onrender.com/api/salary/worker/add",
         { workerId, month, year },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -146,7 +146,7 @@ const WorkerSalary = () => {
       // If there are updates, perform the update
       if (updates.advance !== 0 || updates.loanTaken !== 0 || updates.loanPaid !== 0) {
         const updateRes = await axios.put(
-          `http://localhost:5000/api/salary/worker/${newSalary._id}/update`,
+          `https://labourpro-backend.onrender.com/api/salary/worker/${newSalary._id}/update`,
           updates,
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -203,7 +203,7 @@ const WorkerSalary = () => {
 
       const token = localStorage.getItem("token");
       const res = await axios.put(
-        `http://localhost:5000/api/salary/worker/${salaryData._id}/update`,
+        `https://labourpro-backend.onrender.com/api/salary/worker/${salaryData._id}/update`,
         updates,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -226,6 +226,33 @@ const WorkerSalary = () => {
       alert("❌ " + (err.response?.data?.error || "Error updating salary"));
     }
   };
+
+  // ✅ Refresh salary (recalculate based on attendance and base salary)
+  const handleRefreshSalary = async () => {
+  try {
+    if (!workerId || !month || !year) {
+      alert("⚠️ Please select worker, month, and year");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    const res = await axios.post(
+      "https://labourpro-backend.onrender.com/api/salary/worker/recalculate",
+      { workerId, month, year },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    alert("✅ Salary recalculated");
+    setSalaryData(res.data.salary);
+    setBaseSalary(res.data.salary.baseSalary.toString());
+
+    // refresh display
+    fetchSalary();
+  } catch (err) {
+    console.error("❌ Error refreshing salary:", err.response?.data || err.message);
+    alert("❌ Failed to refresh salary");
+  }
+};
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -347,6 +374,12 @@ const WorkerSalary = () => {
                   <span className="mr-2">✏️</span> Update Salary
                 </button>
               )}
+              <button
+                onClick={handleRefreshSalary}
+                className="bg-purple-600 text-white px-6 py-2 rounded-lg shadow hover:bg-purple-700 transition duration-200 flex items-center"
+              >
+                <span className="mr-2">🔄</span> Refresh Salary
+              </button>
             </div>
           </div>
 

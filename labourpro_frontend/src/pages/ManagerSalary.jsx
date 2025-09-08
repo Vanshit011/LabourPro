@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Sidebar from "../components/Sidebar";
 import { jsPDF } from "jspdf";
+import JSZip from "jszip";
 
 const ManagerSalary = () => {
   const [managers, setManagers] = useState([]);
@@ -284,8 +285,6 @@ const ManagerSalary = () => {
       ["Loan Taken", formatCurrency(salaryData.loanTaken) || "-"],
       ["Loan Paid", formatCurrency(salaryData.loanPaid) || "-"],
       ["Remaining Loan", formatCurrency((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)) || "-"],
-      ["Total Hours Worked", salaryData.totalHours?.toFixed(2) || "-"],
-      ["Days Worked", salaryData.daysWorked || "-"],
       ["Final Salary", formatCurrency(salaryData.finalSalary)],
     ];
 
@@ -332,6 +331,39 @@ const ManagerSalary = () => {
 
     doc.save(fileName);
   };
+
+  // ✅ Download all slips for selected month/year
+const DownloadAllSlips = async () => {
+  try {
+    const month = new Date().getMonth() + 1; // current month
+    const year = new Date().getFullYear();   // current year
+
+    const response = await axios.get(
+      `http://localhost:5000/api/salary/downloadAll/${month}/${year}`,
+      { responseType: "blob" } // 👈 important for binary files
+    );
+
+    // Create a blob from response
+    const blob = new Blob([response.data], { type: "application/zip" });
+    const url = window.URL.createObjectURL(blob);
+
+    // Create a link to trigger download
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute(
+      "download",
+      `All_Salaries_${month}_${year}.zip`
+    );
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+
+    console.log("✅ ZIP downloaded successfully");
+  } catch (err) {
+    console.error("❌ Error downloading all salary slips:", err);
+  }
+};
 
 
   return (
@@ -445,6 +477,7 @@ const ManagerSalary = () => {
               >
                 📥 Download All Salary Slips
               </button>
+
 
               {!salaryData ? (
                 <button

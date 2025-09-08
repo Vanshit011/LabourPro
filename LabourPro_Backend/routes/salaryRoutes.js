@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const { addSalary, updateSalary, getSalary, addWorkerSalary, updateWorkerSalary, getWorkerSalary, downloadSalaryPDF } = require("../controllers/salaryController");
+const { addSalary, updateSalary, getSalary, addWorkerSalary, updateWorkerSalary, getWorkerSalary, downloadSalaryPDF,downloadAllSalariesZIP } = require("../controllers/salaryController");
 const Manager = require("../models/Manager");
 
 // manager routes
 router.post('/add', addSalary);
+router.get('/downloadAll/:month/:year', downloadAllSalariesZIP);
 router.put('/:id/update', updateSalary);
 router.get('/:managerId/:month/:year', getSalary);
 router.get('/:managerId/:month/:year/download', downloadSalaryPDF);
@@ -22,6 +23,7 @@ router.get('/getManager', async (req, res) => {
 router.post('/worker/add', addWorkerSalary);
 router.put('/worker/:id/update', updateWorkerSalary);
 router.get('/worker/:workerId/:month/:year', getWorkerSalary);
+// router.post('/worker/recalculate', recalculateWorkerSalary);
 router.get('/worker/getWorker', async (req, res) => {
     try {
         const workers = await Worker.find();

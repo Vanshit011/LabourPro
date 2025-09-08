@@ -1,6 +1,7 @@
 const Manager = require("../models/Manager");
 const ManagerSalary = require("../models/ManagerSalary");
 const PDFDocument = require("pdfkit");
+const archiver = require("archiver");
 const mongoose = require("mongoose");
 
 
@@ -131,6 +132,78 @@ const downloadSalaryPDF = async (req, res) => {
   }
 };
 
+// GET /salary/:month/:year/download
+// ✅ Helper: create PDF for one salary and return Buffer
+const createPDFBuffer = (salary) => {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ margin: 50 });
+    const chunks = [];
+
+    doc.on("data", (chunk) => chunks.push(chunk));
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
+
+    // 📄 Salary content
+    doc.fontSize(20).text(`Salary Report`, { align: "center" });
+    doc.moveDown();
+
+    // Correctly access populated manager name
+    doc.fontSize(14).text(`Manager: ${salary.managerName || salary.managerId?.name || "N/A"}`);
+    doc.text(`Month/Year: ${salary.month}/${salary.year}`);
+    doc.text(`Base Salary: ₹${salary.baseSalary}`);
+    doc.text(`Advance: ₹${salary.advance}`);
+    doc.text(`Loan Taken: ₹${salary.loanTaken}`);
+    doc.text(`Loan Paid: ₹${salary.loanPaid}`);
+    doc.text(`Remaining Loan: ₹${(salary.loanTaken || 0) - (salary.loanPaid || 0)}`);
+    doc.text(`Final Salary: ₹${salary.finalSalary}`);
+    doc.moveDown();
+
+    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, { align: "right" });
+
+    doc.end();
+  });
+};
+
+
+// ✅ Main API: Download ALL salaries in ZIP
+const downloadAllSalariesZIP = async (req, res) => {
+  try {
+    const { month, year } = req.params;
+
+    const salaries = await ManagerSalary.find({ month, year }).populate("managerId", "name");
+
+    if (!salaries || salaries.length === 0) {
+      return res.status(404).json({ error: "No salaries found for this month/year" });
+    }
+
+    // ZIP headers
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="All_Salaries_${month}_${year}.zip"`
+    );
+
+    const archive = archiver("zip", { zlib: { level: 9 } });
+    archive.pipe(res);
+
+    // Generate PDF for each salary and append
+    for (const salary of salaries) {
+      const salaryData = {
+        ...salary.toObject(),
+        managerName: salary.managerId?.name || "N/A",
+      };
+      const pdfBuffer = await createPDFBuffer(salaryData);
+      archive.append(pdfBuffer, {
+        name: `${salaryData.managerName}_${month}_${year}.pdf`,
+      });
+    }
+
+    await archive.finalize();
+  } catch (err) {
+    console.error("❌ ZIP Generation Error:", err);
+    res.status(500).json({ error: "Failed to generate ZIP", details: err.message });
+  }
+};
 
 
 // Worker Salary Controllers
@@ -284,6 +357,46 @@ const getWorkerSalary = async (req, res) => {
   }
 };
 
+// POST /worker-salary/recalculate
+// salaryController.js
+// const Salary = require("../models/WorkerSalary");
+
+// const recalculateWorkerSalary = async (req, res) => {
+//   try {
+//     const { salaryId } = req.params;
+//     const { newBaseSalary } = req.body; // Expect base salary in body
+
+//     const salary = await WorkerSalary.findById(salaryId);
+//     if (!salary) {
+//       return res.status(404).json({ error: "Salary record not found" });
+//     }
+
+//     // Update baseSalary safely
+//     if (typeof newBaseSalary === "number" && !isNaN(newBaseSalary)) {
+//       salary.baseSalary = newBaseSalary;
+//     }
+
+//     // Default all numeric fields
+//     const baseSalary = Number(salary.baseSalary) || 0;
+//     const advance = Number(salary.advance) || 0;
+//     const loanTaken = Number(salary.loanTaken) || 0;
+//     const loanPaid = Number(salary.loanPaid) || 0;
+
+//     // Recalculate final salary
+//     salary.finalSalary = baseSalary - advance - loanTaken + loanPaid;
+
+//     await salary.save();
+
+//     res.json({
+//       message: "Salary recalculated",
+//       salary,
+//     });
+//   } catch (err) {
+//     console.error("❌ Salary recalculation failed:", err);
+//     res.status(500).json({ error: "Failed to recalculate salary" });
+//   }
+// };
+
 
 module.exports = {
   addSalary,
@@ -292,5 +405,7 @@ module.exports = {
   addWorkerSalary,
   updateWorkerSalary,
   getWorkerSalary,
-  downloadSalaryPDF
+  // recalculateWorkerSalary,
+  downloadSalaryPDF,
+  downloadAllSalariesZIP
 };
