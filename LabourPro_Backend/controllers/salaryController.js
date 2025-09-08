@@ -163,8 +163,6 @@ const createPDFBuffer = (salary) => {
     doc.end();
   });
 };
-
-
 // ✅ Main API: Download ALL salaries in ZIP
 const downloadAllSalariesZIP = async (req, res) => {
   try {
