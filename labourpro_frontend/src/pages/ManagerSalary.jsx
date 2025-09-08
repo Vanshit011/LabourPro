@@ -339,7 +339,7 @@ const DownloadAllSlips = async () => {
     const year = new Date().getFullYear();   // current year
 
     const response = await axios.get(
-      `http://localhost:5000/api/salary/downloadAll/${month}/${year}`,
+      `https://labourpro-backend.onrender.com/api/salary/downloadAll/${month}/${year}`,
       { responseType: "blob" } // 👈 important for binary files
     );
 
