@@ -353,8 +353,9 @@ const otps = {}; // { email: { otp: string, expires: Date } }
 const transporter = nodemailer.createTransport({
   service: 'gmail', // Or your provider (e.g., SendGrid)
   auth: {
-    user: 'vanshitpatel10@gmail.com', // Replace with your email
-    pass: 'cqfl pvsq vqnt jzkn' // Use app-specific password for Gmail
+    user: process.env.EMAIL_USER, // Access from env
+    pass: process.env.EMAIL_PASS
+
   }
 });
 
