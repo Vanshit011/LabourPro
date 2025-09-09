@@ -6,6 +6,7 @@ const adminSchema = new mongoose.Schema({
   password: { type: String, required: true },
   companyName: { type: String, required: true },
   companyId: { type: String, required: true, unique: true },
+  
 
   isTrial: { type: Boolean, default: true },
   planType: { type: String, enum: ["trial", "monthly", "yearly"], default: "trial" },

@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import Sidebar from "../components/Sidebar";
 import Manager from "../components/Manager";
+import { Eye, EyeOff } from "lucide-react"; // 👈 Install lucide-react for icons
 
 const Workers = () => {
   const [workers, setWorkers] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showPasswords, setShowPasswords] = useState({}); // 👈 Track password visibility
   const [form, setForm] = useState({
     name: "",
     number: "",
@@ -101,9 +103,17 @@ const Workers = () => {
     fetchWorkers();
   }, []);
 
+  // Auto-generate email based on full name (only if email is empty)
+  useEffect(() => {
+    if (form.name && !form.email) {
+      const generatedEmail = '@labourpro.com';
+      setForm((prev) => ({ ...prev, email: generatedEmail }));
+    }
+  }, [form.name]);
+
   // List of common worker roles
   const workerRoles = [
-    "forger",
+    "labour",
     "helper",
     "welder",
     "cnc operator",
@@ -111,6 +121,13 @@ const Workers = () => {
     "manager",
   ];
 
+  const togglePasswordVisibility = (id) => {
+    setShowPasswords((prev) => ({
+      ...prev,
+      [id]: !prev[id], // toggle visibility for this worker
+    }));
+  };
+  
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar (fixed on the left) */}
@@ -219,8 +236,23 @@ const Workers = () => {
                         <td className="p-3 border whitespace-nowrap">{w.number}</td>
                         <td className="p-3 border whitespace-nowrap">{w.role}</td>
                         <td className="p-3 border whitespace-nowrap">{w.email}</td>
-                        <td className="p-3 border whitespace-nowrap">{w.password}</td>
-                        <td className="p-3 border whitespace-nowrap">₹{w.rojPerHour}</td>
+                        <td className="p-3 border">
+                          <div className="flex items-center justify-center gap-2">
+                            <span>
+                              {showPasswords[w._id] ? w.password : "••••••"}
+                            </span>
+                            <button
+                              onClick={() => togglePasswordVisibility(w._id)}
+                              className="text-gray-500 hover:text-gray-800"
+                            >
+                              {showPasswords[w._id] ? (
+                                <EyeOff size={18} />
+                              ) : (
+                                <Eye size={18} />
+                              )}
+                            </button>
+                          </div>
+                        </td>                        <td className="p-3 border whitespace-nowrap">₹{w.rojPerHour}</td>
                         <td className="p-3 border space-x-2 whitespace-nowrap">
                           <button
                             onClick={() => handleEdit(w)}

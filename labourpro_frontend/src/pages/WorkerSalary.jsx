@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Sidebar from "../components/Sidebar";
+import { jsPDF } from "jspdf";
 
 const WorkerSalary = () => {
   const [workers, setWorkers] = useState([]);
@@ -229,30 +230,158 @@ const WorkerSalary = () => {
 
   // ✅ Refresh salary (recalculate based on attendance and base salary)
   const handleRefreshSalary = async () => {
-  try {
-    if (!workerId || !month || !year) {
-      alert("⚠️ Please select worker, month, and year");
+    try {
+      if (!workerId || !month || !year) {
+        alert("⚠️ Please select worker, month, and year");
+        return;
+      }
+
+      const token = localStorage.getItem("token");
+      const res = await axios.post(
+        "https://labourpro-backend.onrender.com/api/salary/worker/recalculate",
+        { workerId, month, year },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert("✅ Salary recalculated");
+      setSalaryData(res.data.salary);
+      setBaseSalary(res.data.salary.baseSalary.toString());
+
+      // refresh display
+      fetchSalary();
+    } catch (err) {
+      console.error("❌ Error refreshing salary:", err.response?.data || err.message);
+      alert("❌ Failed to refresh salary");
+    }
+  };
+
+  // ✅ Download PDF
+  const handleDownloadWorkerPDF = (salaryData, month, year, workersList = []) => {
+    if (!salaryData) {
+      alert("No salary data available");
       return;
     }
 
-    const token = localStorage.getItem("token");
-    const res = await axios.post(
-      "https://labourpro-backend.onrender.com/api/salary/worker/recalculate",
-      { workerId, month, year },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    const formatCurrency = (val) =>
+      val !== undefined && val !== null ? `₹${val}` : "-";
 
-    alert("✅ Salary recalculated");
-    setSalaryData(res.data.salary);
-    setBaseSalary(res.data.salary.baseSalary.toString());
+    // console.log("salaryData.workerId:", salaryData.workerId);
+    // console.log("workersList IDs:", workersList.map(w => String(w._id)));
 
-    // refresh display
-    fetchSalary();
-  } catch (err) {
-    console.error("❌ Error refreshing salary:", err.response?.data || err.message);
-    alert("❌ Failed to refresh salary");
-  }
-};
+    const personName =
+      salaryData.workerName ||
+      workersList.find((w) => String(w._id) === String(salaryData.workerId))?.name ||
+      salaryData.workerId || // fallback: show ID if no match
+      "Unknown";
+
+    console.log("🎯 Final Name for PDF:", personName);
+
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+    const monthName = monthNames[month - 1] || "Unknown";
+
+    const doc = new jsPDF("p", "pt", "a4");
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    // Theme colors
+    const blueColor = [0, 112, 192];
+    const lightBlueColor = [240, 248, 255];
+    const grayColor = [128, 128, 128];
+
+    // Background
+    doc.setFillColor(...lightBlueColor);
+    doc.rect(0, 0, pageWidth, pageHeight, "F");
+
+    // Outer border
+    doc.setDrawColor(...blueColor);
+    doc.setLineWidth(2);
+    doc.rect(20, 20, pageWidth - 40, pageHeight - 40);
+
+    // ✅ Title
+    doc.setFontSize(24);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...blueColor);
+    doc.text("LabourPro Salary Slip", pageWidth / 2, 60, { align: "center" });
+
+    // Tagline
+    doc.setFontSize(12);
+    doc.setTextColor(...grayColor);
+    doc.text("Efficient Workforce Management", pageWidth / 2, 80, { align: "center" });
+
+    // ✅ Worker details
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...blueColor);
+    doc.text("Worker Details", 40, 120);
+
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0);
+    doc.text(`Name: ${personName}`, 60, 150);
+    doc.text(`Month/Year: ${monthName} ${year}`, 60, 175);
+    doc.text(`Worker ID: ${salaryData.workerId || "-"}`, 60, 200);
+
+    // Separator
+    doc.setDrawColor(...blueColor);
+    doc.setLineWidth(1);
+    doc.line(40, 220, pageWidth - 40, 220);
+
+    // ✅ Salary fields
+    const startY = 250;
+    const rowHeight = 30;
+    const col1X = 60;
+    const col2X = 350;
+    const tableWidth = pageWidth - 100;
+
+    const fields = [
+      ["Base Salary", formatCurrency(salaryData.baseSalary) || "-"],
+      ["Advance", formatCurrency(salaryData.advance) || "-"],
+      ["Loan Taken", formatCurrency(salaryData.loanTaken) || "-"],
+      ["Loan Paid", formatCurrency(salaryData.loanPaid) || "-"],
+      ["Remaining Loan", formatCurrency((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)) || "-"],
+      ["Total Hours", salaryData.totalHours || "-"],
+      ["Days Worked", salaryData.daysWorked || "-"],
+      ["Final Salary", formatCurrency(salaryData.finalSalary)],
+    ];
+
+    // Table header
+    doc.setFont("helvetica", "bold");
+    doc.setFillColor(...blueColor);
+    doc.rect(col1X - 20, startY - 25, tableWidth, rowHeight, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.text("Field", col1X, startY - 5);
+    doc.text("Amount", col2X, startY - 5);
+
+    // Table rows
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0);
+    fields.forEach((field, i) => {
+      const y = startY + i * rowHeight;
+      if (i % 2 === 0) {
+        doc.setFillColor(255, 255, 255);
+      } else {
+        doc.setFillColor(...lightBlueColor);
+      }
+      doc.rect(col1X - 20, y - 20, tableWidth, rowHeight, "F");
+      doc.setDrawColor(...blueColor);
+      doc.rect(col1X - 20, y - 20, tableWidth, rowHeight);
+      doc.text(field[0], col1X, y);
+      doc.text(field[1]?.toString() || "-", col2X, y);
+    });
+
+    // ✅ Footer
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "italic");
+    doc.setTextColor(...grayColor);
+    doc.text("Generated by LabourPro - All rights reserved", pageWidth / 2, pageHeight - 40, { align: "center" });
+
+    // ✅ Save with proper filename
+    const safeName = personName.replace(/\s+/g, "_");
+    const fileName = `${safeName}_WorkerSalarySlip_${monthName}_${year}.pdf`;
+    doc.save(fileName);
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -399,6 +528,12 @@ const WorkerSalary = () => {
                 <p className="bg-gray-50 p-3 rounded-lg"><b>Total Hours:</b> {salaryData.totalHours}</p>
                 <p className="bg-gray-50 p-3 rounded-lg"><b>Days Worked:</b> {salaryData.daysWorked}</p>
               </div>
+              <button
+                onClick={() => handleDownloadWorkerPDF(salaryData, month, year)}
+                className="bg-purple-600 text-white px-6 py-2 rounded-lg shadow hover:bg-purple-700 transition duration-200"
+              >
+                📄 Download PDF
+              </button>
               {((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)) > 0 && (
                 <p className="mt-4 text-red-600 bg-red-50 p-3 rounded-lg">
                   <b>Warning:</b> Remaining loan: {(salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)}. Cannot add new loans until cleared.

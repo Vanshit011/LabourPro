@@ -1,10 +1,11 @@
 const Worker = require("../models/Worker");
 const Manager = require("../models/Manager");
+const bcrypt = require("bcryptjs");
 
 // ✅ Add Worker
 exports.addWorker = async (req, res) => {
   try {
-    const { name, number, role, rojPerHour, email, password } = req.body;
+    const { name, number,role, rojPerHour, email, password } = req.body;
     const companyId = req.user.companyId;
 
     // Check if email already exists
@@ -90,6 +91,7 @@ exports.addManager = async (req, res) => {
     if (existingWorker) {
       return res.status(400).json({ error: "Email already in use" });
     }
+    // const hashedPassword = await bcrypt.hash(password, 10); // 10 salt rounds for security
 
     const manager = new Manager({
       name,

@@ -151,58 +151,65 @@ const ManagerSalary = () => {
   };
 
   // ✅ Update salary (calculate increments and send to backend)
-  const handleUpdateSalary = async () => {
-    try {
-      if (!salaryData?._id) {
-        alert("⚠️ No salary to update. Add first!");
-        return;
-      }
-
-      // Calculate increments from additional inputs
-      const advanceIncrement = parseFloat(additionalAdvance) || 0;
-      const loanTakenIncrement = parseFloat(additionalLoanTaken) || 0;
-      const loanPaidIncrement = parseFloat(additionalLoanPaid) || 0;
-
-      // Check if trying to add new loan when loan is not complete
-      const currentRemaining = (salaryData.loanTaken || 0) - (salaryData.loanPaid || 0);
-      if (currentRemaining > 0 && loanTakenIncrement > 0) {
-        alert("⚠️ Cannot add new loan until current loan is complete.");
-        return;
-      }
-
-      if (advanceIncrement === 0 && loanTakenIncrement === 0 && loanPaidIncrement === 0) {
-        alert("⚠️ No changes detected.");
-        return;
-      }
-
-      const updates = {
-        advance: advanceIncrement,
-        loanTaken: loanTakenIncrement,
-        loanPaid: loanPaidIncrement,
-      };
-
-      const token = localStorage.getItem("token");
-      const res = await axios.put(
-        `https://labourpro-backend.onrender.com/api/salary/${salaryData._id}/update`,
-        updates,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      // Clear additional inputs
-      setAdditionalAdvance("");
-      setAdditionalLoanTaken("");
-      setAdditionalLoanPaid("");
-
-      alert("✅ Salary Updated");
-      setSalaryData(res.data.salary);
-
-      // Refetch to update display with new totals
-      fetchSalary();
-    } catch (err) {
-      console.error("❌ Error updating salary:", err.response?.data || err.message);
-      alert("❌ " + (err.response?.data?.error || "Error updating salary"));
+const handleUpdateSalary = async () => {
+  try {
+    if (!salaryData?._id) {
+      alert("⚠️ No salary to update. Add first!");
+      return;
     }
-  };
+
+    // Parse additional inputs
+    const advanceIncrement = parseFloat(additionalAdvance) || 0;
+    const loanTakenIncrement = parseFloat(additionalLoanTaken) || 0;
+    const loanPaidIncrement = parseFloat(additionalLoanPaid) || 0;
+
+    // ✅ Calculate current remaining loan
+    const currentRemaining = (salaryData.loanTaken || 0) - (salaryData.loanPaid || 0);
+
+    // ✅ Rule: New loan only if no old loan pending
+    // if (loanTakenIncrement > 0 && currentRemaining > 0) {
+    //   alert("⚠️ Cannot take a new loan until the current loan is fully paid.");
+    //   return;
+    // }
+
+    // ✅ Block empty updates
+    if (
+      advanceIncrement === 0 &&
+      loanTakenIncrement === 0 &&
+      loanPaidIncrement === 0
+    ) {
+      alert("⚠️ No changes detected.");
+      return;
+    }
+
+    const updates = {
+      advance: advanceIncrement,
+      loanTaken: loanTakenIncrement,
+      loanPaid: loanPaidIncrement,
+    };
+
+    const token = localStorage.getItem("token");
+    const res = await axios.put(
+      `https://labourpro-backend.onrender.com/api/salary/${salaryData._id}/update`,
+      updates,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    // Clear inputs
+    setAdditionalAdvance("");
+    setAdditionalLoanTaken("");
+    setAdditionalLoanPaid("");
+
+    alert("✅ Salary Updated");
+    setSalaryData(res.data.salary);
+
+    // Refresh data
+    fetchSalary();
+  } catch (err) {
+    console.error("❌ Error updating salary:", err.response?.data || err.message);
+    alert("❌ " + (err.response?.data?.error || "Error updating salary"));
+  }
+};
 
   // ✅ Download PDF
   const handleDownloadPDF = (salaryData, month, year) => {

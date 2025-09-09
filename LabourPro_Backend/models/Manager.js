@@ -6,7 +6,7 @@ const ManagerSchema = new mongoose.Schema({
   number: { type: String, required: true },
   role: {
     type: String,
-    enum: ["Worker", "Supervisor", "Manager"], // 👈 fixed enum
+    enum: [ "Manager"], // 👈 fixed enum
     required: true
   },
   salary: { type: Number, required: true }, // ✅ single base salary field

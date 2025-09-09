@@ -61,19 +61,24 @@ const addSalary = async (req, res) => {
 // PUT /salary/:id/update
 const updateSalary = async (req, res) => {
   try {
-    const { advance, loanTaken, loanPaid } = req.body;
+    const { advance = 0, loanTaken = 0, loanPaid = 0, month, year } = req.body;
 
     let salary = await ManagerSalary.findById(req.params.id);
     if (!salary) return res.status(404).json({ error: "Salary entry not found" });
 
-    salary.advance += advance || 0;
-    salary.loanTaken += loanTaken || 0;
-    salary.loanPaid += loanPaid || 0;
+    // ✅ Ensure loanTaken applies only to the same month/year
+    if (salary.month === month && salary.year === year) {
+      salary.loanTaken += loanTaken;
+    }
 
-    // Calculate loan remaining
-    salary.loanRemaining = (salary.loanTaken) - salary.loanPaid;
+    // Always update advance & loanPaid (they’re month-specific)
+    salary.advance += advance;
+    salary.loanPaid += loanPaid;
 
-    // Calculate final salary
+    // Recalculate remaining loan
+    salary.loanRemaining = salary.loanTaken - salary.loanPaid;
+
+    // Recalculate final salary
     salary.finalSalary = salary.baseSalary - salary.advance - salary.loanPaid;
 
     await salary.save();

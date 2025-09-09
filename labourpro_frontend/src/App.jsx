@@ -14,6 +14,8 @@ import ScrollToTop from "./components/ScrollToTop";
 import RegisterTrial from "./pages/RegisterTrial";
 import RegisterPaid from "./pages/RegisterPaid";
 
+import ManagerDashboard from "./components/ManagerDashboard";
+
 // Dashboard + Route Protection
 import ProtectedRoute from "./routes/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
@@ -29,19 +31,20 @@ function App() {
 
   // Define paths where Navbar and Footer should be hidden
   const hideLayout = [
-    // "/login",
+    "/login",
     "/dashboard",
     "/dashboard/profile",
     "/dashboard/Worker&Manager",
     "/dashboard/WorkerAttendance",
     "/dashboard/ManagerSalaries&Loans",
     "/dashboard/WorkerSalaries&Loans",
-    "/dashboard/contactRenewPlan"
+    "/dashboard/contactRenewPlan",
+    "/manager-dashboard"
   ];
   const shouldHide = hideLayout.includes(location.pathname);
 
   return (
-   <>
+    <>
       {!shouldHide && <Navbar />}
       <ScrollToTop />
       <main className="flex-grow container mx-auto">
@@ -56,6 +59,7 @@ function App() {
           {/* Registration Routes */}
           <Route path="/register-trial" element={<RegisterTrial />} />
           <Route path="/register-paid" element={<RegisterPaid />} />
+          <Route path='/manager-dashboard' element={<ManagerDashboard/>} />
 
           {/* Protected Routes */}
           <Route

@@ -3,8 +3,15 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const Login = () => {
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ role: "", email: "", password: "" });
   const [error, setError] = useState("");
+  const [forgotStep, setForgotStep] = useState(0); // 0: none, 1: enter email, 2: enter OTP, 3: set new password
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [forgotError, setForgotError] = useState("");
+  const [forgotSuccess, setForgotSuccess] = useState("");
   const navigate = useNavigate();
 
   const handleChange = (e) =>
@@ -14,17 +21,100 @@ const Login = () => {
     e.preventDefault();
     setError("");
 
+    if (!form.role) {
+      setError("Please select a role");
+      return;
+    }
+
     try {
-      const endpoint = "https://labourpro-backend.onrender.com/api/auth/login";
-      const res = await axios.post(endpoint, form);
+      let endpoint;
+      switch (form.role) {
+        case "admin":
+          endpoint = "https://labourpro-backend.onrender.com/api/auth/login";
+          break;
+        case "manager":
+          endpoint = "https://labourpro-backend.onrender.com/api/auth/manager-login";
+          break;
+        case "worker":
+          endpoint = "https://labourpro-backend.onrender.com/api/auth/worker-login";
+          break;
+        default:
+          setError("Invalid role selected");
+          return;
+      }
+
+      const res = await axios.post(endpoint, { email: form.email, password: form.password });
 
       localStorage.setItem("token", res.data.token);
-      localStorage.setItem("role", "admin");
-      localStorage.setItem("user", JSON.stringify(res.data.admin));
+      localStorage.setItem("role", form.role);
+      localStorage.setItem("user", JSON.stringify(res.data.user || res.data.admin || res.data.manager || res.data.worker));
 
-      navigate("/dashboard");
+      // For manager, store salary data and redirect to dashboard
+      if (form.role === "manager") {
+        localStorage.setItem("salaryData", JSON.stringify(res.data.salary));
+        navigate("/manager-dashboard");
+      } else {
+        // Navigate based on role (customize paths as needed)
+        switch (form.role) {
+          case "admin":
+            navigate("/dashboard");
+            break;
+          case "worker":
+            navigate("/worker-dashboard");
+            break;
+        }
+      }
     } catch (err) {
       setError(err.response?.data?.message || "Login failed");
+    }
+  };
+
+  // Forgot Password: Step 1 - Send OTP
+  const handleSendOtp = async (e) => {
+    e.preventDefault();
+    setForgotError("");
+    setForgotSuccess("");
+
+    try {
+      await axios.post("https://labourpro-backend.onrender.com/api/auth/forgot-password", { email: forgotEmail });
+      setForgotSuccess("OTP sent to your email.");
+      setForgotStep(2); // Move to OTP verification
+    } catch (err) {
+      setForgotError(err.response?.data?.message || "Failed to send OTP.");
+    }
+  };
+
+  // Forgot Password: Step 2 - Verify OTP
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setForgotError("");
+    setForgotSuccess("");
+
+    try {
+      await axios.post("https://labourpro-backend.onrender.com/api/auth/verify-otp", { email: forgotEmail, otp });
+      setForgotSuccess("OTP verified.");
+      setForgotStep(3); // Move to set new password
+    } catch (err) {
+      setForgotError(err.response?.data?.message || "Invalid OTP.");
+    }
+  };
+
+  // Forgot Password: Step 3 - Reset Password
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setForgotError("");
+    setForgotSuccess("");
+
+    if (newPassword !== confirmPassword) {
+      return setForgotError("Passwords do not match.");
+    }
+
+    try {
+      await axios.post("https://labourpro-backend.onrender.com/api/auth/reset-password", { email: forgotEmail, newPassword });
+      setForgotSuccess("Password reset successful. You can now login.");
+      setForgotStep(0); // Back to login
+    } catch (err) {
+      setForgotError(err.response?.data?.message || "Failed to reset password.");
     }
   };
 
@@ -33,7 +123,7 @@ const Login = () => {
       <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 shadow-2xl">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800 flex items-center justify-center gap-2">
-            <span className="text-blue-600 text-4xl">🔐</span> Admin Login
+            <span className="text-blue-600 text-4xl">🔐</span> Login
           </h1>
           <p className="mt-2 text-sm text-gray-600">Access your LabourPro dashboard</p>
         </div>
@@ -42,45 +132,173 @@ const Login = () => {
           <p className="mb-4 text-center text-sm text-red-600 bg-red-50 p-2 rounded-lg">{error}</p>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input
-              type="email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              placeholder="Enter your password"
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-md hover:bg-blue-700 transition duration-300 ease-in-out"
-          >
-            Login
-          </button>
-        </form>
+        {forgotStep === 0 ? (
+          <>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Select Role</label>
+                <select
+                  name="role"
+                  value={form.role}
+                  onChange={handleChange}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  required
+                >
+                  <option value="">-- Select Role --</option>
+                  <option value="admin">Admin</option>
+                  <option value="manager">Manager</option>
+                  <option value="worker">Worker</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  placeholder="Enter your email"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <input
+                  type="password"
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="Enter your password"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-md hover:bg-blue-700 transition duration-300 ease-in-out"
+              >
+                Login
+              </button>
+            </form>
 
-        {/* <div className="mt-6 text-center text-sm text-gray-600">
-          <a href="/forgot-password" className="text-blue-600 hover:underline">Forgot Password?</a>
-          <p className="mt-2">
-            Don't have an account? <a href="/signup" className="text-blue-600 hover:underline">Sign Up</a>
-          </p>
-        </div> */}
+            <div className="mt-6 text-center text-sm text-gray-600">
+              <button
+                onClick={() => setForgotStep(1)}
+                className="text-blue-600 hover:underline"
+              >
+                Forgot Password?
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            {forgotError && (
+              <p className="mb-4 text-center text-sm text-red-600 bg-red-50 p-2 rounded-lg">{forgotError}</p>
+            )}
+            {forgotSuccess && (
+              <p className="mb-4 text-center text-sm text-green-600 bg-green-50 p-2 rounded-lg">{forgotSuccess}</p>
+            )}
+
+            {forgotStep === 1 && (
+              <form onSubmit={handleSendOtp} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Enter Email</label>
+                  <input
+                    type="email"
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-md hover:bg-blue-700 transition duration-300 ease-in-out"
+                >
+                  Send OTP
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForgotStep(0)}
+                  className="w-full text-center text-blue-600 hover:underline mt-2"
+                >
+                  Back to Login
+                </button>
+              </form>
+            )}
+
+            {forgotStep === 2 && (
+              <form onSubmit={handleVerifyOtp} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Enter OTP</label>
+                  <input
+                    type="text"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    placeholder="Enter OTP"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-md hover:bg-blue-700 transition duration-300 ease-in-out"
+                >
+                  Verify OTP
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForgotStep(0)}
+                  className="w-full text-center text-blue-600 hover:underline mt-2"
+                >
+                  Back to Login
+                </button>
+              </form>
+            )}
+
+            {forgotStep === 3 && (
+              <form onSubmit={handleResetPassword} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Enter new password"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm new password"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-md hover:bg-blue-700 transition duration-300 ease-in-out"
+                >
+                  Reset Password
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForgotStep(0)}
+                  className="w-full text-center text-blue-600 hover:underline mt-2"
+                >
+                  Back to Login
+                </button>
+              </form>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
