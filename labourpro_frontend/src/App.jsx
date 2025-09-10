@@ -13,7 +13,7 @@ import ScrollToTop from "./components/ScrollToTop";
 // Registration Pages
 import RegisterTrial from "./pages/RegisterTrial";
 import RegisterPaid from "./pages/RegisterPaid";
-
+import WorkerDashboard from "./components/WorkerDashboard"
 import ManagerDashboard from "./components/ManagerDashboard";
 
 // Dashboard + Route Protection
@@ -39,7 +39,8 @@ function App() {
     "/dashboard/ManagerSalaries&Loans",
     "/dashboard/WorkerSalaries&Loans",
     "/dashboard/contactRenewPlan",
-    "/manager-dashboard"
+    "/manager-dashboard",
+    "/worker-dashboard"
   ];
   const shouldHide = hideLayout.includes(location.pathname);
 
@@ -59,9 +60,9 @@ function App() {
           {/* Registration Routes */}
           <Route path="/register-trial" element={<RegisterTrial />} />
           <Route path="/register-paid" element={<RegisterPaid />} />
-          <Route path='/manager-dashboard' element={<ManagerDashboard/>} />
-
-          {/* Protected Routes */}
+          <Route path="/manager-dashboard" element={<ManagerDashboard />} />
+          <Route path="/worker-dashboard" element={<WorkerDashboard />} />
+            {/* Protected Routes */}
           <Route
             path="/dashboard"
             element={

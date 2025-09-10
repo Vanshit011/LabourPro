@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ import navigate
+import { useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import axios from "axios";
 
 const handleDownload = (salary, period) => {
   if (!salary || salary.message) return;
@@ -19,8 +20,8 @@ const handleDownload = (salary, period) => {
   // Table Data
   const tableColumn = ["Field", "Value"];
   const tableRows = [
-    ["Manager Name", salary.workerName || 0],
-    ["Manager ID", salary.managerId || 0],
+    ["Manager Name", salary.workerName || "N/A"],
+    ["Manager ID", salary.managerId || "N/A"],
     ["Base Salary", `₹${salary.baseSalary || "0"}`],
     ["Advance", `₹${salary.advance || "0"}`],
     ["Loan Taken", `₹${salary.loanTaken || "0"}`],
@@ -45,31 +46,73 @@ const handleDownload = (salary, period) => {
     doc.internal.pageSize.height - 10
   );
 
-  // Save PDF
-  doc.save(
-    `SalarySlip_${period}_${salary.month || ""}_${salary.year || ""}.pdf`
-  );
+  doc.save(`SalarySlip_${period}_${salary.month}_${salary.year}.pdf`);
 };
 
 const ManagerDashboard = () => {
-  const [salaryData, setSalaryData] = useState(null);
-  const navigate = useNavigate(); // ✅ hook for redirect
+  const [salaryData, setSalaryData] = useState({ current: null, previous: null });
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const storedSalary = localStorage.getItem("salaryData");
-    if (storedSalary) {
-      setSalaryData(JSON.parse(storedSalary));
-    }
-  }, []);
+    const fetchSalary = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const managerId = localStorage.getItem("managerId"); // ✅ must be saved during login
+        // if (!token || !managerId) {
+        //   navigate("/login");
+        //   return;
+        // }
+
+        // Current date
+        const today = new Date();
+        const currentMonth = today.getMonth() + 1; // JS months are 0-based
+        const currentYear = today.getFullYear();
+
+        // Previous month
+        let prevMonth = currentMonth - 1;
+        let prevYear = currentYear;
+        if (prevMonth === 0) {
+          prevMonth = 12;
+          prevYear -= 1;
+        }
+
+        // Fetch current salary
+        const currentRes = await axios.get(
+          `https://labourpro-backend.onrender.com/api/salary/manager/${managerId}/${currentMonth}/${currentYear}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        // Fetch previous salary
+        const previousRes = await axios.get(
+          `https://labourpro-backend.onrender.com/api/salary/manager/${managerId}/${prevMonth}/${prevYear}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        setSalaryData({
+          current: currentRes.data,
+          previous: previousRes.data,
+        });
+      } catch (err) {
+        console.error("Error fetching salary:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSalary();
+  }, [navigate]);
 
   const handleLogout = () => {
-    localStorage.clear(); // ✅ clear all data (tokens, salary, etc.)
-    navigate("/login"); // ✅ redirect to login page
+    localStorage.clear();
+    navigate("/login");
   };
+
+  if (loading) return <p>Loading salary data...</p>;
 
   return (
     <div className="p-8 max-w-4xl mx-auto relative">
-      {/* ✅ Logout button */}
+      {/* Logout button */}
       <button
         onClick={handleLogout}
         className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
@@ -78,79 +121,62 @@ const ManagerDashboard = () => {
       </button>
 
       <h1 className="text-3xl font-bold mb-6">Manager Dashboard</h1>
-      {salaryData ? (
-        <div className="space-y-8">
-          {/* Current Month Salary */}
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-2xl font-semibold mb-4">
-              Current Month Salary
-            </h2>
-            {salaryData.current.message ? (
-              <p className="text-red-500">{salaryData.current.message}</p>
-            ) : (
-              <>
-                <p>Manager Name: {salaryData.current.workerName || "0"}</p>
-                <p>
-                  Month/Year: {salaryData.current.month || "0"}/
-                  {salaryData.current.year || "0"}
-                </p>
-                <p>Manager ID: {salaryData.current.managerId || "0"}</p>
-                <p>Base Salary: ₹{salaryData.current.baseSalary || "0"}</p>
-                <p>Advance: ₹{salaryData.current.advance || "0"}</p>
-                <p>Loan Taken: ₹{salaryData.current.loanTaken || "0"}</p>
-                <p>Loan Paid: ₹{salaryData.current.loanPaid || "0"}</p>
-                <p>
-                  Remaining Loan: ₹{salaryData.current.remainingLoan || "0"}
-                </p>
-                <p>Final Salary: ₹{salaryData.current.finalSalary || "0"}</p>
-                <button
-                  onClick={() => handleDownload(salaryData.current, "current")}
-                  className="mt-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-                >
-                  Download Current Slip
-                </button>
-              </>
-            )}
-          </div>
 
-          {/* Previous Month Salary */}
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-2xl font-semibold mb-4">
-              Previous Month Salary
-            </h2>
-            {salaryData.previous.message ? (
-              <p className="text-red-500">{salaryData.previous.message}</p>
-            ) : (
-              <>
-                <p>Manager Name: {salaryData.previous.workerName || 0}</p>
-                <p>
-                  Month/Year: {salaryData.previous.month || 0}/
-                  {salaryData.previous.year || 0}
-                </p>
-                <p>Manager ID: {salaryData.previous.managerId || 0}</p>
-                <p>Base Salary: ₹{salaryData.previous.baseSalary || 0}</p>
-                <p>Advance: ₹{salaryData.previous.advance || 0}</p>
-                <p>Loan Taken: ₹{salaryData.previous.loanTaken || 0}</p>
-                <p>Loan Paid: ₹{salaryData.previous.loanPaid || 0}</p>
-                <p>
-                  Remaining Loan: ₹{salaryData.previous.remainingLoan || 0}
-                </p>
-                <p>Final Salary: ₹{salaryData.previous.finalSalary || 0}</p>
-                <button
-                  onClick={() =>
-                    handleDownload(salaryData.previous, "previous")
-                  }
-                  className="mt-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
-                >
-                  Download Previous Slip
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      ) : (
-        <p>Loading salary data...</p>
-      )}
+      {/* Current Month Salary */}
+      <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+        <h2 className="text-2xl font-semibold mb-4">Current Month Salary</h2>
+        {salaryData.current?.message ? (
+          <p className="text-red-500">{salaryData.current.message}</p>
+        ) : (
+          <>
+            <p>Manager Name: {salaryData.current?.managerName || "N/A"}</p>
+            <p>
+              Month/Year: {salaryData.current?.month}/{salaryData.current?.year}
+            </p>
+            <p>Manager ID: {salaryData.current?.managerId || "N/A"}</p>
+            <p>Base Salary: ₹{salaryData.current?.baseSalary || "0"}</p>
+            <p>Advance: ₹{salaryData.current?.advance || "0"}</p>
+            <p>Loan Taken: ₹{salaryData.current?.loanTaken || "0"}</p>
+            <p>Loan Paid: ₹{salaryData.current?.loanPaid || "0"}</p>
+            <p>Remaining Loan: ₹{salaryData.current?.remainingLoan || "0"}</p>
+            <p>Final Salary: ₹{salaryData.current?.finalSalary || "0"}</p>
+            <button
+              onClick={() => handleDownload(salaryData.current, "current")}
+              className="mt-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+            >
+              Download Current Slip
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Previous Month Salary */}
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-2xl font-semibold mb-4">Previous Month Salary</h2>
+        {salaryData.previous?.message ? (
+          <p className="text-red-500">{salaryData.previous.message}</p>
+        ) : (
+          <>
+            <p>Manager Name: {salaryData.previous?.workerName || "N/A"}</p>
+            <p>
+              Month/Year: {salaryData.previous?.month}/{salaryData.previous?.year}
+            </p>
+            <p>Manager ID: {salaryData.previous?.managerId || "N/A"}</p>
+            <p>Base Salary: ₹{salaryData.previous?.baseSalary || "0"}</p>
+            <p>Advance: ₹{salaryData.previous?.advance || "0"}</p>
+            <p>Loan Taken: ₹{salaryData.previous?.loanTaken || "0"}</p>
+            <p>Loan Paid: ₹{salaryData.previous?.loanPaid || "0"}</p>
+            <p>Remaining Loan: ₹{salaryData.previous?.remainingLoan || "0"}</p>
+            <p>Final Salary: ₹{salaryData.previous?.finalSalary || "0"}</p>
+            <button
+              onClick={() => handleDownload(salaryData.previous, "previous")}
+              className="mt-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+            >
+              Download Previous Slip
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 };

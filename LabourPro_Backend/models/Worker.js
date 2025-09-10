@@ -23,7 +23,7 @@ const workerSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ["labour", "helper", "welder", "cnc operator", "foreman", "manager"],
+    enum: ["helper"],
     required: true,
   },
   rojPerHour: {

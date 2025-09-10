@@ -17,57 +17,52 @@ const Login = () => {
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setError("");
 
-    if (!form.role) {
-      setError("Please select a role");
+  try {
+    let endpoint;
+
+    if (form.role === "admin") {
+      endpoint = "https://labourpro-backend.onrender.com/api/auth/login";
+    } else if (form.role === "manager") {
+      endpoint = "https://labourpro-backend.onrender.com/api/auth/manager-login";
+    } else if (form.role === "helper") {
+      endpoint = "http://localhost:5000/api/auth/helper-login";
+    } else {
+      setError("⚠️ Please select a role before login.");
       return;
     }
 
-    try {
-      let endpoint;
-      switch (form.role) {
-        case "admin":
-          endpoint = "https://labourpro-backend.onrender.com/api/auth/login";
-          break;
-        case "manager":
-          endpoint = "https://labourpro-backend.onrender.com/api/auth/manager-login";
-          break;
-        case "worker":
-          endpoint = "https://labourpro-backend.onrender.com/api/auth/worker-login";
-          break;
-        default:
-          setError("Invalid role selected");
-          return;
-      }
+    console.log("🔗 Calling endpoint:", endpoint);
 
-      const res = await axios.post(endpoint, { email: form.email, password: form.password });
+    const res = await axios.post(endpoint, {
+      email: form.email,
+      password: form.password,
+    });
 
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("role", form.role);
-      localStorage.setItem("user", JSON.stringify(res.data.user || res.data.admin || res.data.manager || res.data.worker));
+    localStorage.setItem("token", res.data.token);
+    localStorage.setItem("role", form.role);
+    localStorage.setItem(
+      "user",
+      JSON.stringify(res.data.user || res.data.admin || res.data.manager || res.data.helper)
+    );
 
-      // For manager, store salary data and redirect to dashboard
-      if (form.role === "manager") {
-        localStorage.setItem("salaryData", JSON.stringify(res.data.salary));
-        navigate("/manager-dashboard");
-      } else {
-        // Navigate based on role (customize paths as needed)
-        switch (form.role) {
-          case "admin":
-            navigate("/dashboard");
-            break;
-          case "worker":
-            navigate("/worker-dashboard");
-            break;
-        }
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+    // Redirect based on role
+    if (form.role === "manager") {
+      navigate("/manager-dashboard");
+    } else if (form.role === "helper") {
+      navigate("/worker-dashboard");
+    } else if (form.role === "admin") {
+      navigate("/dashboard");
     }
-  };
+  } catch (err) {
+    console.error("❌ Login error:", err.response?.data || err.message);
+    setError(err.response?.data?.message || "Login failed");
+  }
+};
+
 
   // Forgot Password: Step 1 - Send OTP
   const handleSendOtp = async (e) => {
@@ -147,7 +142,7 @@ const Login = () => {
                   <option value="">-- Select Role --</option>
                   <option value="admin">Admin</option>
                   <option value="manager">Manager</option>
-                  <option value="worker">Worker</option>
+                  <option value="helper">helper</option>
                 </select>
               </div>
               <div>

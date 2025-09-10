@@ -1,7 +1,8 @@
 const Admin = require("../models/Admin");
 const Worker = require("../models/Worker"); // Assuming you have a Worker model for workers and managers
 const Manager = require("../models/Manager");
-const Salary = require("../models/ManagerSalary");
+const SalaryManager = require("../models/ManagerSalary");
+const SalaryWorker = require("../models/WorkerSalary");
 const Subscription = require("../models/Subscription");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -140,43 +141,48 @@ exports.loginAdmin = async (req, res) => {
     if (!email || !password)
       return res.status(400).json({ message: "Email and password are required" });
 
-    let user;
-    let role;
+    let role, user;
 
-    // Check if Admin
+    // 🔹 Check Admin
     user = await Admin.findOne({ email });
     if (user) {
       role = "admin";
     } else {
-      // Check if Manager (role: "manager" in Worker model)
+      // 🔹 Check Manager
       user = await Worker.findOne({ email, role: "manager" });
       if (user) {
         role = "manager";
+      } else {
+        // 🔹 Check Worker (role: "worker")
+        user = await Worker.findOne({ email, role: "worker" });
+        if (user) {
+          role = "worker";
+        }
       }
     }
 
     if (!user)
       return res.status(404).json({ message: "User not found" });
 
+    // 🔹 Password check
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch)
       return res.status(401).json({ message: "Invalid password" });
 
-    // For managers, get companyId from Worker model (assuming it exists)
-    const companyId = role === "admin" ? user.companyId : user.companyId; // Adjust if different
+    // 🔹 CompanyId (both admin & workers have one)
+    const companyId = user.companyId;
 
-    // Subscription check (for both admin and manager via company)
+    // 🔹 Subscription check (using Admin record)
     const admin = role === "admin" ? user : await Admin.findOne({ companyId });
-    if (!admin) {
+    if (!admin)
       return res.status(404).json({ message: "Company not found" });
-    }
 
     const now = new Date();
     if (admin.subscriptionExpiry && admin.subscriptionExpiry < now) {
       return res.status(403).json({ message: "Subscription expired. Please renew your plan." });
     }
 
-    // Generate token with role and companyId
+    // 🔹 Generate JWT
     const token = jwt.sign(
       { id: user._id, companyId, role },
       process.env.JWT_SECRET,
@@ -191,18 +197,19 @@ exports.loginAdmin = async (req, res) => {
         email: user.email,
         companyId,
         role,
-        ...(role === "admin" ? {
-          planType: admin.planType,
-          subscriptionExpiry: admin.subscriptionExpiry,
-        } : {}), // Add admin-specific fields if needed
-      }
+        ...(role === "admin"
+          ? {
+              planType: admin.planType,
+              subscriptionExpiry: admin.subscriptionExpiry,
+            }
+          : {}),
+      },
     });
   } catch (err) {
     console.error("Login Error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 // Worker Login (for regular workers)
 exports.loginWorker = async (req, res) => {
@@ -221,13 +228,12 @@ exports.loginWorker = async (req, res) => {
       return res.status(403).json({ message: "Use manager login endpoint" });
     }
 
-    const isMatch = worker.password
-      ? await bcrypt.compare(password, worker.password)
-      : false;
-
+      // Verify password (plain text comparison - INSECURE; use hashing in production)
+    const isMatch = password === worker.password; // Direct string compare
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid password" });
     }
+    // Rest of your code
 
     // Optional: Check company's subscription expiry via admin (assuming worker has companyId)
     const admin = await Admin.findOne({ companyId: worker.companyId });
@@ -244,14 +250,43 @@ exports.loginWorker = async (req, res) => {
       { expiresIn: "7d" }
     );
 
+    // Fetch salary details (current and previous month)
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth() + 1; // 1-12
+    const currentYear = currentDate.getFullYear();
+    const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+    const previousYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+
+    const currentSalary = await SalaryWorker.findOne({
+      workerId: worker._id,
+      month: currentMonth,
+      year: currentYear,
+      companyId: worker.companyId // Company-wise filter
+    });
+
+    const previousSalary = await SalaryWorker.findOne({
+      workerId: worker._id,
+      month: previousMonth,
+      year: previousYear,
+      companyId: worker.companyId // Company-wise filter
+    });
+
+    // Fetch other details (e.g., manager profile; expand as needed)
+    const workerDetails = {
+      name: worker.name,
+      email: worker.email,
+      role: worker.role,
+      companyId: worker.companyId,
+      // Add more fields like number, etc., if available in model
+    };
+
     res.json({
-      message: "Worker login successful",
+      message: "worker login successful",
       token,
-      worker: {
-        name: worker.name,
-        email: worker.email,
-        companyId: worker.companyId,
-        role: worker.role,
+      manager: workerDetails,
+      salary: {
+        current: currentSalary || { message: "No data for current month" },
+        previous: previousSalary || { message: "No data for previous month" }
       }
     });
   } catch (err) {
@@ -307,14 +342,14 @@ exports.loginManager = async (req, res) => {
     const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
     const previousYear = currentMonth === 1 ? currentYear - 1 : currentYear;
 
-    const currentSalary = await Salary.findOne({
+    const currentSalary = await SalaryManager.findOne({
       managerId: manager._id,
       month: currentMonth,
       year: currentYear,
       companyId: manager.companyId // Company-wise filter
     });
 
-    const previousSalary = await Salary.findOne({
+    const previousSalary = await SalaryManager.findOne({
       managerId: manager._id,
       month: previousMonth,
       year: previousYear,

@@ -20,7 +20,7 @@ const addSalary = async (req, res) => {
     const companyId = manager.companyId;
     const baseSalary = manager.salary;
 
-    // ✅ Prevent duplicate salary for same month
+    // ✅ Prevent duplicate salary for same month/year
     const exists = await ManagerSalary.findOne({ managerId, month, year });
     if (exists) {
       return res.status(400).json({ error: "Salary already exists for this month" });
@@ -31,12 +31,10 @@ const addSalary = async (req, res) => {
 
     let carryForwardLoan = 0;
     if (lastSalary) {
-      // Previous month’s remaining loan = oldRemaining - paid
-      const adjustedRemaining = lastSalary.loanRemaining;
-      carryForwardLoan = adjustedRemaining > 0 ? adjustedRemaining : 0;
+      carryForwardLoan = lastSalary.loanRemaining > 0 ? lastSalary.loanRemaining : 0;
     }
 
-    // ✅ Create new salary
+    // ✅ Create new salary with managerName
     const newSalary = new ManagerSalary({
       companyId,
       managerId,
@@ -47,7 +45,7 @@ const addSalary = async (req, res) => {
       loanTaken: 0,
       loanPaid: 0,
       loanRemaining: carryForwardLoan,
-      finalSalary: baseSalary, // reduce from salary
+      finalSalary: baseSalary - carryForwardLoan, // adjust final salary if needed
     });
 
     await newSalary.save();
@@ -57,6 +55,7 @@ const addSalary = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
 
 // PUT /salary/:id/update
 const updateSalary = async (req, res) => {

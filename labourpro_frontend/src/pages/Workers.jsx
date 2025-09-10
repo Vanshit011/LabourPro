@@ -113,12 +113,7 @@ const Workers = () => {
 
   // List of common worker roles
   const workerRoles = [
-    "labour",
     "helper",
-    "welder",
-    "cnc operator",
-    "foreman",
-    "manager",
   ];
 
   const togglePasswordVisibility = (id) => {
