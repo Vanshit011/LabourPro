@@ -17,54 +17,143 @@ const Login = () => {
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  setError("");
+  // for Manager login use issue  
+  //   const handleSubmit = async (e) => {
 
-  try {
-    let endpoint;
+  //   e.preventDefault();
+  //   setError("");
 
-    if (form.role === "admin") {
-      endpoint = "https://labourpro-backend.onrender.com/api/auth/login";
-    } else if (form.role === "manager") {
-      endpoint = "https://labourpro-backend.onrender.com/api/auth/manager-login";
-    } else if (form.role === "helper") {
-      endpoint = "http://localhost:5000/api/auth/helper-login";
-    } else {
-      setError("⚠️ Please select a role before login.");
-      return;
-    }
+  //   try {
+  //     let endpoint;
 
-    console.log("🔗 Calling endpoint:", endpoint);
+  //     // Determine endpoint based on role
+  //     if (form.role === "admin") {
+  //       endpoint = "https://labourpro-backend.onrender.com/api/auth/login";
+  //     } else if (form.role === "manager") {
+  //       endpoint = "https://labourpro-backend.onrender.com/api/auth/manager-login";
+  //     } else if (form.role === "helper") {
+  //       endpoint = "https://labourpro-backend.onrender.com/api/auth/helper-login";
+  //     } else {
+  //       setError("⚠️ Please select a role before login.");
+  //       return;
+  //     }
 
-    const res = await axios.post(endpoint, {
-      email: form.email,
-      password: form.password,
-    });
+  //     // Send login request
+  //     const res = await axios.post(endpoint, {
+  //       email: form.email,
+  //       password: form.password,
+  //     });
 
-    localStorage.setItem("token", res.data.token);
-    localStorage.setItem("role", form.role);
-    localStorage.setItem(
-      "user",
-      JSON.stringify(res.data.user || res.data.admin || res.data.manager || res.data.helper)
-    );
+  //     const token = res.data.token;
+  //     localStorage.setItem("token", token);
+  //     localStorage.setItem("role", form.role);
 
-    // Redirect based on role
-    if (form.role === "manager") {
-      navigate("/manager-dashboard");
-    } else if (form.role === "helper") {
-      navigate("/worker-dashboard");
-    } else if (form.role === "admin") {
-      navigate("/dashboard");
-    }
-  } catch (err) {
-    console.error("❌ Login error:", err.response?.data || err.message);
-    setError(err.response?.data?.message || "Login failed");
-  }
-};
+  //     let userId, userObj;
 
+  //     // Manager login
+  //     if (form.role === "manager") {
+  //       userObj = res.data.manager;
+  //       userId = res.data.salary?.current?.managerId || userObj?._id;
+
+  //       if (!userId) {
+  //         console.error("Manager ID missing in response:", res.data);
+  //         setError("Manager ID missing. Contact support.");
+  //         return;
+  //       }
+
+  //       localStorage.setItem("managerId", userId);
+  //       localStorage.setItem("user", JSON.stringify(userObj));
+  //       navigate("/manager-dashboard");
+
+  //     } 
+  //     // Helper login
+  //     else if (form.role === "helper") {
+  //       userObj = res.data.helper || res.data.manager; // fallback if backend sends 'manager'
+  //       userId = userObj?._id;
+
+  //       if (!userId) {
+  //         console.error("Helper ID missing in response:", res.data);
+  //         setError("Helper ID missing. Contact support.");
+  //         return;
+  //       }
+
+  //       localStorage.setItem("helperId", userId);
+  //       localStorage.setItem("user", JSON.stringify(userObj));
+  //       navigate("/worker-dashboard");
+
+  //     } 
+  //     // Admin login
+  //     else if (form.role === "admin") {
+  //       userObj = res.data.user; // backend sends 'user' object
+  //       userId = userObj?._id;
+
+  //       if (!userId) {
+  //         console.error("Admin ID missing in response:", res.data);
+  //         setError("Admin ID missing. Contact support.");
+  //         return;
+  //       }
+
+  //       localStorage.setItem("adminId", userId);
+  //       localStorage.setItem("user", JSON.stringify(userObj));
+  //       navigate("/dashboard");
+  //     }
+
+  //   } catch (err) {
+  //     console.error("❌ Login error:", err.response?.data || err.message);
+  //     setError(err.response?.data?.message || "Login failed");
+  //   }
+  // };
 
   // Forgot Password: Step 1 - Send OTP
+  
+  // for Admin login use issue
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    try {
+      let endpoint;
+
+      if (form.role === "admin") {
+        endpoint = "https://labourpro-backend.onrender.com/api/auth/login";
+      } else if (form.role === "manager") {
+        endpoint = "https://labourpro-backend.onrender.com/api/auth/manager-login";
+      } else if (form.role === "helper") {
+        endpoint = "http://localhost:5000/api/auth/helper-login";
+      } else {
+        setError("⚠️ Please select a role before login.");
+        return;
+      }
+
+      console.log("🔗 Calling endpoint:", endpoint);
+
+      const res = await axios.post(endpoint, {
+        email: form.email,
+        password: form.password,
+      });
+
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("role", form.role);
+      localStorage.setItem(
+        "user",
+        JSON.stringify(res.data.user || res.data.admin || res.data.manager || res.data.helper)
+      );
+
+      // Redirect based on role
+      if (form.role === "manager") {
+        navigate("/manager-dashboard");
+      } else if (form.role === "helper") {
+        navigate("/worker-dashboard");
+      } else if (form.role === "admin") {
+        navigate("/dashboard");
+      }
+    } catch (err) {
+      console.error("❌ Login error:", err.response?.data || err.message);
+      setError(err.response?.data?.message || "Login failed");
+    }
+  };
+
+
   const handleSendOtp = async (e) => {
     e.preventDefault();
     setForgotError("");

@@ -1,7 +1,7 @@
 const Manager = require("../models/Manager");
 const ManagerSalary = require("../models/ManagerSalary");
 const PDFDocument = require("pdfkit");
-const archiver = require("archiver");
+// const archiver = require("archiver");
 const mongoose = require("mongoose");
 
 
@@ -138,74 +138,132 @@ const downloadSalaryPDF = async (req, res) => {
 
 // GET /salary/:month/:year/download
 // ✅ Helper: create PDF for one salary and return Buffer
-const createPDFBuffer = (salary) => {
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ margin: 50 });
-    const chunks = [];
+// const createPDFBuffer = (salary) => {
+//   return new Promise((resolve, reject) => {
+//     const doc = new PDFDocument({ margin: 40, size: "A4" });
+//     const chunks = [];
 
-    doc.on("data", (chunk) => chunks.push(chunk));
-    doc.on("end", () => resolve(Buffer.concat(chunks)));
-    doc.on("error", reject);
+//     doc.on("data", (chunk) => chunks.push(chunk));
+//     doc.on("end", () => resolve(Buffer.concat(chunks)));
+//     doc.on("error", reject);
 
-    // 📄 Salary content
-    doc.fontSize(20).text(`Salary Report`, { align: "center" });
-    doc.moveDown();
+//     // 🎨 HEADER (Blue Banner with LabourPro Title)
+//     doc.rect(0, 0, doc.page.width, 80)
+//       .fill("#1E3A8A"); // Dark blue
 
-    // Correctly access populated manager name
-    doc.fontSize(14).text(`Manager: ${salary.managerName || salary.managerId?.name || "N/A"}`);
-    doc.text(`Month/Year: ${salary.month}/${salary.year}`);
-    doc.text(`Base Salary: ₹${salary.baseSalary}`);
-    doc.text(`Advance: ₹${salary.advance}`);
-    doc.text(`Loan Taken: ₹${salary.loanTaken}`);
-    doc.text(`Loan Paid: ₹${salary.loanPaid}`);
-    doc.text(`Remaining Loan: ₹${(salary.loanTaken || 0) - (salary.loanPaid || 0)}`);
-    doc.text(`Final Salary: ₹${salary.finalSalary}`);
-    doc.moveDown();
+//     doc.fillColor("white")
+//       .fontSize(26)
+//       .text("LabourPro", { align: "center", valign: "center" });
 
-    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, { align: "right" });
+//     doc.moveDown(2);
+
+//     // 📄 Title
+//     doc.fillColor("#1E3A8A")
+//       .fontSize(20)
+//       .text("Salary Slip", { align: "center" });
+//     doc.moveDown(1);
+
+//     // 📌 Salary Details Box
+//     doc.fillColor("black")
+//       .fontSize(14);
+
+//     const details = [
+//       { label: "Manager", value: salary.managerName || salary.managerId?.name || "N/A" },
+//       { label: "Month/Year", value: `${salary.month}/${salary.year}` },
+//       { label: "Base Salary", value: `₹${salary.baseSalary}` },
+//       { label: "Advance", value: `₹${salary.advance}` },
+//       { label: "Loan Taken", value: `₹${salary.loanTaken}` },
+//       { label: "Loan Paid", value: `₹${salary.loanPaid}` },
+//       { label: "Remaining Loan", value: `₹${(salary.loanTaken || 0) - (salary.loanPaid || 0)}` },
+//       { label: "Final Salary", value: `₹${salary.finalSalary}` },
+//     ];
+
+//     // Draw details in neat format
+//     details.forEach((item) => {
+//       doc.font("Helvetica-Bold").text(`${item.label}: `, { continued: true });
+//       doc.font("Helvetica").text(item.value);
+//       doc.moveDown(0.5);
+//     });
+
+//     doc.moveDown(2);
+
+//     // 📅 Footer
+//     doc.fontSize(12)
+//       .fillColor("gray")
+//       .text(`Generated on: ${new Date().toLocaleDateString()}`, { align: "right" });
+
+//     doc.moveDown(1);
+//     doc.fillColor("#1E3A8A")
+//       .fontSize(10)
+//       .text("This is a computer-generated salary slip by LabourPro", { align: "center" });
+
+//     doc.end();
+//   });
+// };
+
+// ✅ Route to download all manager salary slips in ONE PDF
+const downloadAllSalaries = async (req, res) => {
+  try {
+    const salaries = await ManagerSalary.find().populate("managerId", "name"); // populate manager name
+
+    // PDF setup
+    const doc = new PDFDocument({ margin: 50, size: "A4" });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", "attachment; filename=All_Manager_Salaries.pdf");
+
+    doc.pipe(res);
+
+    // Loop through each salary and add a new page
+    for (let i = 0; i < salaries.length; i++) {
+      const salary = salaries[i];
+
+      // 🔷 Blue Header
+      doc.rect(0, 0, doc.page.width, 60).fill("#004aad");
+      doc.fillColor("white").fontSize(20).text("LabourPro - Manager Salary Slip", 50, 20);
+
+      // Reset text color
+      doc.fillColor("black").fontSize(12);
+
+      // Manager & Period
+      doc.moveDown(2);
+      doc.text(`Manager: ${salary.managerId?.name || "N/A"}`);
+      doc.text(`Month/Year: ${salary.month}/${salary.year}`);
+      doc.text(`Generated: ${new Date().toLocaleDateString()}`);
+
+      // Salary details
+      doc.moveDown().fontSize(14).text("Salary Details", { underline: true });
+      doc.moveDown(0.5);
+
+      const details = [
+        ["Base Salary", salary.baseSalary],
+        ["Advance", salary.advance],
+        ["Loan Taken", salary.loanTaken],
+        ["Loan Paid", salary.loanPaid],
+        ["Remaining Loan", (salary.loanTaken || 0) - (salary.loanPaid || 0)],
+        ["Final Salary", salary.finalSalary],
+      ];
+
+      details.forEach(([label, value]) => {
+        doc.fontSize(12).text(`${label}: ₹${value}`);
+      });
+
+      // Footer
+      doc.moveDown(2);
+      doc.fontSize(10).fillColor("gray").text("This is a system-generated salary slip.", {
+        align: "center",
+      });
+
+      // Add page if not last
+      if (i < salaries.length - 1) doc.addPage();
+    }
 
     doc.end();
-  });
-};
-// ✅ Main API: Download ALL salaries in ZIP
-const downloadAllSalariesZIP = async (req, res) => {
-  try {
-    const { month, year } = req.params;
-
-    const salaries = await ManagerSalary.find({ month, year }).populate("managerId", "name");
-
-    if (!salaries || salaries.length === 0) {
-      return res.status(404).json({ error: "No salaries found for this month/year" });
-    }
-
-    // ZIP headers
-    res.setHeader("Content-Type", "application/zip");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename="All_Salaries_${month}_${year}.zip"`
-    );
-
-    const archive = archiver("zip", { zlib: { level: 9 } });
-    archive.pipe(res);
-
-    // Generate PDF for each salary and append
-    for (const salary of salaries) {
-      const salaryData = {
-        ...salary.toObject(),
-        managerName: salary.managerId?.name || "N/A",
-      };
-      const pdfBuffer = await createPDFBuffer(salaryData);
-      archive.append(pdfBuffer, {
-        name: `${salaryData.managerName}_${month}_${year}.pdf`,
-      });
-    }
-
-    await archive.finalize();
-  } catch (err) {
-    console.error("❌ ZIP Generation Error:", err);
-    res.status(500).json({ error: "Failed to generate ZIP", details: err.message });
+  } catch (error) {
+    console.error("PDF generation error:", error);
+    res.status(500).json({ message: "Error generating salary slips PDF" });
   }
-};
+}
 
 
 // Worker Salary Controllers
@@ -359,6 +417,52 @@ const getWorkerSalary = async (req, res) => {
   }
 };
 
+// 📌 Download Worker Salary PDF
+const downloadWorkerSalaryPDF = async (req, res) => {
+  try {
+    const { workerId, month, year } = req.params;
+
+    // Find salary entry for this worker
+    const salary = await WorkerSalary.findOne({ workerId, month, year }).populate("workerId", "name");
+    if (!salary) return res.status(404).json({ error: "Salary not found" });
+
+    const doc = new PDFDocument({ margin: 50 });
+
+    // Set headers for download
+    res.setHeader("Content-Disposition", `attachment; filename=WorkerSalary_${month}_${year}.pdf`);
+    res.setHeader("Content-Type", "application/pdf");
+
+    // Pipe PDF to response
+    doc.pipe(res);
+
+    // 🎨 Title
+    doc.fontSize(20).text(`Worker Salary Report`, { align: "center" });
+    doc.moveDown();
+
+    // 📝 Salary details
+    doc.fontSize(14).text(`Worker: ${salary.workerId?.name || "N/A"}`);
+    doc.text(`Month/Year: ${month}/${year}`);
+    doc.text(`Base Salary: ₹${salary.baseSalary}`);
+    doc.text(`Advance: ₹${salary.advance}`);
+    doc.text(`Loan Taken: ₹${salary.loanTaken}`);
+    doc.text(`Loan Paid: ₹${salary.loanPaid}`);
+    doc.text(`Remaining Loan: ₹${(salary.loanTaken || 0) - (salary.loanPaid || 0)}`);
+    doc.text(`Total Hours Worked: ${salary.totalHours}`);
+    doc.text(`Days Worked: ${salary.daysWorked}`);
+    doc.text(`Final Salary: ₹${salary.finalSalary}`);
+    doc.moveDown();
+
+    // 📅 Footer
+    doc.fontSize(12).text(`Generated on: ${new Date().toLocaleDateString()}`, { align: "right" });
+
+    doc.end();
+  } catch (err) {
+    console.error("❌ Worker PDF Error:", err);
+    res.status(500).json({ error: "Failed to generate Worker Salary PDF" });
+  }
+};
+
+
 // POST /worker-salary/recalculate
 // salaryController.js
 // const Salary = require("../models/WorkerSalary");
@@ -409,5 +513,6 @@ module.exports = {
   getWorkerSalary,
   // recalculateWorkerSalary,
   downloadSalaryPDF,
-  downloadAllSalariesZIP
+  downloadAllSalaries,
+  downloadWorkerSalaryPDF
 };

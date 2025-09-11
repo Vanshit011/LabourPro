@@ -151,68 +151,68 @@ const ManagerSalary = () => {
   };
 
   // ✅ Update salary (calculate increments and send to backend)
-const handleUpdateSalary = async () => {
-  try {
-    if (!salaryData?._id) {
-      alert("⚠️ No salary to update. Add first!");
-      return;
+  const handleUpdateSalary = async () => {
+    try {
+      if (!salaryData?._id) {
+        alert("⚠️ No salary to update. Add first!");
+        return;
+      }
+
+      // Parse additional inputs
+      const advanceIncrement = parseFloat(additionalAdvance) || 0;
+      const loanTakenIncrement = parseFloat(additionalLoanTaken) || 0;
+      const loanPaidIncrement = parseFloat(additionalLoanPaid) || 0;
+
+      // ✅ Calculate current remaining loan
+      const currentRemaining = (salaryData.loanTaken || 0) - (salaryData.loanPaid || 0);
+
+      // ✅ Rule: New loan only if no old loan pending
+      // if (loanTakenIncrement > 0 && currentRemaining > 0) {
+      //   alert("⚠️ Cannot take a new loan until the current loan is fully paid.");
+      //   return;
+      // }
+
+      // ✅ Block empty updates
+      if (
+        advanceIncrement === 0 &&
+        loanTakenIncrement === 0 &&
+        loanPaidIncrement === 0
+      ) {
+        alert("⚠️ No changes detected.");
+        return;
+      }
+
+      const updates = {
+        advance: advanceIncrement,
+        loanTaken: loanTakenIncrement,
+        loanPaid: loanPaidIncrement,
+      };
+
+      const token = localStorage.getItem("token");
+      const res = await axios.put(
+        `https://labourpro-backend.onrender.com/api/salary/${salaryData._id}/update`,
+        updates,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Clear inputs
+      setAdditionalAdvance("");
+      setAdditionalLoanTaken("");
+      setAdditionalLoanPaid("");
+
+      alert("✅ Salary Updated");
+      setSalaryData(res.data.salary);
+
+      // Refresh data
+      fetchSalary();
+    } catch (err) {
+      console.error("❌ Error updating salary:", err.response?.data || err.message);
+      alert("❌ " + (err.response?.data?.error || "Error updating salary"));
     }
-
-    // Parse additional inputs
-    const advanceIncrement = parseFloat(additionalAdvance) || 0;
-    const loanTakenIncrement = parseFloat(additionalLoanTaken) || 0;
-    const loanPaidIncrement = parseFloat(additionalLoanPaid) || 0;
-
-    // ✅ Calculate current remaining loan
-    const currentRemaining = (salaryData.loanTaken || 0) - (salaryData.loanPaid || 0);
-
-    // ✅ Rule: New loan only if no old loan pending
-    // if (loanTakenIncrement > 0 && currentRemaining > 0) {
-    //   alert("⚠️ Cannot take a new loan until the current loan is fully paid.");
-    //   return;
-    // }
-
-    // ✅ Block empty updates
-    if (
-      advanceIncrement === 0 &&
-      loanTakenIncrement === 0 &&
-      loanPaidIncrement === 0
-    ) {
-      alert("⚠️ No changes detected.");
-      return;
-    }
-
-    const updates = {
-      advance: advanceIncrement,
-      loanTaken: loanTakenIncrement,
-      loanPaid: loanPaidIncrement,
-    };
-
-    const token = localStorage.getItem("token");
-    const res = await axios.put(
-      `https://labourpro-backend.onrender.com/api/salary/${salaryData._id}/update`,
-      updates,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    // Clear inputs
-    setAdditionalAdvance("");
-    setAdditionalLoanTaken("");
-    setAdditionalLoanPaid("");
-
-    alert("✅ Salary Updated");
-    setSalaryData(res.data.salary);
-
-    // Refresh data
-    fetchSalary();
-  } catch (err) {
-    console.error("❌ Error updating salary:", err.response?.data || err.message);
-    alert("❌ " + (err.response?.data?.error || "Error updating salary"));
-  }
-};
+  };
 
   // ✅ Download PDF
-  const handleDownloadPDF = (salaryData, month, year) => {
+ const handleDownloadPDF = (salaryData, month, year) => {
     if (!salaryData) {
       alert("No salary data available");
       return;
@@ -337,41 +337,32 @@ const handleUpdateSalary = async () => {
     const fileName = `${safeName}_SalarySlip_${monthName}_${year}.pdf`;
 
     doc.save(fileName);
-  };
+  }; 
 
   // ✅ Download all slips for selected month/year
-const DownloadAllSlips = async () => {
-  try {
-    const month = new Date().getMonth() + 1; // current month
-    const year = new Date().getFullYear();   // current year
+  const DownloadAllSlips = async () => {
+    try {
+      const response = await axios.get(
+        "https://labourpro-backend.onrender.com/api/salary/downloadAll/" + month + "/" + year,
+        { responseType: "blob" } // 👈 required for binary (PDF)
+      );
 
-    const response = await axios.get(
-      `https://labourpro-backend.onrender.com/api/salary/downloadAll/${month}/${year}`,
-      { responseType: "blob" } // 👈 important for binary files
-    );
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "All_Manager_Salaries.pdf");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
 
-    // Create a blob from response
-    const blob = new Blob([response.data], { type: "application/zip" });
-    const url = window.URL.createObjectURL(blob);
 
-    // Create a link to trigger download
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute(
-      "download",
-      `All_Salaries_${month}_${year}.zip`
-    );
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
-
-    console.log("✅ ZIP downloaded successfully");
-  } catch (err) {
-    console.error("❌ Error downloading all salary slips:", err);
-  }
-};
-
+      console.log("✅ PDF downloaded successfully");
+    } catch (err) {
+      console.error("❌ Error downloading all salary slips:", err);
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -478,12 +469,12 @@ const DownloadAllSlips = async () => {
 
             {/* Buttons */}
             <div className="flex justify-end gap-4">
-              <button
+           {/*    <button
                 onClick={() => DownloadAllSlips({ month, year })}
                 className="bg-green-600 text-white px-6 py-2 rounded-lg shadow hover:bg-green-700 transition duration-200"
               >
                 📥 Download All Salary Slips
-              </button>
+              </button>  */}
 
 
               {!salaryData ? (
