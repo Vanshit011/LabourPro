@@ -51,8 +51,8 @@ const MonthlySalaryView = () => {
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6 bg-white rounded-2xl shadow-lg font-sans text-gray-800">
-      <h2 className="text-3xl font-bold mb-6 flex items-center justify-center gap-2">
-        <span className="text-3xl">📅</span> View Monthly Salary
+      <h2 className="text-2xl font-bold mb-6 text-blue-700 flex items-center justify-center gap-2">
+        <span className="text-3xl">📅</span> View Monthly
       </h2>
 
       {/* Filters */}

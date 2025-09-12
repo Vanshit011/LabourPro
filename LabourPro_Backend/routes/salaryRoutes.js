@@ -1,12 +1,13 @@
 const express = require("express");
 const router = express.Router();
-const { addSalary, updateSalary, getSalary, addWorkerSalary, updateWorkerSalary, getWorkerSalary,downloadSalaryPDF, downloadWorkerSalaryPDF, downloadAllSalaries } = require("../controllers/salaryController");
+const { addSalary, updateSalary, getSalary, deleteManagerSalary, addWorkerSalary, updateWorkerSalary, deleteWorkerSalary, getWorkerSalary, downloadSalaryPDF, downloadWorkerSalaryPDF, downloadAllSalaries } = require("../controllers/salaryController");
 const Manager = require("../models/Manager");
 
 // manager routes
 router.get('/downloadAll/:month/:year', downloadAllSalaries);
 router.post('/add', addSalary);
 router.put('/:id/update', updateSalary);
+router.delete('/manager/:id/delete', deleteManagerSalary);
 router.get('/:managerId/:month/:year', getSalary);
 router.get('/:managerId/:month/:year/download', downloadSalaryPDF);
 router.get('/getManager', async (req, res) => {
@@ -22,6 +23,7 @@ router.get('/getManager', async (req, res) => {
 
 router.post('/worker/add', addWorkerSalary);
 router.put('/worker/:id/update', updateWorkerSalary);
+router.delete('/worker/:id/delete', deleteWorkerSalary);
 router.get('/worker/:workerId/:month/:year/download', downloadWorkerSalaryPDF);
 router.get('/worker/:workerId/:month/:year', getWorkerSalary);
 // router.post('/worker/recalculate', recalculateWorkerSalary);

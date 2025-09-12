@@ -49,13 +49,13 @@ const Dashboard = () => {
       )}
 
       {/* Main content */}
-      <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+      <main className="flex-1 pt-12 p-4 md:p-8 overflow-y-auto">
         <div className="max-w-4xl mx-auto space-y-8">
           <h1 className="text-3xl md:text-4xl font-bold text-blue-700 flex items-center gap-2">
             <span className="text-4xl animate-wave">👋</span> Welcome, {admin.name}
           </h1>
 
-          <div className="bg-white border border-gray-200 shadow-lg rounded-2xl p-6 md:p-8 space-y-6 transition-all duration-300 hover:shadow-xl">
+          <div className="bg-white border border-gray-200 shadow-lg rounded-2xl p-4 sm:p-6 md:p-8 space-y-6 transition-all duration-300 hover:shadow-xl">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                 <span className="text-gray-600 font-medium flex items-center gap-2">
@@ -93,7 +93,7 @@ const Dashboard = () => {
             <div
               className={`text-center font-bold text-lg py-3 rounded-lg ${
                 daysLeft <= 0 ? "text-red-600 bg-red-50" : "text-green-700 bg-green-50"
-              } flex items-center justify-center gap-2`}
+              } flex items-center justify-center gap-2 transition-colors duration-300`}
             >
               {daysLeft <= 0 ? "🚫 Subscription Expired" : `✅ ${daysLeft} day(s) left`}
             </div>

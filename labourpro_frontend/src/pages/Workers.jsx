@@ -139,7 +139,7 @@ const Workers = () => {
       {/* Main content (scrollable area) */}
       <div className="flex-1 flex flex-col pt-14 md:p-8 overflow-y-auto h-screen">
         <div className="max-w-6xl mx-auto w-full pb-10">
-          <h2 className="text-3xl font-bold mb-6 text-gray-800">👷 Manage Workers</h2>
+          <h2 className="text-3xl font-bold mb-6 ml-6 text-gray-800">👷 Workers</h2>
 
           {/* Form Card */}
           <div className="bg-white rounded-2xl shadow p-6 mb-8">

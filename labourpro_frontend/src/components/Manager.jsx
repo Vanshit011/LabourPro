@@ -122,7 +122,7 @@ const Managers = () => {
       <div className="flex-1 pt-5 overflow-y-auto">
         <div className="max-w-6xl mx-auto">
           <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center">
-            <span className="mr-2">💼</span> Manage Managers
+            <span className="mr-2 ml-6">💼</span> Managers
           </h2>
 
           {/* Manager Form */}

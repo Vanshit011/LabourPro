@@ -7,11 +7,12 @@ const mongoose = require("mongoose");
 
 // Manager Salary Controllers
 // POST /salary/add
+// ======================== ADD SALARY ========================
 const addSalary = async (req, res) => {
   try {
     const { managerId, month, year } = req.body;
 
-    // ✅ Fetch Manager details
+    // ✅ Fetch Manager
     const manager = await Manager.findById(managerId);
     if (!manager) {
       return res.status(404).json({ error: "Manager not found" });
@@ -34,7 +35,7 @@ const addSalary = async (req, res) => {
       carryForwardLoan = lastSalary.loanRemaining > 0 ? lastSalary.loanRemaining : 0;
     }
 
-    // ✅ Create new salary with managerName
+    // ✅ Create new salary
     const newSalary = new ManagerSalary({
       companyId,
       managerId,
@@ -45,45 +46,82 @@ const addSalary = async (req, res) => {
       loanTaken: 0,
       loanPaid: 0,
       loanRemaining: carryForwardLoan,
-      finalSalary: baseSalary - carryForwardLoan, // adjust final salary if needed
+      finalSalary: baseSalary - carryForwardLoan, // deduct carry-forward loan
     });
 
     await newSalary.save();
 
-    res.json({ message: "Salary added successfully", salary: newSalary });
+    res.json({ message: "Salary added successfully ✅", salary: newSalary });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-
-// PUT /salary/:id/update
+// ======================== UPDATE SALARY ========================
 const updateSalary = async (req, res) => {
   try {
-    const { advance = 0, loanTaken = 0, loanPaid = 0, month, year } = req.body;
+    const { advance = 0, loanTaken = 0, loanPaid = 0 } = req.body;
 
-    let salary = await ManagerSalary.findById(req.params.id);
-    if (!salary) return res.status(404).json({ error: "Salary entry not found" });
-
-    // ✅ Ensure loanTaken applies only to the same month/year
-    if (salary.month === month && salary.year === year) {
-      salary.loanTaken += loanTaken;
+    const salary = await ManagerSalary.findById(req.params.id);
+    if (!salary) {
+      return res.status(404).json({ error: "Salary entry not found" });
     }
 
-    // Always update advance & loanPaid (they’re month-specific)
-    salary.advance += advance;
-    salary.loanPaid += loanPaid;
+    // ✅ Convert to numbers
+    const advanceVal = Number(advance) || 0;
+    const loanTakenVal = Number(loanTaken) || 0;
+    const loanPaidVal = Number(loanPaid) || 0;
 
-    // Recalculate remaining loan
-    salary.loanRemaining = salary.loanTaken - salary.loanPaid;
+    // ✅ Store old loanRemaining for carry-forward adjustment
+    const oldLoanRemaining = salary.loanRemaining || 0;
 
-    // Recalculate final salary
-    salary.finalSalary = salary.baseSalary - salary.advance - salary.loanPaid;
+    // ✅ Update salary fields
+    salary.loanTaken = (salary.loanTaken || 0) + loanTakenVal;
+    salary.advance = (salary.advance || 0) + advanceVal;
+    salary.loanPaid = (salary.loanPaid || 0) + loanPaidVal;
+
+    // ✅ Recalculate remaining loan
+    salary.loanRemaining = (salary.loanTaken || 0) - (salary.loanPaid || 0);
+
+    // ✅ Recalculate final salary
+    salary.finalSalary = (salary.baseSalary || 0) - (salary.advance || 0) - (salary.loanRemaining || 0);
 
     await salary.save();
 
-    res.json({ message: "Salary updated successfully", salary });
+    // ✅ Update next month salary carry-forward loan if exists
+    const nextSalary = await ManagerSalary.findOne({
+      managerId: salary.managerId,
+      year: salary.year,
+      month: salary.month + 1
+    });
+
+    if (nextSalary) {
+      // Adjust next month's loanRemaining
+      nextSalary.loanRemaining = (nextSalary.loanRemaining || 0) - oldLoanRemaining + salary.loanRemaining;
+      nextSalary.finalSalary = (nextSalary.baseSalary || 0) - (nextSalary.advance || 0) - (nextSalary.loanRemaining || 0);
+      await nextSalary.save();
+    }
+
+    res.json({ message: "Salary updated successfully ✅", salary });
   } catch (error) {
+    console.error("❌ Update Salary Error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+// DELETE /manager-salary/:id
+const deleteManagerSalary = async (req, res) => {
+  try {
+    const salary = await ManagerSalary.findByIdAndDelete(req.params.id);
+
+    if (!salary) {
+      return res.status(404).json({ error: "Salary entry not found" });
+    }
+
+    res.json({ message: "Manager salary deleted successfully", salary });
+  } catch (error) {
+    console.error("❌ Delete Manager Salary Error:", error.message);
     res.status(500).json({ error: error.message });
   }
 };
@@ -387,11 +425,12 @@ const updateWorkerSalary = async (req, res) => {
     let salary = await WorkerSalary.findById(req.params.id);
     if (!salary) return res.status(404).json({ error: "Salary entry not found" });
 
+    // Increment all values properly
     salary.advance += advance || 0;
     salary.loanTaken += loanTaken || 0;
     salary.loanPaid += loanPaid || 0;
 
-    // Recalculate loan remaining and final salary
+    // Recalculate
     salary.loanRemaining = salary.loanTaken - salary.loanPaid;
     salary.finalSalary = salary.baseSalary - salary.advance - salary.loanPaid;
 
@@ -462,56 +501,34 @@ const downloadWorkerSalaryPDF = async (req, res) => {
   }
 };
 
+// DELETE /worker-salary/:id/delete
+const deleteWorkerSalary = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-// POST /worker-salary/recalculate
-// salaryController.js
-// const Salary = require("../models/WorkerSalary");
+    const salary = await WorkerSalary.findById(id);
+    if (!salary) {
+      return res.status(404).json({ error: "Salary entry not found" });
+    }
 
-// const recalculateWorkerSalary = async (req, res) => {
-//   try {
-//     const { salaryId } = req.params;
-//     const { newBaseSalary } = req.body; // Expect base salary in body
+    await WorkerSalary.findByIdAndDelete(id);
 
-//     const salary = await WorkerSalary.findById(salaryId);
-//     if (!salary) {
-//       return res.status(404).json({ error: "Salary record not found" });
-//     }
-
-//     // Update baseSalary safely
-//     if (typeof newBaseSalary === "number" && !isNaN(newBaseSalary)) {
-//       salary.baseSalary = newBaseSalary;
-//     }
-
-//     // Default all numeric fields
-//     const baseSalary = Number(salary.baseSalary) || 0;
-//     const advance = Number(salary.advance) || 0;
-//     const loanTaken = Number(salary.loanTaken) || 0;
-//     const loanPaid = Number(salary.loanPaid) || 0;
-
-//     // Recalculate final salary
-//     salary.finalSalary = baseSalary - advance - loanTaken + loanPaid;
-
-//     await salary.save();
-
-//     res.json({
-//       message: "Salary recalculated",
-//       salary,
-//     });
-//   } catch (err) {
-//     console.error("❌ Salary recalculation failed:", err);
-//     res.status(500).json({ error: "Failed to recalculate salary" });
-//   }
-// };
-
+    res.json({ message: "Salary entry deleted successfully" });
+  } catch (error) {
+    console.error("❌ Delete Salary Error:", error.message, error.stack);
+    res.status(500).json({ error: "Failed to delete salary entry" });
+  }
+};
 
 module.exports = {
   addSalary,
   updateSalary,
   getSalary,
+  deleteManagerSalary,
   addWorkerSalary,
   updateWorkerSalary,
+  deleteWorkerSalary,
   getWorkerSalary,
-  // recalculateWorkerSalary,
   downloadSalaryPDF,
   downloadAllSalaries,
   downloadWorkerSalaryPDF

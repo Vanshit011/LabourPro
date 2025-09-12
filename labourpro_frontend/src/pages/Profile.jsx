@@ -100,7 +100,7 @@ const Profile = () => {
       )}
 
       {/* Main content */}
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 relative">
+      <div className="flex-1 overflow-y-auto pt-10 p-4 md:p-6 relative">
         <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-lg p-6 md:p-8 space-y-8">
           <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
             <span className="text-blue-600 text-4xl">👤</span> My Profile

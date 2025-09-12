@@ -36,8 +36,8 @@ function App() {
     "/dashboard/profile",
     "/dashboard/Worker&Manager",
     "/dashboard/WorkerAttendance",
-    "/dashboard/ManagerSalaries&Loans",
-    "/dashboard/WorkerSalaries&Loans",
+    "/dashboard/ManagerSalaries",
+    "/dashboard/WorkerSalaries",
     "/dashboard/contactRenewPlan",
     "/manager-dashboard",
     "/worker-dashboard"
@@ -96,7 +96,7 @@ function App() {
             }
           />
           <Route
-            path="/dashboard/managerSalaries&Loans"
+            path="/dashboard/managerSalaries"
             element={
               <ProtectedRoute>
                 <ManagerSalary />
@@ -104,7 +104,7 @@ function App() {
             }
           />
           <Route
-            path="/dashboard/WorkerSalaries&Loans"
+            path="/dashboard/WorkerSalaries"
             element={
               <ProtectedRoute>
                 <WorkerSalary />

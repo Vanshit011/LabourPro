@@ -94,8 +94,8 @@ const AttendancePage = () => {
       <main className="flex-1 overflow-y-auto p-4 md:p-6">
         <div className="max-w-5xl mx-auto space-y-8">
           <div className="bg-white shadow-lg rounded-2xl p-6">
-            <h2 className="text-3xl font-bold text-center text-blue-700 mb-6 flex items-center justify-center gap-2">
-              <span className="text-3xl">📝</span> Add Worker Attendance
+            <h2 className="text-2xl font-bold text-center text-blue-700 mb-6 flex items-center justify-center gap-2">
+              <span className="text-2xl ml-3">📝</span> Add Attendance
             </h2>
             <form
               onSubmit={handleSubmit}

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Sidebar from "../components/Sidebar";
 import { jsPDF } from "jspdf";
-import JSZip from "jszip";
 
 const ManagerSalary = () => {
   const [managers, setManagers] = useState([]);
@@ -89,66 +88,68 @@ const ManagerSalary = () => {
   };
 
   // ✅ Add new salary (manual, if no record exists for selected month/year)
-  const handleAddSalary = async () => {
-    try {
-      if (salaryData) {
-        alert("⚠️ Salary already exists for this month/year.");
-        return;
-      }
+ const handleAddSalary = async () => {
+  try {
+    if (salaryData) {
+      alert("⚠️ Salary already exists for this month/year.");
+      return;
+    }
 
-      // Pre-check for attempting to add new loan when previous is incomplete
-      const userLoanTakenInc = parseFloat(additionalLoanTaken) || 0;
-      const prevRemaining = previousSalary ? (previousSalary.loanTaken || 0) - (previousSalary.loanPaid || 0) : 0;
-      if (prevRemaining > 0 && userLoanTakenInc > 0) {
-        alert("⚠️ Cannot add new loan until previous month's loan is complete.");
-        return;
-      }
+    const token = localStorage.getItem("token");
 
-      const token = localStorage.getItem("token");
-      const res = await axios.post(
-        "https://labourpro-backend.onrender.com/api/salary/add",
-        { managerId, month, year },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      let newSalary = res.data.salary;
+    // ✅ Add new manager salary
+    const res = await axios.post(
+      "https://labourpro-backend.onrender.com/api/salary/add",
+      { managerId, month, year },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-      // Prepare updates for carry-over and user additionals
-      let updates = { advance: 0, loanTaken: 0, loanPaid: 0 };
+    let newSalary = res.data.salary;
 
-      // Carry over previous remaining loan
-      if (previousSalary && prevRemaining !== 0) {
+    // Prepare updates for carry-over and user additionals
+    let updates = { advance: 0, loanTaken: 0, loanPaid: 0 };
+
+    // Carry over previous remaining loan
+    if (previousSalary) {
+      const prevRemaining = (previousSalary.loanTaken || 0) - (previousSalary.loanPaid || 0);
+      if (prevRemaining !== 0) {
         updates.loanTaken = prevRemaining > 0 ? prevRemaining : 0;
         updates.loanPaid = prevRemaining < 0 ? -prevRemaining : 0;
       }
-
-      // Add user additionals (loanTaken already checked)
-      updates.advance += parseFloat(additionalAdvance) || 0;
-      updates.loanTaken += userLoanTakenInc;
-      updates.loanPaid += parseFloat(additionalLoanPaid) || 0;
-
-      // If there are updates, perform the update
-      if (updates.advance !== 0 || updates.loanTaken !== 0 || updates.loanPaid !== 0) {
-        const updateRes = await axios.put(
-          `https://labourpro-backend.onrender.com/api/salary/${newSalary._id}/update`,
-          updates,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        newSalary = updateRes.data.salary;
-      }
-
-      // Clear additional inputs
-      setAdditionalAdvance("");
-      setAdditionalLoanTaken("");
-      setAdditionalLoanPaid("");
-
-      alert("✅ Salary Added");
-      setSalaryData(newSalary);
-      fetchSalary(); // Refresh display
-    } catch (err) {
-      console.error("❌ Error adding salary:", err.response?.data || err.message);
-      alert("❌ " + (err.response?.data?.error || "Error adding salary"));
     }
-  };
+
+    // Add user additionals
+    updates.advance += parseFloat(additionalAdvance) || 0;
+    updates.loanTaken += parseFloat(additionalLoanTaken) || 0;
+    updates.loanPaid += parseFloat(additionalLoanPaid) || 0;
+
+    // If there are updates, perform the update
+    if (updates.advance !== 0 || updates.loanTaken !== 0 || updates.loanPaid !== 0) {
+      const updateRes = await axios.put(
+        `https://labourpro-backend.onrender.com/api/salary/${newSalary._id}/update`,
+        updates,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      newSalary = updateRes.data.salary;
+    }
+
+    // Notify other components that salary was updated
+    window.dispatchEvent(new Event("attendanceUpdated"));
+
+    // Clear additional inputs
+    setAdditionalAdvance("");
+    setAdditionalLoanTaken("");
+    setAdditionalLoanPaid("");
+
+    alert("✅ Manager Salary Added");
+    setSalaryData(newSalary);
+    fetchSalary(); // Refresh display
+  } catch (err) {
+    console.error("❌ Error adding manager salary:", err.response?.data || err.message);
+    alert("❌ " + (err.response?.data?.error || "Error adding manager salary"));
+  }
+};
+
 
   // ✅ Update salary (calculate increments and send to backend)
   const handleUpdateSalary = async () => {
@@ -158,19 +159,10 @@ const ManagerSalary = () => {
         return;
       }
 
-      // Parse additional inputs
-      const advanceIncrement = parseFloat(additionalAdvance) || 0;
-      const loanTakenIncrement = parseFloat(additionalLoanTaken) || 0;
-      const loanPaidIncrement = parseFloat(additionalLoanPaid) || 0;
-
-      // ✅ Calculate current remaining loan
-      const currentRemaining = (salaryData.loanTaken || 0) - (salaryData.loanPaid || 0);
-
-      // ✅ Rule: New loan only if no old loan pending
-      // if (loanTakenIncrement > 0 && currentRemaining > 0) {
-      //   alert("⚠️ Cannot take a new loan until the current loan is fully paid.");
-      //   return;
-      // }
+      // ✅ Parse inputs safely
+      const advanceIncrement = Number(additionalAdvance) || 0;
+      const loanTakenIncrement = Number(additionalLoanTaken) || 0;
+      const loanPaidIncrement = Number(additionalLoanPaid) || 0;
 
       // ✅ Block empty updates
       if (
@@ -182,10 +174,13 @@ const ManagerSalary = () => {
         return;
       }
 
+      // ✅ Prepare request body (include month/year for loanTaken logic in backend)
       const updates = {
         advance: advanceIncrement,
         loanTaken: loanTakenIncrement,
         loanPaid: loanPaidIncrement,
+        month: salaryData.month,
+        year: salaryData.year,
       };
 
       const token = localStorage.getItem("token");
@@ -195,24 +190,46 @@ const ManagerSalary = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Clear inputs
+      // ✅ Reset form fields
       setAdditionalAdvance("");
       setAdditionalLoanTaken("");
       setAdditionalLoanPaid("");
 
-      alert("✅ Salary Updated");
+      // ✅ Show success
+      alert("✅ Manager Salary Updated");
+
+      // ✅ Update local state with new salary
       setSalaryData(res.data.salary);
 
-      // Refresh data
+      // ✅ Refresh from backend (optional if salaryData already updated)
       fetchSalary();
     } catch (err) {
       console.error("❌ Error updating salary:", err.response?.data || err.message);
-      alert("❌ " + (err.response?.data?.error || "Error updating salary"));
+      alert("❌ " + (err.response?.data?.error || "Error updating manager salary"));
+    }
+  };
+
+  // ✅ Delete salary
+  const deleteSalary = async (salaryId) => {
+    if (!window.confirm("⚠️ Are you sure you want to delete this salary entry?")) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete(
+        `https://labourpro-backend.onrender.com/api/salary/manager/${salaryId}/delete`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert("✅ Salary entry deleted");
+      fetchSalary(); // Refresh salary list
+    } catch (err) {
+      console.error("❌ Error deleting salary:", err.response?.data || err.message);
+      alert("❌ " + (err.response?.data?.error || "Error deleting salary"));
     }
   };
 
   // ✅ Download PDF
- const handleDownloadPDF = (salaryData, month, year) => {
+  const handleDownloadPDF = (salaryData, month, year) => {
     if (!salaryData) {
       alert("No salary data available");
       return;
@@ -337,32 +354,32 @@ const ManagerSalary = () => {
     const fileName = `${safeName}_SalarySlip_${monthName}_${year}.pdf`;
 
     doc.save(fileName);
-  }; 
+  };
 
   // ✅ Download all slips for selected month/year
-  const DownloadAllSlips = async () => {
-    try {
-      const response = await axios.get(
-        "https://labourpro-backend.onrender.com/api/salary/downloadAll/" + month + "/" + year,
-        { responseType: "blob" } // 👈 required for binary (PDF)
-      );
+  // const DownloadAllSlips = async () => {
+  //   try {
+  //     const response = await axios.get(
+  //       "https://labourpro-backend.onrender.com/api/salary/downloadAll/" + month + "/" + year,
+  //       { responseType: "blob" } // 👈 required for binary (PDF)
+  //     );
 
-      const blob = new Blob([response.data], { type: "application/pdf" });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", "All_Manager_Salaries.pdf");
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+  //     const blob = new Blob([response.data], { type: "application/pdf" });
+  //     const url = window.URL.createObjectURL(blob);
+  //     const link = document.createElement("a");
+  //     link.href = url;
+  //     link.setAttribute("download", "All_Manager_Salaries.pdf");
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     link.remove();
+  //     window.URL.revokeObjectURL(url);
 
 
-      console.log("✅ PDF downloaded successfully");
-    } catch (err) {
-      console.error("❌ Error downloading all salary slips:", err);
-    }
-  };
+  //     console.log("✅ PDF downloaded successfully");
+  //   } catch (err) {
+  //     console.error("❌ Error downloading all salary slips:", err);
+  //   }
+  // };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -378,10 +395,10 @@ const ManagerSalary = () => {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 p-4 md:p-6 overflow-y-auto">
+      <div className="flex-1 p-4 md:p-6 overflow-y-auto mt-2">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center">
-            <span className="mr-2">💰</span> Salary Management
+          <h2 className="text-2xl font-bold text-blue-700 mb-6 flex items-center">
+            <span className="mr-2 ml-9">💰</span> Salary Management
           </h2>
 
           {/* Card */}
@@ -469,7 +486,7 @@ const ManagerSalary = () => {
 
             {/* Buttons */}
             <div className="flex justify-end gap-4">
-           {/*    <button
+              {/*    <button
                 onClick={() => DownloadAllSlips({ month, year })}
                 className="bg-green-600 text-white px-6 py-2 rounded-lg shadow hover:bg-green-700 transition duration-200"
               >
@@ -516,13 +533,15 @@ const ManagerSalary = () => {
               >
                 📄 Download PDF
               </button>
+              <button onClick={() => deleteSalary(salaryData._id)} className="bg-red-600 text-white px-6 py-2 rounded-lg shadow hover:bg-red-700 transition duration-200 ml-4">
+                🗑️ Delete Salary
+              </button>
 
-
-              {((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)) > 0 && (
+              {/* {((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)) > 0 && (
                 <p className="mt-4 text-red-600 bg-red-50 p-3 rounded-lg">
                   <b>Warning:</b> Remaining loan: {(salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)}. Cannot add new loans until cleared.
                 </p>
-              )}
+              )} */}
               {((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)) < 0 && (
                 <p className="mt-4 text-green-600 bg-green-50 p-3 rounded-lg">
                   <b>Note:</b> Overpaid by {-((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0))}.

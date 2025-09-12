@@ -179,23 +179,20 @@ const WorkerSalary = () => {
         return;
       }
 
-      // Calculate increments from additional inputs
       const advanceIncrement = parseFloat(additionalAdvance) || 0;
       const loanTakenIncrement = parseFloat(additionalLoanTaken) || 0;
       const loanPaidIncrement = parseFloat(additionalLoanPaid) || 0;
 
-      // Check if trying to add new loan when loan is not complete
-      const currentRemaining = (salaryData.loanTaken || 0) - (salaryData.loanPaid || 0);
-      if (currentRemaining > 0 && loanTakenIncrement > 0) {
-        alert("⚠️ Cannot add new loan until current loan is complete.");
-        return;
-      }
-
-      if (advanceIncrement === 0 && loanTakenIncrement === 0 && loanPaidIncrement === 0) {
+      if (
+        advanceIncrement === 0 &&
+        loanTakenIncrement === 0 &&
+        loanPaidIncrement === 0
+      ) {
         alert("⚠️ No changes detected.");
         return;
       }
 
+      // ✅ send only increments (backend already adds them)
       const updates = {
         advance: advanceIncrement,
         loanTaken: loanTakenIncrement,
@@ -209,10 +206,8 @@ const WorkerSalary = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // After adding/updating salary
       window.dispatchEvent(new Event("attendanceUpdated"));
 
-      // Clear additional inputs
       setAdditionalAdvance("");
       setAdditionalLoanTaken("");
       setAdditionalLoanPaid("");
@@ -220,7 +215,6 @@ const WorkerSalary = () => {
       alert("✅ Salary Updated");
       setSalaryData(res.data.salary);
 
-      // Refetch to update display with new totals
       fetchSalary();
     } catch (err) {
       console.error("❌ Error updating salary:", err.response?.data || err.message);
@@ -228,32 +222,50 @@ const WorkerSalary = () => {
     }
   };
 
-  // ✅ Refresh salary (recalculate based on attendance and base salary)
-  const handleRefreshSalary = async () => {
-    try {
-      if (!workerId || !month || !year) {
-        alert("⚠️ Please select worker, month, and year");
-        return;
-      }
+  const deleteSalary = async (salaryId) => {
+    if (!window.confirm("⚠️ Are you sure you want to delete this salary entry?")) return;
 
+    try {
       const token = localStorage.getItem("token");
-      const res = await axios.post(
-        "https://labourpro-backend.onrender.com/api/salary/worker/recalculate",
-        { workerId, month, year },
+      await axios.delete(
+        `https://labourpro-backend.onrender.com/api/salary/worker/${salaryId}/delete`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert("✅ Salary recalculated");
-      setSalaryData(res.data.salary);
-      setBaseSalary(res.data.salary.baseSalary.toString());
-
-      // refresh display
-      fetchSalary();
+      alert("✅ Salary entry deleted");
+      fetchSalary(); // Refresh salary list
     } catch (err) {
-      console.error("❌ Error refreshing salary:", err.response?.data || err.message);
-      alert("❌ Failed to refresh salary");
+      console.error("❌ Error deleting salary:", err.response?.data || err.message);
+      alert("❌ " + (err.response?.data?.error || "Error deleting salary"));
     }
   };
+
+  // ✅ Refresh salary (recalculate based on attendance and base salary)
+  // const handleRefreshSalary = async () => {
+  //   try {
+  //     if (!workerId || !month || !year) {
+  //       alert("⚠️ Please select worker, month, and year");
+  //       return;
+  //     }
+
+  //     const token = localStorage.getItem("token");
+  //     const res = await axios.post(
+  //       "https://labourpro-backend.onrender.com/api/salary/worker/recalculate",
+  //       { workerId, month, year },
+  //       { headers: { Authorization: `Bearer ${token}` } }
+  //     );
+
+  //     alert("✅ Salary recalculated");
+  //     setSalaryData(res.data.salary);
+  //     setBaseSalary(res.data.salary.baseSalary.toString());
+
+  //     // refresh display
+  //     fetchSalary();
+  //   } catch (err) {
+  //     console.error("❌ Error refreshing salary:", err.response?.data || err.message);
+  //     alert("❌ Failed to refresh salary");
+  //   }
+  // };
 
   // ✅ Download PDF
   const generateWorkerSalaryPDF = (salaryData, month, year, managers = []) => {
@@ -396,10 +408,10 @@ const WorkerSalary = () => {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 p-4 md:p-6 overflow-y-auto">
+      <div className="flex-1 p-4 md:p-6 overflow-y-auto mt-2">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-800 mb-6 flex items-center">
-            <span className="mr-2">💰</span> Salary Management
+          <h2 className="text-2xl font-bold text-blue-700 mb-6 flex items-center">
+            <span className="mr-2 ml-9">💰</span> Salary Management
           </h2>
 
           {/* Card */}
@@ -536,11 +548,14 @@ const WorkerSalary = () => {
                 📄 Download PDF
               </button>
 
-              {((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)) > 0 && (
+              <button onClick={() => deleteSalary(salaryData._id)} className="bg-red-600 text-white px-6 py-2 rounded-lg shadow hover:bg-red-700 transition duration-200 ml-4">
+                🗑️ Delete Salary
+              </button>
+              {/* {((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)) > 0 && (
                 <p className="mt-4 text-red-600 bg-red-50 p-3 rounded-lg">
                   <b>Warning:</b> Remaining loan: {(salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)}. Cannot add new loans until cleared.
                 </p>
-              )}
+              )} */}
               {((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)) < 0 && (
                 <p className="mt-4 text-green-600 bg-green-50 p-3 rounded-lg">
                   <b>Note:</b> Overpaid by {-((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0))}.

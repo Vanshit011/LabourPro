@@ -111,8 +111,8 @@ const ViewAttendanceByDate = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-6 bg-white rounded-2xl shadow-lg">
-      <h2 className="text-3xl font-bold text-center mb-6 flex items-center justify-center gap-2">
-        <span className="text-3xl">📅</span> View Attendance by Date
+      <h2 className="text-2xl font-bold text-blue-700 text-center mb-6 flex items-center justify-center gap-2">
+        <span className="text-3xl">📅</span>check Attendance 
       </h2>
 
       <div className="flex flex-col sm:flex-row items-center gap-4 mb-8 justify-center">

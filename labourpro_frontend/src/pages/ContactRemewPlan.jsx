@@ -1,158 +1,160 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from "axios";
+import Sidebar from '../components/Sidebar';
 
-function ContactRemewPlan() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: 'renewal',
-    message: '',
-  });
 
+// utils/getAdmin.js
+const getAdmin = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await axios.get("https://labourpro-backend.onrender.com/api/admin/me", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.data;
+  } catch (err) {
+    console.error("Error fetching admin:", err);
+    return null;
+  }
+};
+
+export const RenewContent = () => {
+  const [admin, setAdmin] = useState(null);
+  const [newPlan, setNewPlan] = useState('monthly');
+  const [message, setMessage] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+  useEffect(() => {
+    const load = async () => {
+      const data = await getAdmin();
+      setAdmin(data);
+    };
+    load();
+  }, []);
+
+  const handleSendWhatsApp = () => {
+    if (!admin) return;
+
+    const planPrice = newPlan === 'monthly' ? 500 : 5000;
+
+    const text = `
+Hello, I want to upgrade my plan.
+
+📧 Email: ${admin.email}
+🏢 Company: ${admin.companyName}
+🔁 Current Plan: ${admin.planType}
+📅 Expiry: ${new Date(admin.subscriptionExpiry).toLocaleDateString()}
+📈 Upgrade To: ${newPlan === 'monthly' ? 'Monthly' : 'Yearly'}
+💰 Plan Price: ₹${planPrice}
+📝 Message: ${message}
+`.trim();
+
+    const encoded = encodeURIComponent(text);
+    const link = `https://wa.me/919499558009?text=${encoded}`;
+    window.open(link, '_blank');
+
+    // Reset form fields after sending
+    setNewPlan('');
+    setMessage('');
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // TODO: Integrate backend API for plan updates
-    alert(`Request submitted! Subject: ${formData.subject}. We'll process your plan update.`);
-    setFormData({ name: '', email: '', subject: 'renewal', message: '' });
-  };
-
+ if (!admin)
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gray-50">
+        <p className="text-lg font-semibold text-gray-600 animate-pulse">Loading plan...</p>
+      </div>
+    );
   return (
-    <div className="flex h-screen bg-gradient-to-r from-gray-100 to-gray-200 font-sans text-gray-800">
+    <div className="flex min-h-screen bg-gradient-to-br from-blue-50 to-white">
       {/* Sidebar */}
-      <aside className={`fixed md:relative inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
-        <div className="p-6">
-          <h2 className="text-xl font-bold text-indigo-600 mb-4">Plan Dashboard</h2>
-          <ul className="space-y-3">
-            <li><a href="#current-plan" className="text-gray-600 hover:text-indigo-600 font-medium">View Current Plan</a></li>
-            <li><a href="#renew" className="text-gray-600 hover:text-indigo-600 font-medium">Renew Plan</a></li>
-            <li><a href="#extend" className="text-gray-600 hover:text-indigo-600 font-medium">Extend Trial</a></li>
-            <li><a href="#cancel" className="text-gray-600 hover:text-indigo-600 font-medium">Cancel Plan</a></li>
-            <li><a href="#support" className="text-gray-600 hover:text-indigo-600 font-medium">Contact Support</a></li>
-            <li>
-              <a 
-                href="https://wa.me/919499558009?text=Hello%2C%20I%20need%20help%20with%20my%20Remew%20Plan" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="text-green-600 hover:text-green-800 font-medium flex items-center"
-              >
-                Contact via WhatsApp (9499558009)
-              </a>
-            </li>
-          </ul>
-        </div>
-      </aside>
+      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
-      {/* Overlay for mobile when sidebar is open */}
+      {/* Overlay for mobile */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-40 z-40 md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Main Content */}
-      <main className="flex-1 p-6 overflow-y-auto">
-        {/* Hamburger Menu for Mobile */}
-        <button 
-          className="md:hidden text-2xl p-2 mb-4 bg-indigo-600 text-white rounded-md"
-          onClick={() => setSidebarOpen(true)}
-        >
-          ☰
-        </button>
+      <div className="flex-grow p-6 md:p-8 flex items-center justify-center">
+        <div className="w-full max-w-lg bg-white rounded-xl shadow-lg p-6 md:p-8 space-y-6">
+          <h1 className="text-2xl md:text-3xl font-bold text-center text-blue-800">Renew or Upgrade Plan</h1>
 
-        <h1 className="text-3xl font-bold mb-6 text-center md:text-left">Contact Remew Plan</h1>
-        
-        <section className="bg-white p-6 rounded-lg shadow-md mb-6">
-          <h2 className="text-2xl font-semibold mb-4">Company Information</h2>
-          <p><strong>Company Name:</strong> Remew Plan</p>
-          <p><strong>Purpose:</strong> Manage your plan renewals, updates, extensions, or cancellations easily.</p>
-        </section>
-        
-        <section className="bg-white p-6 rounded-lg shadow-md mb-6">
-          <h2 className="text-2xl font-semibold mb-4">Your Current Plan</h2>
-          <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-            <p><strong>Plan Type:</strong> Free Trial</p>
-            <p><strong>Expiry Date:</strong> September 18, 2025</p>
-            <p><strong>Status:</strong> Active</p>
-            <p>Use the form below to request updates like renewal or extension.</p>
+          {/* Plan Info Card */}
+          <div className="bg-blue-50 p-4 rounded-lg space-y-2 text-blue-900">
+            <p><strong>Company:</strong> {admin.companyName}</p>
+            <p><strong>Current Plan:</strong> {admin.planType}</p>
+            <p><strong>Expires on:</strong> {new Date(admin.subscriptionExpiry).toLocaleDateString()}</p>
+            <p><strong>Status:</strong> {new Date(admin.subscriptionExpiry) > new Date() ? 'Active ✅' : 'Expired ❌'}</p>
           </div>
-        </section>
-        
-        <section className="bg-white p-6 rounded-lg shadow-md mb-6">
-          <h2 className="text-2xl font-semibold mb-4">Send a Message or Update Request</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <label htmlFor="name" className="block font-medium">Your Name</label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
 
-            <label htmlFor="email" className="block font-medium">Email Address</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
+          {/* Select New Plan */}
+          <label className="block text-sm font-medium text-blue-800 mb-2">Select New Plan</label>
+          {/* <select
+            value={newPlan}
+            onChange={(e) => setNewPlan(e.target.value)}
+            className="w-full p-3 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+          >
+            <option value="monthly">Monthly Plan</option>
+            <option value="yearly">Yearly Plan</option>
+          </select> */}
 
-            <label htmlFor="subject" className="block font-medium">Subject</label>
-            <select
-              id="subject"
-              name="subject"
-              value={formData.subject}
-              onChange={handleChange}
-              required
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="renewal">Renew Plan</option>
-              <option value="extend">Extend Free Trial</option>
-              <option value="cancel">Cancel Free Plan</option>
-              <option value="other">Other Update</option>
-            </select>
+          {/* Select New Plan (Radio buttons) */}
+          <div className="flex gap-6 justify-center mb-4">
+            <label className="inline-flex items-center cursor-pointer text-blue-800 font-medium">
+              <input
+                type="radio"
+                name="plan"
+                value="monthly"
+                checked={newPlan === 'monthly'}
+                onChange={() => setNewPlan('monthly')}
+                className="form-radio h-5 w-5 text-blue-600"
+              />
+              <span className="ml-2">Monthly Plan</span>
+            </label>
+            <label className="inline-flex items-center cursor-pointer text-blue-800 font-medium">
+              <input
+                type="radio"
+                name="plan"
+                value="yearly"
+                checked={newPlan === 'yearly'}
+                onChange={() => setNewPlan('yearly')}
+                className="form-radio h-5 w-5 text-blue-600"
+              />
+              <span className="ml-2">Yearly Plan</span>
+            </label>
+          </div>
 
-            <label htmlFor="message" className="block font-medium">Message</label>
-            <textarea
-              id="message"
-              name="message"
-              rows="5"
-              value={formData.message}
-              onChange={handleChange}
-              required
-              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
 
-            <button 
-              type="submit" 
-              className="w-full py-3 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700 transition-colors"
-            >
-              Submit Request
-            </button>
-          </form>
-        </section>
-        
-        <section className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-2xl font-semibold mb-4">How It Works</h2>
-          <p>If you request to <strong>extend your free trial</strong>, we'll review and update your expiry date.</p>
-          <p>For <strong>cancellations</strong>, expect a confirmation email before deactivation.</p>
-          <p>All requests are processed within 24-48 hours. You'll receive a notification: “Your plan update has been processed!”</p>
-        </section>
-      </main>
+          {/* Price Display */}
+          <div className="text-blue-800 font-semibold text-center">
+            Plan Price: ₹{newPlan === 'monthly' ? '500' : '5000'} / {newPlan}
+          </div>
+
+          {/* Message Textarea */}
+          <label className="block text-sm font-medium text-blue-800 mb-2">Message</label>
+          <textarea
+            rows="4"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            className="w-full p-3 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+            placeholder="Write any additional info..."
+          />
+
+          {/* Send Button */}
+          <button
+            onClick={handleSendWhatsApp}
+            className="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-300 shadow-md"
+          >
+            Send Request via WhatsApp
+          </button>
+        </div>
+      </div>
     </div>
   );
-}
+};
 
-export default ContactRemewPlan;
+export default RenewContent;
