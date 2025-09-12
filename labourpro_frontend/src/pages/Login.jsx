@@ -28,11 +28,11 @@ const Login = () => {
 
   //     // Determine endpoint based on role
   //     if (form.role === "admin") {
-  //       endpoint = "https://labourpro-backend.onrender.com/api/auth/login";
+  //       endpoint = "http://localhost:5000/api/auth/login";
   //     } else if (form.role === "manager") {
-  //       endpoint = "https://labourpro-backend.onrender.com/api/auth/manager-login";
+  //       endpoint = "http://localhost:5000/api/auth/managerlogin";
   //     } else if (form.role === "helper") {
-  //       endpoint = "https://labourpro-backend.onrender.com/api/auth/helper-login";
+  //       endpoint = "http://localhost:5000/api/auth/helperlogin";
   //     } else {
   //       setError("⚠️ Please select a role before login.");
   //       return;
@@ -104,7 +104,6 @@ const Login = () => {
   //   }
   // };
 
-  // Forgot Password: Step 1 - Send OTP
   
   // for Admin login use issue
   const handleSubmit = async (e) => {
@@ -153,14 +152,17 @@ const Login = () => {
     }
   };
 
-
+  // Forgot Password: Step 1 - Send OTP
   const handleSendOtp = async (e) => {
     e.preventDefault();
     setForgotError("");
     setForgotSuccess("");
 
     try {
-      await axios.post("https://labourpro-backend.onrender.com/api/auth/forgot-password", { email: forgotEmail });
+      await axios.post(
+        "http://localhost:5000/api/auth/forgotpassword",
+        { email: forgotEmail, role: form.role } // add role if needed
+      );
       setForgotSuccess("OTP sent to your email.");
       setForgotStep(2); // Move to OTP verification
     } catch (err) {
@@ -175,7 +177,7 @@ const Login = () => {
     setForgotSuccess("");
 
     try {
-      await axios.post("https://labourpro-backend.onrender.com/api/auth/verify-otp", { email: forgotEmail, otp });
+      await axios.post("http://localhost:5000/api/auth/verifyotp", { email: forgotEmail, otp });
       setForgotSuccess("OTP verified.");
       setForgotStep(3); // Move to set new password
     } catch (err) {
@@ -194,7 +196,7 @@ const Login = () => {
     }
 
     try {
-      await axios.post("https://labourpro-backend.onrender.com/api/auth/reset-password", { email: forgotEmail, newPassword });
+      await axios.post("http://localhost:5000/api/auth/resetpassword", { email: forgotEmail, newPassword });
       setForgotSuccess("Password reset successful. You can now login.");
       setForgotStep(0); // Back to login
     } catch (err) {

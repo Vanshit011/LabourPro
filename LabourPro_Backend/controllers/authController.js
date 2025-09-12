@@ -199,9 +199,9 @@ exports.loginAdmin = async (req, res) => {
         role,
         ...(role === "admin"
           ? {
-              planType: admin.planType,
-              subscriptionExpiry: admin.subscriptionExpiry,
-            }
+            planType: admin.planType,
+            subscriptionExpiry: admin.subscriptionExpiry,
+          }
           : {}),
       },
     });
@@ -228,7 +228,7 @@ exports.loginWorker = async (req, res) => {
       return res.status(403).json({ message: "Use manager login endpoint" });
     }
 
-      // Verify password (plain text comparison - INSECURE; use hashing in production)
+    // Verify password (plain text comparison - INSECURE; use hashing in production)
     const isMatch = password === worker.password; // Direct string compare
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid password" });
@@ -388,9 +388,8 @@ const otps = {}; // { email: { otp: string, expires: Date } }
 const transporter = nodemailer.createTransport({
   service: 'gmail', // Or your provider (e.g., SendGrid)
   auth: {
-    user: process.env.EMAIL_USER, // Access from env
-    pass: process.env.EMAIL_PASS
-
+    user: "vanshitpatel10@gmail.com",
+    pass: "cnnf elcb gndw aqdc"
   }
 });
 
@@ -409,12 +408,18 @@ exports.forgotPassword = async (req, res) => {
     otps[email] = { otp, expires };
 
     // Send email with OTP
-    await transporter.sendMail({
-      from: 'your-email@gmail.com',
-      to: email,
-      subject: 'Password Reset OTP',
-      text: `Your OTP for password reset is ${otp}. It expires in 10 minutes.`
-    });
+    try {
+      await transporter.sendMail({
+        from: "vanshitpatel10@gmail.com",
+        to: email,
+        subject: 'Password Reset OTP',
+        text: `Your OTP for password reset is ${otp}. It expires in 10 minutes.`
+      });
+    } catch (err) {
+      console.error("Nodemailer Error:", err);
+      return res.status(500).json({ message: "Failed to send OTP email" });
+    }
+
 
     res.json({ message: "OTP sent to your email" });
   } catch (err) {

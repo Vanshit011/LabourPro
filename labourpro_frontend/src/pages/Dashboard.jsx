@@ -56,13 +56,13 @@ const Dashboard = () => {
           </h1>
 
           <div className="bg-white border border-gray-200 shadow-lg rounded-2xl p-4 sm:p-6 md:p-8 space-y-6 transition-all duration-300 hover:shadow-xl">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                 <span className="text-gray-600 font-medium flex items-center gap-2">
                   <span className="text-blue-600">🏢</span> Company ID
                 </span>
                 <span className="text-gray-900 font-semibold">{admin.companyId}</span>
-              </div>
+              </div> */}
               <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                 <span className="text-gray-600 font-medium flex items-center gap-2">
                   <span className="text-blue-600">🏭</span> Company Name
@@ -81,7 +81,7 @@ const Dashboard = () => {
                 </span>
                 <span className="text-blue-600 font-bold uppercase">{admin.planType}</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg sm:col-span-2">
+              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg sm:col-span-3">
                 <span className="text-gray-600 font-medium flex items-center gap-2">
                   <span className="text-blue-600">⏳</span> Expiry Date
                 </span>

@@ -83,7 +83,7 @@ const Sidebar = () => {
           <div className="mt-auto">
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 w-full px-4 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white transition duration-200 shadow-md"
+              className="flex items-center gap-3 w-full mt-3 px-4 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white transition duration-200 shadow-md"
             >
               <LogOut size={18} />
               Logout

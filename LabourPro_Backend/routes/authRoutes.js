@@ -7,13 +7,13 @@ const { loginAdmin } = require("../controllers/authController");
 router.post("/register-trial", registerTrial);
 router.post("/register-paid", registerPaid);
 router.post("/login", loginAdmin);
-router.post("/manager-login", loginManager);
-router.post("/helper-login", loginWorker);
+router.post("/managerlogin", loginManager);
+router.post("/helperlogin", loginWorker);
 
 // Routes - Ensure handlers are functions
-router.post('/forgot-password', forgotPassword); // Line 14-ish
-router.post('/verify-otp', verifyOtp);
-router.post('/reset-password', resetPassword);
+router.post('/forgotpassword', forgotPassword); // Line 14-ish
+router.post('/verifyotp', verifyOtp);
+router.post('/resetpassword', resetPassword);
 
 
 module.exports = router;
