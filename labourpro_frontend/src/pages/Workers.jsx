@@ -122,7 +122,7 @@ const Workers = () => {
       [id]: !prev[id], // toggle visibility for this worker
     }));
   };
-  
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar (fixed on the left) */}
@@ -247,7 +247,8 @@ const Workers = () => {
                               )}
                             </button>
                           </div>
-                        </td>                        <td className="p-3 border whitespace-nowrap">₹{w.rojPerHour}</td>
+                        </td>
+                        <td className="p-3 border whitespace-nowrap">₹{w.rojPerHour}</td>
                         <td className="p-3 border space-x-2 whitespace-nowrap">
                           <button
                             onClick={() => handleEdit(w)}
