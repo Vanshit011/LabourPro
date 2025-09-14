@@ -194,6 +194,10 @@ const Login = () => {
         localStorage.setItem("companyId", userObj.companyId);
       }
 
+      // Save token and role
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("role", form.role);
+
       // ✅ Redirect by role
       if (form.role === "manager") {
         const managerObj = res.data.manager;
@@ -214,6 +218,8 @@ const Login = () => {
         navigate("/managerdashboard");
       }
       else if (form.role === "helper") {
+        const workerId = res.data.salary?.current?.workerId || JSON.parse(atob(res.data.token.split(".")[1])).id;
+        localStorage.setItem("workerId", workerId);
         navigate("/workerdashboard");
       } else if (form.role === "admin") {
         navigate("/dashboard");

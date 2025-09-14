@@ -4,7 +4,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import axios from "axios";
 
-// PDF Download function
+// PDF Download function (unchanged, as the request focuses on the dashboard UI)
 const handleDownload = (salary, period) => {
   if (!salary) return alert("Salary data not available");
 
@@ -178,86 +178,61 @@ const ManagerDashboard = () => {
 
   if (loading) return <p className="text-center text-gray-500 text-lg">Loading salary data...</p>;
 
+  const renderSalarySection = (salary, title) => (
+    <div className="space-y-4">
+      <h2 className="text-xl sm:text-2xl font-semibold text-indigo-700 mb-4 flex items-center gap-2">
+        <svg className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        {title} ({salary.month}/{salary.year})
+      </h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-gray-700">
+        {[
+          { title: "Base Salary", value: `₹${salary.baseSalary || 0}` },
+          { title: "Advance", value: `₹${salary.advance || 0}` },
+          { title: "Loan Taken", value: `₹${salary.loanTaken || 0}` },
+          { title: "Loan Paid", value: `₹${salary.loanPaid || 0}` },
+          { title: "Remaining Loan", value: `₹${salary.loanRemaining || 0}` },
+          { title: "Final Salary", value: `₹${salary.finalSalary || 0}` },
+        ].map((item) => (
+          <div key={item.title} className="p-4 bg-gradient-to-br from-white to-blue-50 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-blue-100">
+            <h3 className="font-medium text-indigo-600 text-sm sm:text-base">{item.title}</h3>
+            <p className="text-base sm:text-lg font-bold text-gray-800">{item.value}</p>
+          </div>
+        ))}
+      </div>
+      <button
+        onClick={() => handleDownload(salary, period)}
+        className="w-full bg-green-500 text-white px-3 py-2 sm:px-4 sm:py-3 rounded-lg hover:bg-green-600 transition-all duration-300 shadow-md mt-3 sm:mt-4 text-sm sm:text-base font-semibold"
+      >
+        Download {title} Slip
+      </button>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
-      <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl p-8 relative">
-        <button
-          onClick={handleLogout}
-          className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition duration-300 shadow-md"
-        >
-          Logout
-        </button>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 sm:p-6 md:p-8 relative">
+      <button
+        onClick={handleLogout}
+        className="fixed top-4 right-4 bg-transparent border border-red-500 text-red-500 px-3 py-1 sm:px-4 sm:py-2 rounded-md hover:bg-red-100 hover:text-red-600 transition duration-300 shadow-md text-sm sm:text-base z-10"
+      >
+        Logout
+      </button>
 
-        <h1 className="text-4xl font-bold text-center text-indigo-800 mb-10 tracking-wide">Manager Salary Details</h1>
+      <div className="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 mt-16 sm:mt-0 space-y-8">
+        <h1 className="text-3xl sm:text-4xl font-bold text-center text-indigo-800 mb-8 sm:mb-10 tracking-wide">Hey, {manager?.name || "Manager"}!</h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Current Month Salary */}
-          <div className="bg-gradient-to-br from-white to-blue-50 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-blue-100">
-            <h2 className="text-2xl font-semibold text-indigo-700 mb-6 flex items-center gap-2">
-              <svg className="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Current Month Salary
-            </h2>
-            {salaryData.current?.message ? (
-              <p className="text-red-500 text-center italic">{salaryData.current.message}</p>
-            ) : salaryData.current ? (
-              <div className="space-y-3 text-gray-700">
-                <p className="flex justify-between"><span className="font-medium">Manager Name:</span> {manager?.name || "N/A"}</p>
-                <p className="flex justify-between"><span className="font-medium">Month/Year:</span> {salaryData.current.month}/{salaryData.current.year}</p>
-                <p className="flex justify-between"><span className="font-medium">Manager ID:</span> {salaryData.current.managerId || "N/A"}</p>
-                <p className="flex justify-between"><span className="font-medium">Base Salary:</span> ₹{salaryData.current.baseSalary || 0}</p>
-                <p className="flex justify-between"><span className="font-medium">Advance:</span> ₹{salaryData.current.advance || 0}</p>
-                <p className="flex justify-between"><span className="font-medium">Loan Taken:</span> ₹{salaryData.current.loanTaken || 0}</p>
-                <p className="flex justify-between"><span className="font-medium">Loan Paid:</span> ₹{salaryData.current.loanPaid || 0}</p>
-                <p className="flex justify-between"><span className="font-medium">Remaining Loan:</span> ₹{salaryData.current.loanRemaining || 0}</p>
-                <p className="flex justify-between text-lg font-bold text-green-600"><span>Final Salary:</span> ₹{salaryData.current.finalSalary || 0}</p>
-                <button
-                  onClick={() => handleDownload(salaryData.current, "current")}
-                  className="w-full bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-all duration-300 shadow-md mt-4"
-                >
-                  Download Current Slip
-                </button>
+        {salaryData.current?.message ? (
+          <p className="text-red-500 text-center italic text-sm sm:text-base">{salaryData.current.message}</p>
+        ) : salaryData.current ? renderSalarySection(salaryData.current, "Current Month Salary") : (
+          <p className="text-gray-500 text-center italic text-sm sm:text-base">No salary data available for current month.</p>
+        )}
 
-              </div>
-            ) : (
-              <p className="text-gray-500 text-center italic">No salary data available for current month.</p>
-            )}
-          </div>
-
-          {/* Previous Month Salary */}
-          <div className="bg-gradient-to-br from-white to-blue-50 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-blue-100">
-            <h2 className="text-2xl font-semibold text-indigo-700 mb-6 flex items-center gap-2">
-              <svg className="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Previous Month Salary
-            </h2>
-            {salaryData.previous?.message ? (
-              <p className="text-red-500 text-center italic">{salaryData.previous.message}</p>
-            ) : salaryData.previous ? (
-              <div className="space-y-3 text-gray-700">
-                <p className="flex justify-between"><span className="font-medium">Manager Name:</span> {manager?.name || "N/A"}</p>
-                <p className="flex justify-between"><span className="font-medium">Month/Year:</span> {salaryData.previous.month}/{salaryData.previous.year}</p>
-                <p className="flex justify-between"><span className="font-medium">Manager ID:</span> {salaryData.previous.managerId || "N/A"}</p>
-                <p className="flex justify-between"><span className="font-medium">Base Salary:</span> ₹{salaryData.previous.baseSalary || 0}</p>
-                <p className="flex justify-between"><span className="font-medium">Advance:</span> ₹{salaryData.previous.advance || 0}</p>
-                <p className="flex justify-between"><span className="font-medium">Loan Taken:</span> ₹{salaryData.previous.loanTaken || 0}</p>
-                <p className="flex justify-between"><span className="font-medium">Loan Paid:</span> ₹{salaryData.previous.loanPaid || 0}</p>
-                <p className="flex justify-between"><span className="font-medium">Remaining Loan:</span> ₹{salaryData.previous.loanRemaining || 0}</p>
-                <p className="flex justify-between text-lg font-bold text-green-600"><span>Final Salary:</span> ₹{salaryData.previous.finalSalary || 0}</p>
-                <button
-                  onClick={() => handleDownload(salaryData.previous, "previous")}
-                  className="w-full bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition duration-300 shadow-md mt-4"
-                >
-                  Download Previous Slip
-                </button>
-              </div>
-            ) : (
-              <p className="text-gray-500 text-center italic">No salary data available for previous month.</p>
-            )}
-          </div>
-        </div>
+        {salaryData.previous?.message ? (
+          <p className="text-red-500 text-center italic text-sm sm:text-base">{salaryData.previous.message}</p>
+        ) : salaryData.previous ? renderSalarySection(salaryData.previous, "Previous Month Salary") : (
+          <p className="text-gray-500 text-center italic text-sm sm:text-base">No salary data available for previous month.</p>
+        )}
       </div>
     </div>
   );

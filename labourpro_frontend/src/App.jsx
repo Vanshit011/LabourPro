@@ -39,8 +39,8 @@ function App() {
     "/dashboard/ManagerSalaries",
     "/dashboard/WorkerSalaries",
     "/dashboard/contactRenewPlan",
-    "/manager-dashboard",
-    "/worker-dashboard"
+    "/managerdashboard",
+    "/workerdashboard"
   ];
   const shouldHide = hideLayout.includes(location.pathname);
 
