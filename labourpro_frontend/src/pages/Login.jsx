@@ -196,9 +196,9 @@ const Login = () => {
 
       // ✅ Redirect by role
       if (form.role === "manager") {
-        navigate("/manager-dashboard");
+        navigate("/managerdashboard");
       } else if (form.role === "helper") {
-        navigate("/worker-dashboard");
+        navigate("/workerdashboard");
       } else if (form.role === "admin") {
         navigate("/dashboard");
       }
