@@ -23,6 +23,17 @@ const Pricing = () => {
     navigate(`/register-paid?plan=${selectedPlan}&amount=${selectedAmount}`);
   };
 
+  const handleUPIClick = (amount, plan) => {
+    const upiId = "vanshitpatel10@okaxis";
+    const name = "LabourPro";
+    const txnRef = `LP${Date.now()}`;
+    const url = `upi://pay?pa=${upiId}&pn=${name}&tn=${plan}&am=${amount}&cu=INR&tr=${txnRef}`;
+
+    // This will open the UPI app installed on the device
+    window.location.href = url;
+  };
+
+
   const closeModal = () => setShowPaymentOptions(false);
 
   return (
@@ -62,11 +73,12 @@ const Pricing = () => {
             <p className="text-4xl font-bold text-blue-600 mb-6">₹499</p>
 
             <button
-              onClick={() => handlePlanClick(499, "monthly")}
+              onClick={() => handleUPIClick(499, "Monthly Plan")}
               className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition duration-300 shadow"
             >
               Pay via UPI & QR
             </button>
+
             <ul className="mt-4 text-sm text-gray-600 space-y-1">
               <li>✔ Unlimited Users</li>
               <li>✔ Advanced Analytics & Reports</li>
@@ -83,7 +95,7 @@ const Pricing = () => {
             <p className="text-4xl font-bold text-blue-600 mb-6">₹4999</p>
 
             <button
-              onClick={() => handlePlanClick(4999, "yearly")}
+              onClick={() => handleUPIClick(4999, "yearly")}
               className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition duration-300 shadow"
             >
               Pay via UPI & QR
