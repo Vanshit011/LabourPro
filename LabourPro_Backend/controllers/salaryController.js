@@ -6,7 +6,6 @@ const mongoose = require("mongoose");
 
 
 // Manager Salary Controllers
-// POST /salary/add
 // ======================== ADD SALARY ========================
 const addSalary = async (req, res) => {
   try {
@@ -27,8 +26,24 @@ const addSalary = async (req, res) => {
       return res.status(400).json({ error: "Salary already exists for this month" });
     }
 
-    // ✅ Get last month's salary (loan carry forward)
-    const lastSalary = await ManagerSalary.findOne({ managerId }).sort({ year: -1, month: -1 });
+    // ✅ Find last month's salary for loan carry forward
+    let prevMonth = month - 1;
+    let prevYear = year;
+    if (prevMonth === 0) {
+      prevMonth = 12;
+      prevYear = year - 1;
+    }
+
+    let lastSalary = await ManagerSalary.findOne({
+      managerId,
+      month: prevMonth,
+      year: prevYear,
+    });
+
+    // If previous month not found → fallback to latest
+    if (!lastSalary) {
+      lastSalary = await ManagerSalary.findOne({ managerId }).sort({ year: -1, month: -1 });
+    }
 
     let carryForwardLoan = 0;
     if (lastSalary) {
@@ -45,8 +60,8 @@ const addSalary = async (req, res) => {
       advance: 0,
       loanTaken: 0,
       loanPaid: 0,
-      loanRemaining: carryForwardLoan,
-      finalSalary: baseSalary - carryForwardLoan, // deduct carry-forward loan
+      loanRemaining: carryForwardLoan, // 🔥 auto carry forward
+      finalSalary: baseSalary,
     });
 
     await newSalary.save();
@@ -67,40 +82,27 @@ const updateSalary = async (req, res) => {
       return res.status(404).json({ error: "Salary entry not found" });
     }
 
-    // ✅ Convert to numbers
+    // Convert to numbers
     const advanceVal = Number(advance) || 0;
     const loanTakenVal = Number(loanTaken) || 0;
     const loanPaidVal = Number(loanPaid) || 0;
 
-    // ✅ Store old loanRemaining for carry-forward adjustment
-    const oldLoanRemaining = salary.loanRemaining || 0;
+    // ✅ Add new values to cumulative totals
+    salary.advance += advanceVal;
+    salary.loanTaken += loanTakenVal;
+    salary.loanPaid += loanPaidVal;
 
-    // ✅ Update salary fields
-    salary.loanTaken = (salary.loanTaken || 0) + loanTakenVal;
-    salary.advance = (salary.advance || 0) + advanceVal;
-    salary.loanPaid = (salary.loanPaid || 0) + loanPaidVal;
+    // ✅ Calculate loan remaining correctly
+    // carryForward (already in salary.loanRemaining when created)
+    // + total loanTaken – total loanPaid
+    salary.loanRemaining =
+      (salary.loanRemaining || 0) + loanTakenVal - loanPaidVal;
 
-    // ✅ Recalculate remaining loan
-    salary.loanRemaining = (salary.loanTaken || 0) - (salary.loanPaid || 0);
-
-    // ✅ Recalculate final salary
-    salary.finalSalary = (salary.baseSalary || 0) - (salary.advance || 0) - (salary.loanRemaining || 0);
+    // ✅ Final salary = base – advance – loanPaid
+    salary.finalSalary =
+      (salary.baseSalary || 0) - (salary.advance || 0) - (salary.loanPaid || 0);
 
     await salary.save();
-
-    // ✅ Update next month salary carry-forward loan if exists
-    const nextSalary = await ManagerSalary.findOne({
-      managerId: salary.managerId,
-      year: salary.year,
-      month: salary.month + 1
-    });
-
-    if (nextSalary) {
-      // Adjust next month's loanRemaining
-      nextSalary.loanRemaining = (nextSalary.loanRemaining || 0) - oldLoanRemaining + salary.loanRemaining;
-      nextSalary.finalSalary = (nextSalary.baseSalary || 0) - (nextSalary.advance || 0) - (nextSalary.loanRemaining || 0);
-      await nextSalary.save();
-    }
 
     res.json({ message: "Salary updated successfully ✅", salary });
   } catch (error) {
@@ -108,7 +110,6 @@ const updateSalary = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 // DELETE /manager-salary/:id
 const deleteManagerSalary = async (req, res) => {
@@ -315,7 +316,6 @@ const addWorkerSalary = async (req, res) => {
   try {
     const { workerId, month, year } = req.body;
 
-    // Validate worker
     const worker = await Worker.findById(workerId);
     if (!worker) {
       return res.status(404).json({ error: "Worker not found" });
@@ -329,23 +329,17 @@ const addWorkerSalary = async (req, res) => {
     const nextMonthYear = Number(month) === 12 ? Number(year) + 1 : Number(year);
     const nextMonthStr = nextMonth.toString().padStart(2, "0");
 
-    // Actual date objects for filtering
     const startDate = new Date(`${year}-${monthStr}-01`);
     const endDate = new Date(`${nextMonthYear}-${nextMonthStr}-01`);
 
     const attendanceSummary = await Attendance.aggregate([
-      {
-        // ✅ Convert "YYYY-MM-DD" string into Date object inside pipeline
-        $addFields: {
-          dateObj: { $dateFromString: { dateString: "$date" } }
-        }
-      },
+      { $addFields: { dateObj: { $dateFromString: { dateString: "$date" } } } },
       {
         $match: {
-          companyId: companyId,
-          workerId: new mongoose.Types.ObjectId(workerId), // make sure ID type matches
-          dateObj: { $gte: startDate, $lt: endDate }
-        }
+          companyId,
+          workerId: new mongoose.Types.ObjectId(workerId),
+          dateObj: { $gte: startDate, $lt: endDate },
+        },
       },
       {
         $group: {
@@ -368,8 +362,6 @@ const addWorkerSalary = async (req, res) => {
       },
     ]);
 
-    console.log("Matched Attendance:", attendanceSummary);
-
     const summary =
       attendanceSummary[0] || { totalHours: 0, totalRojEarned: 0, daysWorked: 0 };
 
@@ -381,15 +373,15 @@ const addWorkerSalary = async (req, res) => {
         .json({ error: "Salary already exists for this worker in this month" });
     }
 
-    // Get last month's salary for loan carryover
+    // Get last month’s loan balance
     const lastSalary = await WorkerSalary.findOne({ workerId }).sort({
       year: -1,
       month: -1,
     });
-    let carryForwardLoan =
-      lastSalary?.loanRemaining > 0 ? lastSalary.loanRemaining : 0;
 
-    // Create new salary record
+    let carryForwardLoan = lastSalary?.loanRemaining || 0;
+
+    // New salary record
     const newSalary = new WorkerSalary({
       companyId,
       workerId,
@@ -399,20 +391,17 @@ const addWorkerSalary = async (req, res) => {
       advance: 0,
       loanTaken: 0,
       loanPaid: 0,
-      loanRemaining: carryForwardLoan,
-      finalSalary: summary.totalRojEarned - carryForwardLoan,
+      loanRemaining: carryForwardLoan, // just carry forward
+      finalSalary: summary.totalRojEarned - carryForwardLoan, // deduct only here
       totalHours: summary.totalHours,
       daysWorked: summary.daysWorked,
     });
 
     await newSalary.save();
 
-    res.json({
-      message: "Salary added successfully",
-      salary: newSalary,
-    });
+    res.json({ message: "Salary added successfully", salary: newSalary });
   } catch (error) {
-    console.error("Add Salary Error:", error.message, error.stack);
+    console.error("Add Salary Error:", error.message);
     res.status(500).json({ error: error.message });
   }
 };
@@ -420,28 +409,34 @@ const addWorkerSalary = async (req, res) => {
 // PUT /worker-salary/:id/update
 const updateWorkerSalary = async (req, res) => {
   try {
-    const { advance, loanTaken, loanPaid } = req.body;
+    const { advance = 0, loanTaken = 0, loanPaid = 0 } = req.body;
 
     let salary = await WorkerSalary.findById(req.params.id);
     if (!salary) return res.status(404).json({ error: "Salary entry not found" });
 
-    // Increment all values properly
-    salary.advance += advance || 0;
-    salary.loanTaken += loanTaken || 0;
-    salary.loanPaid += loanPaid || 0;
+    // Update values
+    salary.advance += advance;
+    salary.loanTaken += loanTaken;
 
-    // Recalculate
-    salary.loanRemaining = salary.loanTaken - salary.loanPaid;
-    salary.finalSalary = salary.baseSalary - salary.advance - salary.loanPaid;
+    // Adjust loanRemaining
+    salary.loanRemaining += loanTaken;
+    salary.loanRemaining -= loanPaid;
+    if (salary.loanRemaining < 0) salary.loanRemaining = 0;
+
+    salary.loanPaid += loanPaid;
+
+    // Recalculate final salary
+    salary.finalSalary = salary.baseSalary - salary.advance - salary.loanRemaining;
 
     await salary.save();
 
-    res.json({ message: "Salary updated successfully", salary });
+    res.json({ message: "Salary updated successfully ✅", salary });
   } catch (error) {
-    console.error("Update Salary Error:", error.message, error.stack);
+    console.error("Update Salary Error:", error.message);
     res.status(500).json({ error: error.message });
   }
 };
+
 
 // GET /worker-salary/:workerId/:month/:year
 const getWorkerSalary = async (req, res) => {

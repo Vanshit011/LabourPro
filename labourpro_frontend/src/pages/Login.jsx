@@ -104,8 +104,58 @@ const Login = () => {
   //   }
   // };
 
-  
+
   // for Admin login use issue
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   setError("");
+
+  //   try {
+  //     let endpoint;
+
+  //     if (form.role === "admin") {
+  //       endpoint = "https://labourpro-backend.onrender.com/api/auth/login";
+  //     } else if (form.role === "manager") {
+  //       endpoint = "https://labourpro-backend.onrender.com/api/auth/manager-login";
+  //     } else if (form.role === "helper") {
+  //       endpoint = "http://localhost:5000/api/auth/helper-login";
+  //     } else {
+  //       setError("⚠️ Please select a role before login.");
+  //       return;
+  //     }
+
+  //     console.log("🔗 Calling endpoint:", endpoint);
+
+  //     const res = await axios.post(endpoint, {
+  //       email: form.email,
+  //       password: form.password,
+  //     });
+
+  //     localStorage.setItem("token", res.data.token);
+  //     localStorage.setItem("role", form.role);
+  //     localStorage.setItem(
+  //       "user",
+  //       JSON.stringify(res.data.user || res.data.admin || res.data.manager || res.data.helper)
+  //     );
+
+  //     // Redirect based on role
+  //     if (form.role === "manager") {
+  //       navigate("/manager-dashboard");
+  //     } else if (form.role === "helper") {
+  //       navigate("/worker-dashboard");
+  //     } else if (form.role === "admin") {
+  //       navigate("/dashboard");
+  //     }
+  //   } catch (err) {
+  //     console.error("❌ Login error:", err.response?.data || err.message);
+  //     setError(err.response?.data?.message || "Login failed");
+  //   }
+  // };
+
+
+
+  // Forgot Password: Step 1 - Send OTP
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -113,12 +163,13 @@ const Login = () => {
     try {
       let endpoint;
 
+      // ✅ Select API based on role
       if (form.role === "admin") {
         endpoint = "https://labourpro-backend.onrender.com/api/auth/login";
       } else if (form.role === "manager") {
         endpoint = "https://labourpro-backend.onrender.com/api/auth/manager-login";
       } else if (form.role === "helper") {
-        endpoint = "http://localhost:5000/api/auth/helper-login";
+        endpoint = "https://labourpro-backend.onrender.com/api/auth/helper-login";
       } else {
         setError("⚠️ Please select a role before login.");
         return;
@@ -131,19 +182,31 @@ const Login = () => {
         password: form.password,
       });
 
+      // ✅ Store token + role
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", form.role);
-      localStorage.setItem(
-        "user",
-        JSON.stringify(res.data.user || res.data.admin || res.data.manager || res.data.helper)
-      );
 
-      // Redirect based on role
+      // ✅ Detect user object properly
+      const userObj =
+        res.data.user || res.data.admin || res.data.manager || res.data.helper;
+
+      if (!userObj?._id) {
+        console.error("⚠️ User object missing in response:", res.data);
+        setError("Login failed. User ID not found.");
+        return;
+      }
+
+      localStorage.setItem("user", JSON.stringify(userObj));
+
+      // ✅ Redirect by role
       if (form.role === "manager") {
+        localStorage.setItem("managerId", userObj._id);
         navigate("/manager-dashboard");
       } else if (form.role === "helper") {
+        localStorage.setItem("helperId", userObj._id);
         navigate("/worker-dashboard");
       } else if (form.role === "admin") {
+        localStorage.setItem("adminId", userObj._id);
         navigate("/dashboard");
       }
     } catch (err) {
@@ -152,7 +215,7 @@ const Login = () => {
     }
   };
 
-  // Forgot Password: Step 1 - Send OTP
+
   const handleSendOtp = async (e) => {
     e.preventDefault();
     setForgotError("");
@@ -222,20 +285,48 @@ const Login = () => {
           <>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Select Role</label>
-                <select
-                  name="role"
-                  value={form.role}
-                  onChange={handleChange}
-                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-                  required
-                >
-                  <option value="">-- Select Role --</option>
-                  <option value="admin">Admin</option>
-                  <option value="manager">Manager</option>
-                  <option value="helper">helper</option>
-                </select>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Role
+                </label>
+                <div className="flex gap-6">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="role"
+                      value="admin"
+                      checked={form.role === "admin"}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                    />
+                    <span className="text-gray-700">Admin</span>
+                  </label>
+
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="role"
+                      value="manager"
+                      checked={form.role === "manager"}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                    />
+                    <span className="text-gray-700">Manager</span>
+                  </label>
+
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="role"
+                      value="helper"
+                      checked={form.role === "helper"}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
+                    />
+                    <span className="text-gray-700">Helper</span>
+                  </label>
+                </div>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <input

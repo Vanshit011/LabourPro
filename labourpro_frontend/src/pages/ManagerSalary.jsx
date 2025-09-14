@@ -88,68 +88,65 @@ const ManagerSalary = () => {
   };
 
   // ✅ Add new salary (manual, if no record exists for selected month/year)
- const handleAddSalary = async () => {
-  try {
-    if (salaryData) {
-      alert("⚠️ Salary already exists for this month/year.");
-      return;
-    }
-
-    const token = localStorage.getItem("token");
-
-    // ✅ Add new manager salary
-    const res = await axios.post(
-      "https://labourpro-backend.onrender.com/api/salary/add",
-      { managerId, month, year },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    let newSalary = res.data.salary;
-
-    // Prepare updates for carry-over and user additionals
-    let updates = { advance: 0, loanTaken: 0, loanPaid: 0 };
-
-    // Carry over previous remaining loan
-    if (previousSalary) {
-      const prevRemaining = (previousSalary.loanTaken || 0) - (previousSalary.loanPaid || 0);
-      if (prevRemaining !== 0) {
-        updates.loanTaken = prevRemaining > 0 ? prevRemaining : 0;
-        updates.loanPaid = prevRemaining < 0 ? -prevRemaining : 0;
+  const handleAddSalary = async () => {
+    try {
+      if (salaryData) {
+        alert("⚠️ Salary already exists for this month/year.");
+        return;
       }
-    }
 
-    // Add user additionals
-    updates.advance += parseFloat(additionalAdvance) || 0;
-    updates.loanTaken += parseFloat(additionalLoanTaken) || 0;
-    updates.loanPaid += parseFloat(additionalLoanPaid) || 0;
+      const token = localStorage.getItem("token");
 
-    // If there are updates, perform the update
-    if (updates.advance !== 0 || updates.loanTaken !== 0 || updates.loanPaid !== 0) {
-      const updateRes = await axios.put(
-        `https://labourpro-backend.onrender.com/api/salary/${newSalary._id}/update`,
-        updates,
+      // Step 1: Add salary
+      const res = await axios.post(
+        "https://labourpro-backend.onrender.com/api/salary/add",
+        { managerId, month, year },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      newSalary = updateRes.data.salary;
+
+      let newSalary = res.data.salary;
+
+      // Step 2: Prepare updates (advance/loan adjustments only)
+      let updates = { advance: 0, loanTaken: 0, loanPaid: 0 };
+
+      // Carry over previous remaining loan
+      if (previousSalary) {
+        const prevRemaining = (previousSalary.loanTaken || 0) - (previousSalary.loanPaid || 0);
+        if (prevRemaining !== 0) {
+          updates.loanTaken = prevRemaining > 0 ? prevRemaining : 0;
+          updates.loanPaid = prevRemaining < 0 ? -prevRemaining : 0;
+        }
+      }
+
+      // Add user inputs
+      updates.advance += parseFloat(additionalAdvance) || 0;
+      updates.loanTaken += parseFloat(additionalLoanTaken) || 0;
+      updates.loanPaid += parseFloat(additionalLoanPaid) || 0;
+
+      // Step 3: Update salary
+      if (updates.advance !== 0 || updates.loanTaken !== 0 || updates.loanPaid !== 0) {
+        const updateRes = await axios.put(
+          `https://labourpro-backend.onrender.com/api/salary/${newSalary._id}/update`,
+          updates,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        newSalary = updateRes.data.salary;
+      }
+
+      // Step 4: Refresh UI
+      window.dispatchEvent(new Event("attendanceUpdated"));
+      setAdditionalAdvance("");
+      setAdditionalLoanTaken("");
+      setAdditionalLoanPaid("");
+
+      alert("✅ Manager Salary Added");
+      setSalaryData(newSalary);
+      fetchSalary();
+    } catch (err) {
+      console.error("❌ Error adding manager salary:", err.response?.data || err.message);
+      alert("❌ " + (err.response?.data?.error || "Error adding manager salary"));
     }
-
-    // Notify other components that salary was updated
-    window.dispatchEvent(new Event("attendanceUpdated"));
-
-    // Clear additional inputs
-    setAdditionalAdvance("");
-    setAdditionalLoanTaken("");
-    setAdditionalLoanPaid("");
-
-    alert("✅ Manager Salary Added");
-    setSalaryData(newSalary);
-    fetchSalary(); // Refresh display
-  } catch (err) {
-    console.error("❌ Error adding manager salary:", err.response?.data || err.message);
-    alert("❌ " + (err.response?.data?.error || "Error adding manager salary"));
-  }
-};
-
+  };
 
   // ✅ Update salary (calculate increments and send to backend)
   const handleUpdateSalary = async () => {
@@ -174,7 +171,7 @@ const ManagerSalary = () => {
         return;
       }
 
-      // ✅ Prepare request body (include month/year for loanTaken logic in backend)
+      // ✅ Prepare request body
       const updates = {
         advance: advanceIncrement,
         loanTaken: loanTakenIncrement,
@@ -195,19 +192,31 @@ const ManagerSalary = () => {
       setAdditionalLoanTaken("");
       setAdditionalLoanPaid("");
 
+      // ✅ Updated salary from backend
+      const updatedSalary = res.data.salary;
+
+      // ✅ Recalculate final salary on frontend
+      const recalculatedFinalSalary =
+        (updatedSalary.baseSalary || 0) -
+        (updatedSalary.advance || 0) -
+        (updatedSalary.loanPaid || 0);
+
+      updatedSalary.finalSalary = recalculatedFinalSalary;
+
+      // ✅ Update state
+      setSalaryData(updatedSalary);
+
       // ✅ Show success
       alert("✅ Manager Salary Updated");
 
-      // ✅ Update local state with new salary
-      setSalaryData(res.data.salary);
-
-      // ✅ Refresh from backend (optional if salaryData already updated)
+      // ✅ Refresh from backend (optional, only if you want latest DB values)
       fetchSalary();
     } catch (err) {
       console.error("❌ Error updating salary:", err.response?.data || err.message);
       alert("❌ " + (err.response?.data?.error || "Error updating manager salary"));
     }
   };
+
 
   // ✅ Delete salary
   const deleteSalary = async (salaryId) => {
@@ -524,8 +533,13 @@ const ManagerSalary = () => {
                 <p className="bg-gray-50 p-3 rounded-lg"><b>Advance:</b> {salaryData.advance}</p>
                 <p className="bg-gray-50 p-3 rounded-lg"><b>Loan Taken:</b> {salaryData.loanTaken}</p>
                 <p className="bg-gray-50 p-3 rounded-lg"><b>Loan Paid:</b> {salaryData.loanPaid}</p>
-                <p className="bg-gray-50 p-3 rounded-lg"><b>Remaining Loan:</b> {(salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)}</p>
-                <p className="bg-gray-50 p-3 rounded-lg"><b>Final Salary:</b> {salaryData.finalSalary}</p>
+                <p className="bg-gray-50 p-3 rounded-lg">
+                  <b>Remaining Loan:</b> {(salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)}
+                </p>
+                <p className="bg-gray-50 p-3 rounded-lg">
+                  <b>Final Salary:</b>{" "}
+                  {(salaryData.baseSalary || 0) - (salaryData.advance || 0) - (salaryData.loanPaid || 0)}
+                </p>
               </div>
               <button
                 onClick={() => handleDownloadPDF(salaryData, month, year)}
@@ -533,23 +547,21 @@ const ManagerSalary = () => {
               >
                 📄 Download PDF
               </button>
-              <button onClick={() => deleteSalary(salaryData._id)} className="bg-red-600 text-white px-6 py-2 rounded-lg shadow hover:bg-red-700 transition duration-200 ml-4">
+              <button
+                onClick={() => deleteSalary(salaryData._id)}
+                className="bg-red-600 text-white px-6 py-2 rounded-lg shadow hover:bg-red-700 transition duration-200 ml-4"
+              >
                 🗑️ Delete Salary
               </button>
 
-              {/* {((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)) > 0 && (
-                <p className="mt-4 text-red-600 bg-red-50 p-3 rounded-lg">
-                  <b>Warning:</b> Remaining loan: {(salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)}. Cannot add new loans until cleared.
-                </p>
-              )} */}
               {((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)) < 0 && (
                 <p className="mt-4 text-green-600 bg-green-50 p-3 rounded-lg">
                   <b>Note:</b> Overpaid by {-((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0))}.
                 </p>
               )}
             </div>
-
           )}
+
         </div>
       </div>
     </div>
