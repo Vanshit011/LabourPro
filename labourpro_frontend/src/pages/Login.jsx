@@ -166,9 +166,9 @@ const Login = () => {
       if (form.role === "admin") {
         endpoint = "https://labourpro-backend.onrender.com/api/auth/login";
       } else if (form.role === "manager") {
-        endpoint = "https://labourpro-backend.onrender.com/api/auth/manager-login";
+        endpoint = "https://labourpro-backend.onrender.com/api/auth/managerlogin";
       } else if (form.role === "helper") {
-        endpoint = "https://labourpro-backend.onrender.com/api/auth/helper-login";
+        endpoint = "https://labourpro-backend.onrender.com/api/auth/helperlogin";
       } else {
         setError("⚠️ Please select a role before login.");
         return;
