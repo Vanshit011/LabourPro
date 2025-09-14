@@ -163,13 +163,12 @@ const Login = () => {
     try {
       let endpoint;
 
-      // ✅ Select API based on role
       if (form.role === "admin") {
         endpoint = "https://labourpro-backend.onrender.com/api/auth/login";
       } else if (form.role === "manager") {
-        endpoint = "https://labourpro-backend.onrender.com/api/auth/managerlogin";
+        endpoint = "https://labourpro-backend.onrender.com/api/auth/manager-login";
       } else if (form.role === "helper") {
-        endpoint = "https://labourpro-backend.onrender.com/api/auth/helperlogin";
+        endpoint = "https://labourpro-backend.onrender.com/api/auth/helper-login";
       } else {
         setError("⚠️ Please select a role before login.");
         return;
@@ -182,33 +181,28 @@ const Login = () => {
         password: form.password,
       });
 
-      // ✅ Store token + role
+      // ✅ Save token
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("role", form.role);
 
-      // ✅ Detect user object properly
-      const userObj =
-        res.data.user || res.data.admin || res.data.manager || res.data.helper;
-
-      if (!userObj?._id) {
-        console.error("⚠️ User object missing in response:", res.data);
-        setError("Login failed. User ID not found.");
-        return;
-      }
-
+      // ✅ Save user object directly
+      const userObj = res.data.user || res.data.admin || res.data.manager || res.data.helper;
       localStorage.setItem("user", JSON.stringify(userObj));
+
+      // ✅ Save companyId (if exists)
+      if (userObj?.companyId) {
+        localStorage.setItem("companyId", userObj.companyId);
+      }
 
       // ✅ Redirect by role
       if (form.role === "manager") {
-        localStorage.setItem("managerId", userObj._id);
         navigate("/manager-dashboard");
       } else if (form.role === "helper") {
-        localStorage.setItem("helperId", userObj._id);
         navigate("/worker-dashboard");
       } else if (form.role === "admin") {
-        localStorage.setItem("adminId", userObj._id);
         navigate("/dashboard");
       }
+
     } catch (err) {
       console.error("❌ Login error:", err.response?.data || err.message);
       setError(err.response?.data?.message || "Login failed");
