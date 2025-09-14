@@ -239,7 +239,7 @@ const Login = () => {
 
     try {
       await axios.post(
-        "http://localhost:5000/api/auth/forgotpassword",
+        "https://labourpro-backend.onrender.com/api/auth/forgotpassword",
         { email: forgotEmail, role: form.role } // add role if needed
       );
       setForgotSuccess("OTP sent to your email.");
@@ -256,7 +256,7 @@ const Login = () => {
     setForgotSuccess("");
 
     try {
-      await axios.post("http://localhost:5000/api/auth/verifyotp", { email: forgotEmail, otp });
+      await axios.post("https://labourpro-backend.onrender.com/api/auth/verifyotp", { email: forgotEmail, otp });
       setForgotSuccess("OTP verified.");
       setForgotStep(3); // Move to set new password
     } catch (err) {
@@ -275,7 +275,7 @@ const Login = () => {
     }
 
     try {
-      await axios.post("http://localhost:5000/api/auth/resetpassword", { email: forgotEmail, newPassword });
+      await axios.post("https://labourpro-backend.onrender.com/api/auth/resetpassword", { email: forgotEmail, newPassword });
       setForgotSuccess("Password reset successful. You can now login.");
       setForgotStep(0); // Back to login
     } catch (err) {

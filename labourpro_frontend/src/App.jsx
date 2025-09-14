@@ -38,6 +38,7 @@ function App() {
     "/dashboard/WorkerAttendance",
     "/dashboard/ManagerSalaries",
     "/dashboard/WorkerSalaries",
+    "/dashboard/notifications",
     "/dashboard/contactRenewPlan",
     "/managerdashboard",
     "/workerdashboard"

@@ -1,132 +1,150 @@
-import axios from "axios";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import QRCode from "../assets/QR.jpg";
 
 const Pricing = () => {
-  const handleBuyPlan = async (amount, planType) => {
-    try {
-      const res = await axios.post(
-        "https://labourpro-backend.onrender.com/api/razorpay/create-order",
-        {
-          amount,
-          planType,
-        }
-      );
+  const navigate = useNavigate();
+  const [showPaymentOptions, setShowPaymentOptions] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [selectedAmount, setSelectedAmount] = useState(null);
 
-      const options = {
-        key: "rzp_test_QDisG20aeCbPzI",
-        amount: res.data.amount,
-        currency: "INR",
-        name: "LabourPro",
-        description: `${planType} Subscription`,
-        order_id: res.data.id,
-        handler: function (response) {
-          const queryParams = new URLSearchParams({
-            plan: planType,
-            amount: amount,
-            payment_id: response.razorpay_payment_id,
-            order_id: res.data.id,
-          }).toString();
-
-          window.location.href = `/register-paid?${queryParams}`;
-        },
-        prefill: {
-          name: "LabourPro User",
-          email: "user@example.com",
-        },
-        theme: {
-          color: "#1D4ED8",
-        },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } catch (err) {
-      alert("Failed to initiate payment.");
+  const handlePlanClick = (amount, planType) => {
+    if (amount === 0) {
+      navigate(`/register-paid?plan=${planType}&amount=${amount}`);
+    } else {
+      setSelectedPlan(planType);
+      setSelectedAmount(amount);
+      setShowPaymentOptions(true);
     }
   };
+
+  const handleIPaid = () => {
+    setShowPaymentOptions(false);
+    navigate(`/register-paid?plan=${selectedPlan}&amount=${selectedAmount}`);
+  };
+
+  const closeModal = () => setShowPaymentOptions(false);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto text-center">
-        <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4 flex items-center justify-center gap-2">
-          <span className="text-blue-600 text-5xl">💼</span> Choose Your Plan
+        <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+          💼 Choose Your Plan
         </h2>
-        <p className="text-lg md:text-xl text-gray-600 mb-12 max-w-3xl mx-auto">
-          Simple, transparent pricing. No hidden fees. Start with a free trial or upgrade anytime 
-          to unlock premium features like advanced analytics and unlimited users.
+        <p className="text-lg text-gray-600 mb-12">
+          Select the perfect plan to manage your workforce efficiently
         </p>
 
         <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {/* Free Trial */}
-          <div className="relative bg-white border border-gray-200 rounded-2xl shadow-lg p-6 md:p-8 hover:shadow-xl transition duration-300">
-            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-yellow-400 text-white px-4 py-1 rounded-full text-sm font-semibold shadow">
-              Free
-            </div>
-            <h3 className="text-2xl font-semibold mb-2 text-gray-800 flex items-center justify-center gap-2">
-              <span className="text-yellow-500 text-3xl">🚀</span> Free Trial
-            </h3>
-            <p className="text-gray-500 mb-4">14-day full access</p>
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-lg p-6 md:p-8 hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
+            <h3 className="text-2xl font-semibold mb-2 text-gray-800">Free Trial</h3>
+            <p className="text-gray-500 mb-4">14-day full access to try basic features</p>
             <p className="text-4xl font-bold text-blue-600 mb-6">₹0</p>
-            <a
-              href="/register-trial"
-              className="block w-full text-center bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-300 shadow"
+            <button
+              onClick={() => handlePlanClick(0, "free-trial")}
+              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-300 shadow"
             >
               Start Free Trial
-            </a>
-            <ul className="mt-6 space-y-2 text-sm text-gray-600">
-              <li>✔️ Basic Features</li>
-              <li>✔️ Limited Users</li>
-              <li>✔️ Email Support</li>
+            </button>
+            <ul className="mt-4 text-sm text-gray-600 space-y-1">
+              <li>✔ Basic Dashboard</li>
+              <li>✔ Limited Users</li>
+              <li>✔ Email Support</li>
             </ul>
           </div>
 
           {/* Monthly Plan */}
-          <div className="relative bg-white border-2 border-blue-600 rounded-2xl shadow-xl p-6 md:p-8 transform scale-105 transition duration-300">
-            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-semibold shadow">
-              Popular
-            </div>
-            <h3 className="text-2xl font-semibold mb-2 text-gray-800 flex items-center justify-center gap-2">
-              <span className="text-green-500 text-3xl">💼</span> Monthly Plan
-            </h3>
-            <p className="text-gray-500 mb-4">Perfect for small teams</p>
-            <p className="text-4xl font-bold text-green-600 mb-6">₹499</p>
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-lg p-6 md:p-8 hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1 relative">
+            <span className="absolute top-0 right-0 bg-green-500 text-white text-xs px-2 py-1 rounded-bl-lg">Popular</span>
+            <h3 className="text-2xl font-semibold mb-2 text-gray-800">Monthly Plan</h3>
+            <p className="text-gray-500 mb-4">₹499 / month - Perfect for small to medium teams</p>
+            <p className="text-4xl font-bold text-blue-600 mb-6">₹499</p>
+
             <button
-              onClick={() => handleBuyPlan(499, "monthly")}
+              onClick={() => handlePlanClick(499, "monthly")}
               className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition duration-300 shadow"
             >
-              Buy Monthly Plan
+              Pay via UPI & QR
             </button>
-            <ul className="mt-6 space-y-2 text-sm text-gray-600">
-              <li>✔️ All Free Features</li>
-              <li>✔️ Unlimited Users</li>
-              <li>✔️ Priority Support</li>
-              <li>✔️ Advanced Analytics</li>
+            <ul className="mt-4 text-sm text-gray-600 space-y-1">
+              <li>✔ Unlimited Users</li>
+              <li>✔ Advanced Analytics & Reports</li>
+              <li>✔ Priority Email & Chat Support</li>
+              <li>✔ Attendance & Payroll Automation</li>
+              <li>✔ Cloud Backup & Security</li>
             </ul>
           </div>
 
           {/* Yearly Plan */}
-          <div className="relative bg-white border border-gray-200 rounded-2xl shadow-lg p-6 md:p-8 hover:shadow-xl transition duration-300">
-            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-purple-600 text-white px-4 py-1 rounded-full text-sm font-semibold shadow">
-              Save 17%
-            </div>
-            <h3 className="text-2xl font-semibold mb-2 text-gray-800 flex items-center justify-center gap-2">
-              <span className="text-purple-500 text-3xl">🏢</span> Yearly Plan
-            </h3>
-            <p className="text-gray-500 mb-4">Save 2 months!</p>
-            <p className="text-4xl font-bold text-purple-600 mb-6">₹4999</p>
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-lg p-6 md:p-8 hover:shadow-xl transition-shadow duration-300 transform hover:-translate-y-1">
+            <h3 className="text-2xl font-semibold mb-2 text-gray-800">Yearly Plan</h3>
+            <p className="text-gray-500 mb-4">₹4999 / year - Save 17% and unlock premium features</p>
+            <p className="text-4xl font-bold text-blue-600 mb-6">₹4999</p>
+
             <button
-              onClick={() => handleBuyPlan(4999, "yearly")}
+              onClick={() => handlePlanClick(4999, "yearly")}
               className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition duration-300 shadow"
             >
-              Buy Yearly Plan
+              Pay via UPI & QR
             </button>
-            <ul className="mt-6 space-y-2 text-sm text-gray-600">
-              <li>✔️ All Monthly Features</li>
-              <li>✔️ Custom Integrations</li>
-              <li>✔️ Dedicated Account Manager</li>
-              <li>✔️ Advanced Security</li>
+            <ul className="mt-4 text-sm text-gray-600 space-y-1">
+              <li>✔ All Monthly Plan Features</li>
+              <li>✔ Dedicated Account Manager</li>
+              <li>✔ Custom Integrations & Automation</li>
+              <li>✔ Advanced Security & GDPR Compliance</li>
+              <li>✔ Priority Support & Training</li>
+              <li>✔ Export & Multi-location Management</li>
             </ul>
           </div>
         </div>
+
+        {/* Payment Modal */}
+        {showPaymentOptions && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4"
+            onClick={closeModal} // Clicking on backdrop closes modal
+          >
+            <div
+              className="bg-white rounded-xl shadow-2xl p-6 md:p-8 max-w-md w-full relative animate-fade-in"
+              onClick={(e) => e.stopPropagation()} // Prevent modal content click from closing
+            >
+              <button
+                onClick={closeModal}
+                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                &times;
+              </button>
+              <h4 className="text-lg font-semibold mb-4 text-gray-800">
+                Complete Payment for {selectedPlan} Plan
+              </h4>
+              <p className="text-gray-700 mb-2">
+                Amount: <strong>₹{selectedAmount}</strong>
+              </p>
+              <p className="text-gray-700 mb-2">
+                UPI ID: <strong>vanshitpatel10@okaxis</strong>
+              </p>
+              <p className="text-gray-700 mb-4">Scan the QR code below to pay:</p>
+
+              <img
+                src={QRCode}
+                alt="UPI QR Code"
+                className="w-48 h-48 mx-auto mb-4 rounded-lg shadow-md"
+              />
+
+              <p className="text-sm text-gray-500 mb-4">
+                After completing the payment, click "I Paid" to proceed with registration.
+              </p>
+              <button
+                onClick={handleIPaid}
+                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-300 shadow"
+              >
+                I Paid
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );

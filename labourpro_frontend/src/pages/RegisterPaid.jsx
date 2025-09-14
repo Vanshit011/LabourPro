@@ -9,8 +9,6 @@ const RegisterPaid = () => {
   // Extract plan details from URL
   const planType = params.get("plan");
   const amount = params.get("amount");
-  const razorpayOrderId = params.get("order_id");
-  const razorpayPaymentId = params.get("payment_id");
 
   const [form, setForm] = useState({
     name: "",
@@ -18,7 +16,6 @@ const RegisterPaid = () => {
     password: "",
     companyName: "",
   });
-
   const [error, setError] = useState("");
 
   const handleChange = (e) => {
@@ -32,10 +29,7 @@ const RegisterPaid = () => {
         ...form,
         planType,
         amount,
-        razorpayOrderId,
-        razorpayPaymentId,
       });
-
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("admin", JSON.stringify(res.data.admin));
       navigate("/dashboard");
@@ -53,17 +47,13 @@ const RegisterPaid = () => {
           </h2>
           <p className="mt-2 text-sm text-gray-600">Finish setting up your paid account</p>
         </div>
-
         <div className="mb-6 p-4 bg-gray-50 rounded-lg shadow-inner">
           <p className="text-sm text-gray-700"><strong>Plan:</strong> {planType}</p>
           <p className="text-sm text-gray-700"><strong>Amount:</strong> ₹{amount}</p>
-          <p className="text-sm text-gray-700"><strong>Payment ID:</strong> {razorpayPaymentId}</p>
         </div>
-
         {error && (
           <p className="mb-4 text-center text-sm text-red-600 bg-red-50 p-2 rounded-lg">{error}</p>
         )}
-
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>

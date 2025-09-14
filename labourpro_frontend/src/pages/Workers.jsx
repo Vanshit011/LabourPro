@@ -12,11 +12,12 @@ const Workers = () => {
   const [form, setForm] = useState({
     name: "",
     number: "",
-    role: "",
+    role: "helper", // default
     rojPerHour: "",
     email: "",
     password: "",
   });
+
 
   const token = localStorage.getItem("token");
 
@@ -34,43 +35,82 @@ const Workers = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    console.log("Submitting form data:", form); // Log data before sending for debugging
+  e.preventDefault();
+  console.log("Submitting form data:", form);
 
-    try {
-      if (editingId) {
-        await axios.put(
-          `https://labourpro-backend.onrender.com/api/worker/${editingId}`,
-          form,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json' // Explicitly set JSON
-            }
-          }
-        );
-        alert("✅ Worker updated successfully!");
-        setEditingId(null);
-      } else {
-        await axios.post(
-          "https://labourpro-backend.onrender.com/api/worker/add",
-          form,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json' // Explicitly set JSON
-            }
-          }
-        );
-        alert("✅ Worker added successfully!");
-      }
-      setForm({ name: "", number: "", role: "", rojPerHour: "", email: "", password: "" });
-      fetchWorkers();
-    } catch (err) {
-      console.error("❌ Submit error:", err.response?.data || err.message);
-      alert("❌ Failed to add/update worker: " + (err.response?.data?.error || "Check console for details."));
+  // ✅ Validations
+  if (!/^\d{10}$/.test(form.number)) {
+    return alert("❌ Phone number must be exactly 10 digits");
+  }
+
+  if (!Number(form.rojPerHour) || Number(form.rojPerHour) <= 0) {
+    return alert("❌ Roj Per Hour must be a positive number");
+  }
+
+  if (!form.password.match(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{6,}$/)) {
+    return alert(
+      "❌ Password must be at least 6 characters and include uppercase, lowercase, and a number"
+    );
+  }
+
+  // Check for duplicate name, email, or number
+  const duplicate = workers.find(
+    (w) =>
+      w._id !== editingId &&
+      (w.name.toLowerCase() === form.name.toLowerCase() ||
+        w.email.toLowerCase() === form.email.toLowerCase() ||
+        w.number === form.number)
+  );
+  if (duplicate) return alert("❌ Name, Email, or Phone number already exists");
+
+  try {
+    if (editingId) {
+      await axios.put(
+        `https://labourpro-backend.onrender.com/api/worker/${editingId}`,
+        form,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      alert("✅ Worker updated successfully!");
+      setEditingId(null);
+    } else {
+      await axios.post(
+        "https://labourpro-backend.onrender.com/api/worker/add",
+        form,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      alert("✅ Worker added successfully!");
     }
-  };
+
+    // Reset form with default role
+    setForm({
+      name: "",
+      number: "",
+      role: "helper",
+      rojPerHour: "",
+      email: "",
+      password: "",
+    });
+
+    fetchWorkers();
+  } catch (err) {
+    console.error("❌ Submit error:", err.response?.data || err.message);
+    alert(
+      "❌ Failed to add/update worker: " +
+        (err.response?.data?.error || "Check console for details.")
+    );
+  }
+};
+
 
   const handleEdit = (worker) => {
     setForm({

@@ -31,36 +31,90 @@ const Managers = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    console.log("Submitting manager form data:", managerForm); // Log data before sending for debugging
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  console.log("Submitting manager form data:", managerForm);
 
-    try {
-      if (editingManagerId) {
-        await axios.put(`https://labourpro-backend.onrender.com/api/worker/updateManager/${editingManagerId}`, managerForm, {
+  // ✅ Validations
+  if (!/^\d{10}$/.test(managerForm.number)) {
+    return alert("❌ Phone number must be exactly 10 digits");
+  }
+
+  if (!Number(managerForm.salary) || Number(managerForm.salary) <= 0) {
+    return alert("❌ Salary must be a positive number");
+  }
+
+  if (!managerForm.password && !editingManagerId) {
+    return alert("❌ Password is required");
+  }
+
+  if (
+    managerForm.password &&
+    !managerForm.password.match(/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{6,}$/)
+  ) {
+    return alert(
+      "❌ Password must be at least 6 characters and include uppercase, lowercase, and a number"
+    );
+  }
+
+  // Check for duplicates (name, email, number) among existing managers
+  const duplicate = managers.find(
+    (m) =>
+      m._id !== editingManagerId &&
+      (m.name.toLowerCase() === managerForm.name.toLowerCase() ||
+        m.email.toLowerCase() === managerForm.email.toLowerCase() ||
+        m.number === managerForm.number)
+  );
+  if (duplicate) return alert("❌ Name, Email, or Phone number already exists");
+
+  try {
+    if (editingManagerId) {
+      await axios.put(
+        `https://labourpro-backend.onrender.com/api/worker/updateManager/${editingManagerId}`,
+        managerForm,
+        {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json' // Explicitly set JSON
+            "Content-Type": "application/json",
           },
-        });
-        alert("✅ Manager updated successfully!");
-        setEditingManagerId(null);
-      } else {
-        await axios.post("https://labourpro-backend.onrender.com/api/worker/addManager", managerForm, {
+        }
+      );
+      alert("✅ Manager updated successfully!");
+      setEditingManagerId(null);
+    } else {
+      await axios.post(
+        "https://labourpro-backend.onrender.com/api/worker/addManager",
+        managerForm,
+        {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json' // Explicitly set JSON
+            "Content-Type": "application/json",
           },
-        });
-        alert("✅ Manager added successfully!");
-      }
-      setManagerForm({ name: "", number: "", role: "", salary: "", email: "", password: "" });
-      fetchManagers();
-    } catch (err) {
-      console.error("❌ Manager submit error:", err.response?.data || err.message);
-      alert("❌ Failed to add/update manager: " + (err.response?.data?.error || "Check console for details."));
+        }
+      );
+      alert("✅ Manager added successfully!");
     }
-  };
+
+    // Reset form with default role
+    setManagerForm({
+      name: "",
+      number: "",
+      role: "Manager",
+      salary: "",
+      email: "",
+      password: "",
+    });
+
+    fetchManagers();
+  } catch (err) {
+    console.error("❌ Manager submit error:", err.response?.data || err.message);
+    alert(
+      "❌ Failed to add/update manager: " +
+        (err.response?.data?.error || "Check console for details.")
+    );
+  }
+};
+
 
   const handleEdit = (manager) => {
     setManagerForm({
