@@ -196,8 +196,24 @@ const Login = () => {
 
       // ✅ Redirect by role
       if (form.role === "manager") {
+        const managerObj = res.data.manager;
+
+        // Get managerId from token or salary
+        let managerId = res.data.salary?.current?.managerId;
+        if (!managerId) {
+          // fallback: decode JWT token
+          const decoded = JSON.parse(atob(res.data.token.split(".")[1]));
+          managerId = decoded.id;
+        }
+
+        localStorage.setItem("managerId", managerId);
+        localStorage.setItem("user", JSON.stringify(managerObj));
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("role", "manager");
+
         navigate("/managerdashboard");
-      } else if (form.role === "helper") {
+      }
+      else if (form.role === "helper") {
         navigate("/workerdashboard");
       } else if (form.role === "admin") {
         navigate("/dashboard");
