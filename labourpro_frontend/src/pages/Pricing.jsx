@@ -8,13 +8,23 @@ const Pricing = () => {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [selectedAmount, setSelectedAmount] = useState(null);
 
+  // ✅ Detect mobile device
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
   const handlePlanClick = (amount, planType) => {
     if (amount === 0) {
       navigate(`/register-paid?plan=${planType}&amount=${amount}`);
     } else {
       setSelectedPlan(planType);
       setSelectedAmount(amount);
-      setShowPaymentOptions(true);
+
+      if (isMobile) {
+        // Mobile → Open UPI app directly
+        handleUPIClick(amount, planType);
+      } else {
+        // Desktop → Show QR modal
+        setShowPaymentOptions(true);
+      }
     }
   };
 
@@ -23,16 +33,21 @@ const Pricing = () => {
     navigate(`/register-paid?plan=${selectedPlan}&amount=${selectedAmount}`);
   };
 
+  // ✅ UPI deep link
   const handleUPIClick = (amount, plan) => {
     const upiId = "vanshitpatel10@okaxis";
     const name = "LabourPro";
     const txnRef = `LP${Date.now()}`;
     const url = `upi://pay?pa=${upiId}&pn=${name}&tn=${plan}&am=${amount}&cu=INR&tr=${txnRef}`;
 
-    // This will open the UPI app installed on the device
+    // Opens UPI app (works only on mobile with UPI apps installed)
     window.location.href = url;
-  };
 
+    // After payment, user can come back & continue
+    setTimeout(() => {
+      navigate(`/register-paid?plan=${plan}&amount=${amount}`);
+    }, 3000);
+  };
 
   const closeModal = () => setShowPaymentOptions(false);
 
@@ -73,12 +88,11 @@ const Pricing = () => {
             <p className="text-4xl font-bold text-blue-600 mb-6">₹499</p>
 
             <button
-              onClick={() => handleUPIClick(499, "Monthly Plan")}
+              onClick={() => handlePlanClick(499, "monthly")}
               className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition duration-300 shadow"
             >
               Pay via UPI & QR
             </button>
-
             <ul className="mt-4 text-sm text-gray-600 space-y-1">
               <li>✔ Unlimited Users</li>
               <li>✔ Advanced Analytics & Reports</li>
@@ -95,7 +109,7 @@ const Pricing = () => {
             <p className="text-4xl font-bold text-blue-600 mb-6">₹4999</p>
 
             <button
-              onClick={() => handleUPIClick(4999, "yearly")}
+              onClick={() => handlePlanClick(4999, "yearly")}
               className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition duration-300 shadow"
             >
               Pay via UPI & QR
@@ -111,15 +125,15 @@ const Pricing = () => {
           </div>
         </div>
 
-        {/* Payment Modal */}
-        {showPaymentOptions && (
+        {/* Payment Modal for Desktop */}
+        {showPaymentOptions && !isMobile && (
           <div
             className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 px-4"
-            onClick={closeModal} // Clicking on backdrop closes modal
+            onClick={closeModal}
           >
             <div
               className="bg-white rounded-xl shadow-2xl p-6 md:p-8 max-w-md w-full relative animate-fade-in"
-              onClick={(e) => e.stopPropagation()} // Prevent modal content click from closing
+              onClick={(e) => e.stopPropagation()}
             >
               <button
                 onClick={closeModal}
@@ -156,7 +170,6 @@ const Pricing = () => {
             </div>
           </div>
         )}
-
       </div>
     </div>
   );
