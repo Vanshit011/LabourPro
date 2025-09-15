@@ -176,6 +176,7 @@ const Workers = () => {
         />
       )}
 
+
       {/* Main content (scrollable area) */}
       <div className="flex-1 flex flex-col pt-14 md:p-8 overflow-y-auto h-screen">
         <div className="max-w-6xl mx-auto w-full pb-10">

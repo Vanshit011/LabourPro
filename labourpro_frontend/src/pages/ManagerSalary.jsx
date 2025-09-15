@@ -402,100 +402,102 @@ const ManagerSalary = () => {
           onClick={() => setSidebarOpen(false)}
         />
       )}
+      {/* Main content (scrollable) */}
+      <div className="flex-1 flex flex-col pt-14 md:p-8 overflow-y-auto h-screen">
+        <div className="max-w-5xl mx-auto space-y-8 pb-10"></div>
+        {/* Main Content */}
+        <div className="flex-1 p-4 md:p-6 overflow-y-auto mt-2">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-2xl font-bold text-blue-700 mb-6 flex items-center">
+              <span className="mr-2 ml-9">💰</span> Salary Management
+            </h2>
 
-      {/* Main Content */}
-      <div className="flex-1 p-4 md:p-6 overflow-y-auto mt-2">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold text-blue-700 mb-6 flex items-center">
-            <span className="mr-2 ml-9">💰</span> Salary Management
-          </h2>
+            {/* Card */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6">
+              {/* Manager Dropdown */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Manager</label>
+                <select
+                  value={managerId}
+                  onChange={(e) => setManagerId(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                >
+                  <option value="">-- Select Manager --</option>
+                  {managers.map((m) => (
+                    <option key={m._id} value={m._id}>
+                      {m.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          {/* Card */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6">
-            {/* Manager Dropdown */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Manager</label>
-              <select
-                value={managerId}
-                onChange={(e) => setManagerId(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-              >
-                <option value="">-- Select Manager --</option>
-                {managers.map((m) => (
-                  <option key={m._id} value={m._id}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+              {/* Month + Year */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="12"
+                    value={month}
+                    onChange={(e) => setMonth(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                  <input
+                    type="number"
+                    value={year}
+                    onChange={(e) => setYear(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  />
+                </div>
+              </div>
 
-            {/* Month + Year */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="12"
-                  value={month}
-                  onChange={(e) => setMonth(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-                />
+              {/* Salary Inputs */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Base Salary</label>
+                  <input
+                    type="number"
+                    value={baseSalary}
+                    readOnly
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-100 cursor-not-allowed"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Additional Advance</label>
+                  <input
+                    type="number"
+                    value={additionalAdvance}
+                    onChange={(e) => setAdditionalAdvance(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Additional Loan Taken</label>
+                  <input
+                    type="number"
+                    value={additionalLoanTaken}
+                    onChange={(e) => setAdditionalLoanTaken(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Additional Loan Paid</label>
+                  <input
+                    type="number"
+                    value={additionalLoanPaid}
+                    onChange={(e) => setAdditionalLoanPaid(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
-                <input
-                  type="number"
-                  value={year}
-                  onChange={(e) => setYear(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-                />
-              </div>
-            </div>
 
-            {/* Salary Inputs */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Base Salary</label>
-                <input
-                  type="number"
-                  value={baseSalary}
-                  readOnly
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-100 cursor-not-allowed"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Additional Advance</label>
-                <input
-                  type="number"
-                  value={additionalAdvance}
-                  onChange={(e) => setAdditionalAdvance(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Additional Loan Taken</label>
-                <input
-                  type="number"
-                  value={additionalLoanTaken}
-                  onChange={(e) => setAdditionalLoanTaken(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Additional Loan Paid</label>
-                <input
-                  type="number"
-                  value={additionalLoanPaid}
-                  onChange={(e) => setAdditionalLoanPaid(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-                />
-              </div>
-            </div>
-
-            {/* Buttons */}
-            <div className="flex justify-end gap-4">
-              {/*    <button
+              {/* Buttons */}
+              <div className="flex justify-end gap-4">
+                {/*    <button
                 onClick={() => DownloadAllSlips({ month, year })}
                 className="bg-green-600 text-white px-6 py-2 rounded-lg shadow hover:bg-green-700 transition duration-200"
               >
@@ -503,69 +505,71 @@ const ManagerSalary = () => {
               </button>  */}
 
 
-              {!salaryData ? (
-                <button
-                  onClick={handleAddSalary}
-                  className="bg-green-600 text-white px-6 py-2 rounded-lg shadow hover:bg-green-700 transition duration-200 flex items-center"
-                >
-                  <span className="mr-2">➕</span> Add Salary
-                </button>
-              ) : (
-                <button
-                  onClick={handleUpdateSalary}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-700 transition duration-200 flex items-center"
-                >
-                  <span className="mr-2">✏️</span> Update Salary
-                </button>
-              )}
+                {!salaryData ? (
+                  <button
+                    onClick={handleAddSalary}
+                    className="bg-green-600 text-white px-6 py-2 rounded-lg shadow hover:bg-green-700 transition duration-200 flex items-center"
+                  >
+                    <span className="mr-2">➕</span> Add Salary
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleUpdateSalary}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-700 transition duration-200 flex items-center"
+                  >
+                    <span className="mr-2">✏️</span> Update Salary
+                  </button>
+                )}
 
-            </div>
-          </div>
-
-          {/* Salary Details */}
-          {salaryData && (
-            <div className="bg-white rounded-2xl shadow-lg p-6 mt-6">
-              <h3 className="text-xl font-semibold mb-4 flex items-center">
-                <span className="mr-2">📊</span> Salary Details
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-gray-800">
-                <p className="bg-gray-50 p-3 rounded-lg"><b>Base Salary:</b> {salaryData.baseSalary}</p>
-                <p className="bg-gray-50 p-3 rounded-lg"><b>Advance:</b> {salaryData.advance}</p>
-                <p className="bg-gray-50 p-3 rounded-lg"><b>Loan Taken:</b> {salaryData.loanTaken}</p>
-                <p className="bg-gray-50 p-3 rounded-lg"><b>Loan Paid:</b> {salaryData.loanPaid}</p>
-                <p className="bg-gray-50 p-3 rounded-lg">
-                  <b>Remaining Loan:</b> {(salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)}
-                </p>
-                <p className="bg-gray-50 p-3 rounded-lg">
-                  <b>Final Salary:</b>{" "}
-                  {(salaryData.baseSalary || 0) - (salaryData.advance || 0) - (salaryData.loanPaid || 0)}
-                </p>
               </div>
-              <button
-                onClick={() => handleDownloadPDF(salaryData, month, year)}
-                className="bg-purple-600 text-white px-6 py-2 rounded-lg shadow hover:bg-purple-700 transition duration-200"
-              >
-                📄 Download PDF
-              </button>
-              <button
-                onClick={() => deleteSalary(salaryData._id)}
-                className="bg-red-600 text-white px-6 py-2 rounded-lg shadow hover:bg-red-700 transition duration-200 ml-4"
-              >
-                🗑️ Delete Salary
-              </button>
-
-              {((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)) < 0 && (
-                <p className="mt-4 text-green-600 bg-green-50 p-3 rounded-lg">
-                  <b>Note:</b> Overpaid by {-((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0))}.
-                </p>
-              )}
             </div>
-          )}
 
+            {/* Salary Details */}
+            {salaryData && (
+              <div className="bg-white rounded-2xl shadow-lg p-6 mt-6">
+                <h3 className="text-xl font-semibold mb-4 flex items-center">
+                  <span className="mr-2">📊</span> Salary Details
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-gray-800">
+                  <p className="bg-gray-50 p-3 rounded-lg"><b>Base Salary:</b> {salaryData.baseSalary}</p>
+                  <p className="bg-gray-50 p-3 rounded-lg"><b>Advance:</b> {salaryData.advance}</p>
+                  <p className="bg-gray-50 p-3 rounded-lg"><b>Loan Taken:</b> {salaryData.loanTaken}</p>
+                  <p className="bg-gray-50 p-3 rounded-lg"><b>Loan Paid:</b> {salaryData.loanPaid}</p>
+                  <p className="bg-gray-50 p-3 rounded-lg">
+                    <b>Remaining Loan:</b> {(salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)}
+                  </p>
+                  <p className="bg-gray-50 p-3 rounded-lg">
+                    <b>Final Salary:</b>{" "}
+                    {(salaryData.baseSalary || 0) - (salaryData.advance || 0) - (salaryData.loanPaid || 0)}
+                  </p>
+                </div>
+                <button
+                  onClick={() => handleDownloadPDF(salaryData, month, year)}
+                  className="bg-purple-600 text-white px-6 py-2 rounded-lg shadow hover:bg-purple-700 transition duration-200"
+                >
+                  📄 Download PDF
+                </button>
+                <button
+                  onClick={() => deleteSalary(salaryData._id)}
+                  className="bg-red-600 text-white px-6 py-2 rounded-lg shadow hover:bg-red-700 transition duration-200 ml-4"
+                >
+                  🗑️ Delete Salary
+                </button>
+
+                {((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)) < 0 && (
+                  <p className="mt-4 text-green-600 bg-green-50 p-3 rounded-lg">
+                    <b>Note:</b> Overpaid by {-((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0))}.
+                  </p>
+                )}
+              </div>
+            )}
+
+          </div>
         </div>
       </div>
     </div>
-  );
+    
+      );
 };
 
-export default ManagerSalary;
+      export default ManagerSalary;

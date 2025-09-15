@@ -5,6 +5,7 @@ import axios from "axios";
 const Login = () => {
   const [form, setForm] = useState({ role: "", email: "", password: "" });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false); // ✅ Added loading state
   const [forgotStep, setForgotStep] = useState(0); // 0: none, 1: enter email, 2: enter OTP, 3: set new password
   const [forgotEmail, setForgotEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -159,6 +160,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true); // ✅ Start loading
 
     try {
       let endpoint;
@@ -228,6 +230,9 @@ const Login = () => {
     } catch (err) {
       console.error("❌ Login error:", err.response?.data || err.message);
       setError(err.response?.data?.message || "Login failed");
+    }
+    finally {
+      setLoading(false); // ✅ Stop loading
     }
   };
 
@@ -369,9 +374,13 @@ const Login = () => {
               </div>
               <button
                 type="submit"
-                className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-md hover:bg-blue-700 transition duration-300 ease-in-out"
+                disabled={loading} // ✅ disable while loading
+                className={`w-full rounded-lg px-4 py-3 text-sm font-semibold text-white shadow-md transition duration-300 ease-in-out ${loading
+                    ? "bg-blue-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-700"
+                  }`}
               >
-                Login
+                {loading ? "Processing..." : "Login"} {/* ✅ Show status */}
               </button>
             </form>
 

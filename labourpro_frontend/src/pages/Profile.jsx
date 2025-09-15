@@ -14,7 +14,7 @@ const Profile = () => {
     newPassword: "",
   });
   const [message, setMessage] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(false); // Toggle state
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const token = localStorage.getItem("token");
 
@@ -82,7 +82,9 @@ const Profile = () => {
   if (!admin)
     return (
       <div className="flex justify-center items-center min-h-screen bg-gray-50">
-        <p className="text-lg font-semibold text-gray-600 animate-pulse">Loading profile...</p>
+        <p className="text-lg font-semibold text-gray-600 animate-pulse">
+          Loading profile...
+        </p>
       </div>
     );
 
@@ -100,9 +102,9 @@ const Profile = () => {
       )}
 
       {/* Main content */}
-      <div className="flex-1 overflow-y-auto pt-10 p-4 md:p-6 relative">
-        <div className="max-w-3xl mx-auto bg-white rounded-2xl shadow-lg p-6 md:p-8 space-y-8">
-          <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
+      <div className="flex-1 pt-10 p-4 md:p-6 relative flex justify-center">
+        <div className="max-w-3xl w-full bg-white rounded-2xl shadow-lg p-6 md:p-8 flex flex-col h-[calc(100vh-5rem)]">
+          <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2 mb-4">
             <span className="text-blue-600 text-4xl">👤</span> My Profile
           </h1>
 
@@ -112,76 +114,89 @@ const Profile = () => {
             </div>
           )}
 
-          {/* Profile Update Form */}
-          <form onSubmit={handleUpdateProfile} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-              <input
-                type="text"
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input
-                type="email"
-                name="email"
-                value={form.email}
-                onChange={handleChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
-              <input
-                type="text"
-                name="companyName"
-                value={form.companyName}
-                disabled
-                className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
-              />
-            </div>
-            <button className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-300 shadow">
-              Update Profile
-            </button>
-          </form>
+          {/* Scrollable content */}
+          <div className="flex-1 overflow-y-auto pr-2 space-y-8">
+            {/* Profile Update Form */}
+            <form onSubmit={handleUpdateProfile} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={form.email}
+                  onChange={handleChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Company Name
+                </label>
+                <input
+                  type="text"
+                  name="companyName"
+                  value={form.companyName}
+                  disabled
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
+                />
+              </div>
+              <button className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-300 shadow">
+                Update Profile
+              </button>
+            </form>
 
-          {/* Change Password */}
-          <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
-            <span className="text-blue-600 text-3xl">🔐</span> Change Password
-          </h2>
-          <form onSubmit={handleChangePassword} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Old Password</label>
-              <input
-                type="password"
-                name="oldPassword"
-                value={passwords.oldPassword}
-                onChange={handlePasswordChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-              <input
-                type="password"
-                name="newPassword"
-                value={passwords.newPassword}
-                onChange={handlePasswordChange}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-                required
-              />
-            </div>
-            <button className="w-full bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition duration-300 shadow">
-              Change Password
-            </button>
-          </form>
+            {/* Change Password */}
+            <h2 className="text-2xl font-semibold text-gray-800 flex items-center gap-2">
+              <span className="text-blue-600 text-3xl">🔐</span> Change Password
+            </h2>
+            <form onSubmit={handleChangePassword} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Old Password
+                </label>
+                <input
+                  type="password"
+                  name="oldPassword"
+                  value={passwords.oldPassword}
+                  onChange={handlePasswordChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  name="newPassword"
+                  value={passwords.newPassword}
+                  onChange={handlePasswordChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  required
+                />
+              </div>
+              <button className="w-full bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition duration-300 shadow">
+                Change Password
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>

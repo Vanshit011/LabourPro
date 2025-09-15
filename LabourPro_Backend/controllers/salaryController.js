@@ -437,7 +437,6 @@ const updateWorkerSalary = async (req, res) => {
   }
 };
 
-
 // GET /worker-salary/:workerId/:month/:year
 const getWorkerSalary = async (req, res) => {
   const { workerId, month, year } = req.params;

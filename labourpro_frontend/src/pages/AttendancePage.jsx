@@ -49,7 +49,7 @@ const AttendancePage = () => {
         },
       });
 
-      // trigger event for salary update
+      // trigger salary update
       window.dispatchEvent(new Event("attendanceUpdated"));
 
       setForm({
@@ -79,7 +79,7 @@ const AttendancePage = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar */}
+      {/* Sidebar (fixed left) */}
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
       {/* Overlay for mobile */}
@@ -90,9 +90,10 @@ const AttendancePage = () => {
         />
       )}
 
-      {/* Main content with scroll */}
-      <main className="flex-1 overflow-y-auto p-4 md:p-6">
-        <div className="max-w-5xl mx-auto space-y-8">
+      {/* Main content (scrollable) */}
+      <div className="flex-1 flex flex-col pt-14 md:p-8 overflow-y-auto h-screen">
+        <div className="max-w-5xl mx-auto space-y-8 pb-10">
+          {/* Add Attendance Form */}
           <div className="bg-white shadow-lg rounded-2xl p-6">
             <h2 className="text-2xl font-bold text-center text-blue-700 mb-6 flex items-center justify-center gap-2">
               <span className="text-2xl ml-3">📝</span> Add Attendance
@@ -128,7 +129,9 @@ const AttendancePage = () => {
 
               {/* Date */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date
+                </label>
                 <input
                   type="date"
                   name="date"
@@ -169,7 +172,7 @@ const AttendancePage = () => {
                 />
               </div>
 
-              {/* Submit Button */}
+              {/* Submit */}
               <div className="col-span-2">
                 <button
                   type="submit"
@@ -191,7 +194,7 @@ const AttendancePage = () => {
             <MonthlySalaryView />
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 };
