@@ -62,7 +62,7 @@ function App() {
 
           {/* Registration Routes */}
           <Route path="/register-trial" element={<RegisterTrial />} />
-          <Route path="/register-paid" element={<RegisterPaid />} />
+          <Route path="/register-paid" element={<ProtectedRoute><RegisterPaid /></ProtectedRoute>} />
           <Route path="/managerdashboard" element={<ProtectedRoute><ManagerDashboard /></ProtectedRoute>} />
           <Route path="/workerdashboard" element={<ProtectedRoute><WorkerDashboard /></ProtectedRoute>} />
           {/* Protected Routes */}
