@@ -90,20 +90,22 @@ const AttendancePage = () => {
         />
       )}
 
-      {/* Main content (scrollable) */}
+      {/* Main content */}
       <div className="flex-1 flex flex-col pt-14 md:p-8 overflow-y-auto h-screen">
-        <div className="max-w-5xl mx-auto space-y-8 pb-10">
+        <div className="max-w-6xl mx-auto space-y-8 pb-10 w-full px-4 sm:px-6 md:px-0">
+          
           {/* Add Attendance Form */}
           <div className="bg-white shadow-lg rounded-2xl p-6">
-            <h2 className="text-2xl font-bold text-center text-blue-700 mb-6 flex items-center justify-center gap-2">
-              <span className="text-2xl ml-3">📝</span> Add Attendance
+            <h2 className="text-xl md:text-2xl font-bold text-center text-blue-700 mb-6 flex items-center justify-center gap-2">
+              <span className="text-2xl ml-1">📝</span> Add Attendance
             </h2>
+
             <form
               onSubmit={handleSubmit}
-              className="grid grid-cols-1 gap-5 md:grid-cols-2"
+              className="grid grid-cols-1 sm:grid-cols-2 gap-5"
             >
               {/* Worker */}
-              <div className="col-span-2">
+              <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Select Worker
                 </label>
@@ -111,7 +113,7 @@ const AttendancePage = () => {
                   name="workerId"
                   value={form.workerId}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 text-sm sm:text-base"
                   required
                 >
                   <option value="">-- Select Worker --</option>
@@ -137,7 +139,7 @@ const AttendancePage = () => {
                   name="date"
                   value={form.date}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                   required
                 />
               </div>
@@ -152,7 +154,7 @@ const AttendancePage = () => {
                   name="entryTime"
                   value={form.entryTime}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                   required
                 />
               </div>
@@ -167,16 +169,16 @@ const AttendancePage = () => {
                   name="exitTime"
                   value={form.exitTime}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
                   required
                 />
               </div>
 
               {/* Submit */}
-              <div className="col-span-2">
+              <div className="sm:col-span-2">
                 <button
                   type="submit"
-                  className="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition duration-300 shadow"
+                  className="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition duration-300 shadow text-sm sm:text-base"
                 >
                   Submit Attendance
                 </button>
@@ -185,12 +187,12 @@ const AttendancePage = () => {
           </div>
 
           {/* Attendance Viewer */}
-          <div className="bg-white shadow-lg rounded-2xl p-6">
+          <div className="bg-white shadow-lg rounded-2xl p-4 sm:p-6">
             <ViewAttendanceByDate />
           </div>
 
           {/* Monthly Salary Summary */}
-          <div className="bg-white shadow-lg rounded-2xl p-6">
+          <div className="bg-white shadow-lg rounded-2xl p-4 sm:p-6">
             <MonthlySalaryView />
           </div>
         </div>
