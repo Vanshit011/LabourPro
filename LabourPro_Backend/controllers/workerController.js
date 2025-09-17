@@ -49,19 +49,48 @@ exports.updateWorker = async (req, res) => {
   try {
     const { id } = req.params;
     const companyId = req.user.companyId;
+    const { name, email, phone } = req.body;
+
+    // ✅ Check if another worker has same name/email/phone
+    const duplicate = await Worker.findOne({
+      companyId,
+      _id: { $ne: id }, // exclude the worker being updated
+      $or: [
+        name ? { name } : null,
+        email ? { email } : null,
+        phone ? { phone } : null,
+      ].filter(Boolean), // only check fields that are being updated
+    });
+
+    if (duplicate) {
+      return res.status(400).json({
+        message: "❌ Name, Email, or Phone number already exists in this company",
+      });
+    }
+
+    // ✅ Update worker (any field can be updated)
     const updated = await Worker.findOneAndUpdate(
       { _id: id, companyId },
-      req.body,
-      { new: true }
+      { $set: req.body },
+      { new: true, runValidators: true }
     );
 
-    if (!updated) return res.status(404).json({ message: "Worker not found" });
+    if (!updated) {
+      return res.status(404).json({ message: "⚠️ Worker not found" });
+    }
 
-    res.status(200).json({ message: "Worker updated", worker: updated });
+    res.status(200).json({
+      message: "✅ Worker updated successfully",
+      worker: updated,
+    });
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({
+      message: "❌ Server error",
+      error: err.message,
+    });
   }
 };
+
 
 // ✅ Delete Worker
 exports.deleteWorker = async (req, res) => {

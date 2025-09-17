@@ -343,7 +343,7 @@ const Login = () => {
                       onChange={handleChange}
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                     />
-                    <span className="text-gray-700">Helper</span>
+                    <span className="text-gray-700">worker</span>
                   </label>
                 </div>
               </div>

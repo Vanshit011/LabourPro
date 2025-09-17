@@ -3,7 +3,6 @@ const Worker = require("../models/Worker");
 // const mongoose = require('mongoose');
 
 // Add attendance
-
 const addAttendance = async (req, res) => {
   try {
     const { workerId, entryTime, exitTime, date } = req.body;
@@ -17,6 +16,19 @@ const addAttendance = async (req, res) => {
     const worker = await Worker.findOne({ _id: workerId, companyId });
     if (!worker) {
       return res.status(404).json({ message: "Worker not found" });
+    }
+
+    // 🛑 Check if attendance already exists for SAME worker + SAME date
+    const existingAttendance = await Attendance.findOne({
+      workerId,
+      date,
+      companyId,
+    });
+
+    if (existingAttendance) {
+      return res.status(400).json({
+        message: `⚠️ Attendance already exists for ${worker.name} on ${date}`,
+      });
     }
 
     // ✅ Calculate total hours
@@ -41,13 +53,12 @@ const addAttendance = async (req, res) => {
       rojRate,
       totalRojEarned,
       date,
-      companyId
+      companyId,
     });
 
     await attendance.save();
 
-    res.status(201).json({ message: "Attendance added", attendance });
-
+    res.status(201).json({ message: "✅ Attendance added successfully", attendance });
   } catch (error) {
     console.error("Add Attendance Error:", error);
     res.status(500).json({ message: "Server error" });
