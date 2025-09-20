@@ -240,33 +240,6 @@ const WorkerSalary = () => {
     }
   };
 
-  // ✅ Refresh salary (recalculate based on attendance and base salary)
-  // const handleRefreshSalary = async () => {
-  //   try {
-  //     if (!workerId || !month || !year) {
-  //       alert("⚠️ Please select worker, month, and year");
-  //       return;
-  //     }
-
-  //     const token = localStorage.getItem("token");
-  //     const res = await axios.post(
-  //       "https://labourpro-backend.onrender.com/api/salary/worker/recalculate",
-  //       { workerId, month, year },
-  //       { headers: { Authorization: `Bearer ${token}` } }
-  //     );
-
-  //     alert("✅ Salary recalculated");
-  //     setSalaryData(res.data.salary);
-  //     setBaseSalary(res.data.salary.baseSalary.toString());
-
-  //     // refresh display
-  //     fetchSalary();
-  //   } catch (err) {
-  //     console.error("❌ Error refreshing salary:", err.response?.data || err.message);
-  //     alert("❌ Failed to refresh salary");
-  //   }
-  // };
-
   // ✅ Download PDF
   const generateWorkerSalaryPDF = (salaryData, month, year, managers = []) => {
     if (!salaryData) {
@@ -393,6 +366,25 @@ const WorkerSalary = () => {
     doc.save(fileName);
   };
 
+  const handleDownload = async () => {
+    try {
+      const response = await axios.get(
+        `https://labourpro-backend.onrender.com/api/salary/downloadAllWorkers/${month}/${year}`,
+        {
+          responseType: "blob", // important for PDF
+        }
+      );
+
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `Worker_Salaries_${month}_${year}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+    } catch (error) {
+      console.error("Download error:", error);
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -425,8 +417,7 @@ const WorkerSalary = () => {
                 <select
                   value={workerId}
                   onChange={(e) => setWorkerId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-                >
+                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200">
                   <option value="">-- Select Worker --</option>
                   {workers.map((w) => (
                     <option key={w._id} value={w._id}>
@@ -502,6 +493,12 @@ const WorkerSalary = () => {
 
               {/* Buttons */}
               <div className="flex justify-end gap-4">
+                <button
+                  onClick={handleDownload}
+                  className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-green-700"
+                >
+                  Download All Worker Salaries
+                </button>
                 {!salaryData ? (
                   <button
                     onClick={handleAddSalary}
@@ -517,12 +514,7 @@ const WorkerSalary = () => {
                     <span className="mr-2">✏️</span> Update Salary
                   </button>
                 )}
-                {/* <button
-                onClick={handleRefreshSalary}
-                className="bg-purple-600 text-white px-6 py-2 rounded-lg shadow hover:bg-purple-700 transition duration-200 flex items-center"
-              >
-                <span className="mr-2">🔄</span> Refresh Salary
-              </button> */}
+
               </div>
             </div>
 
@@ -571,8 +563,8 @@ const WorkerSalary = () => {
         </div>
       </div>
     </div>
-    
-      );
+
+  );
 };
 
-      export default WorkerSalary;
+export default WorkerSalary;

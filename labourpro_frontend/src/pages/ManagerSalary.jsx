@@ -4,6 +4,8 @@ import Sidebar from "../components/Sidebar";
 import { jsPDF } from "jspdf";
 
 const ManagerSalary = () => {
+  const [allManagerSalaries, setAllManagerSalaries] = useState([]);
+
   const [managers, setManagers] = useState([]);
   const [managerId, setManagerId] = useState("");
   const [month, setMonth] = useState(new Date().getMonth() + 1); // Auto-set to current month (1-12)
@@ -217,7 +219,6 @@ const ManagerSalary = () => {
     }
   };
 
-
   // ✅ Delete salary
   const deleteSalary = async (salaryId) => {
     if (!window.confirm("⚠️ Are you sure you want to delete this salary entry?")) return;
@@ -390,6 +391,94 @@ const ManagerSalary = () => {
   //   }
   // };
 
+  // ✅ Download all slips for selected month/year
+  // const handleDownloadAllPDF = async () => {
+  //   try {
+  //     const token = localStorage.getItem("token");
+
+  //     const response = await axios.get(
+  //       `https://labourpro-backend.onrender.com/api/salary/downloadAll/${month}/${year}`,
+  //       {
+  //         responseType: "blob", // 👈 important for PDF binary
+  //         headers: { Authorization: `Bearer ${token}` },
+  //       }
+  //     );
+
+  //     // Create a Blob for the file
+  //     const blob = new Blob([response.data], { type: "application/pdf" });
+  //     const url = window.URL.createObjectURL(blob);
+
+  //     // Create link and trigger download
+  //     const link = document.createElement("a");
+  //     link.href = url;
+  //     link.setAttribute("download", `All_Manager_Salaries_${month}_${year}.pdf`);
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     link.remove();
+
+  //     window.URL.revokeObjectURL(url);
+
+  //     console.log("✅ All Manager Slips PDF downloaded successfully");
+  //   } catch (err) {
+  //     console.error("❌ Error downloading all salary slips:", err);
+  //     alert("❌ Could not download all salary slips. Check API/server.");
+  //   }
+  // };
+
+  // const handleDownloadAll = async (month, year) => {
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     const response = await axios.get(
+  //       `https://labourpro-backend.onrender.com/api/salary/downloadAll/${month}/${year}`,
+  //       {
+  //         responseType: "blob",
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       }
+  //     );
+
+  //     // Create a blob URL and trigger download
+  //     const url = window.URL.createObjectURL(new Blob([response.data]));
+  //     const link = document.createElement("a");
+  //     link.href = url;
+  //     link.setAttribute("download", `All_Salaries_${month}_${year}.pdf`);
+  //     document.body.appendChild(link);
+  //     link.click();
+  //     link.remove();
+  //     // Optionally: Revoke object URL after download
+  //     setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+  //   } catch (error) {
+  //     console.error("Download failed:", error);
+  //     alert("Failed to download. Please try again.");
+  //   }
+  // };
+
+
+  const handleDownload = async () => {
+    try {
+      const token = localStorage.getItem("token"); // if you are using auth
+      const response = await axios.get(
+        `https://labourpro-backend.onrender.com/api/salary/downloadAll/${month}/${year}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: "blob", // important for PDF
+        }
+      );
+
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `Manager_Salaries_${month}_${year}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error("Download error:", error);
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar */}
@@ -497,14 +586,12 @@ const ManagerSalary = () => {
 
               {/* Buttons */}
               <div className="flex justify-end gap-4">
-                {/*    <button
-                onClick={() => DownloadAllSlips({ month, year })}
-                className="bg-green-600 text-white px-6 py-2 rounded-lg shadow hover:bg-green-700 transition duration-200"
-              >
-                📥 Download All Salary Slips
-              </button>  */}
-
-
+                <button
+                  onClick={handleDownload}
+                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                >
+                  Download All Manager Salaries
+                </button>
                 {!salaryData ? (
                   <button
                     onClick={handleAddSalary}
@@ -568,8 +655,8 @@ const ManagerSalary = () => {
         </div>
       </div>
     </div>
-    
-      );
+
+  );
 };
 
-      export default ManagerSalary;
+export default ManagerSalary;

@@ -23,7 +23,7 @@ const Sidebar = () => {
     { name: "Worker Attendance", path: "/dashboard/WorkerAttendance", icon: <Calendar size={18} /> },
     { name: "Manager Salaries", path: "/dashboard/ManagerSalaries", icon: <Wallet size={18} /> },
     { name: "Worker Salaries", path: "/dashboard/WorkerSalaries", icon: <Wallet size={18} /> },
-    { name: "Notifications", path: "/dashboard/notifications", icon: <Bell size={18} /> },
+    // { name: "Notifications", path: "/dashboard/notifications", icon: <Bell size={18} /> },
     { name: "Renew Plan", path: "/dashboard/contactRenewPlan", icon: <Repeat2 size={18} /> },
   ];
 

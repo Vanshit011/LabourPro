@@ -175,134 +175,137 @@ const downloadSalaryPDF = async (req, res) => {
   }
 };
 
-// GET /salary/:month/:year/download
-// ✅ Helper: create PDF for one salary and return Buffer
-// const createPDFBuffer = (salary) => {
-//   return new Promise((resolve, reject) => {
-//     const doc = new PDFDocument({ margin: 40, size: "A4" });
-//     const chunks = [];
-
-//     doc.on("data", (chunk) => chunks.push(chunk));
-//     doc.on("end", () => resolve(Buffer.concat(chunks)));
-//     doc.on("error", reject);
-
-//     // 🎨 HEADER (Blue Banner with LabourPro Title)
-//     doc.rect(0, 0, doc.page.width, 80)
-//       .fill("#1E3A8A"); // Dark blue
-
-//     doc.fillColor("white")
-//       .fontSize(26)
-//       .text("LabourPro", { align: "center", valign: "center" });
-
-//     doc.moveDown(2);
-
-//     // 📄 Title
-//     doc.fillColor("#1E3A8A")
-//       .fontSize(20)
-//       .text("Salary Slip", { align: "center" });
-//     doc.moveDown(1);
-
-//     // 📌 Salary Details Box
-//     doc.fillColor("black")
-//       .fontSize(14);
-
-//     const details = [
-//       { label: "Manager", value: salary.managerName || salary.managerId?.name || "N/A" },
-//       { label: "Month/Year", value: `${salary.month}/${salary.year}` },
-//       { label: "Base Salary", value: `₹${salary.baseSalary}` },
-//       { label: "Advance", value: `₹${salary.advance}` },
-//       { label: "Loan Taken", value: `₹${salary.loanTaken}` },
-//       { label: "Loan Paid", value: `₹${salary.loanPaid}` },
-//       { label: "Remaining Loan", value: `₹${(salary.loanTaken || 0) - (salary.loanPaid || 0)}` },
-//       { label: "Final Salary", value: `₹${salary.finalSalary}` },
-//     ];
-
-//     // Draw details in neat format
-//     details.forEach((item) => {
-//       doc.font("Helvetica-Bold").text(`${item.label}: `, { continued: true });
-//       doc.font("Helvetica").text(item.value);
-//       doc.moveDown(0.5);
-//     });
-
-//     doc.moveDown(2);
-
-//     // 📅 Footer
-//     doc.fontSize(12)
-//       .fillColor("gray")
-//       .text(`Generated on: ${new Date().toLocaleDateString()}`, { align: "right" });
-
-//     doc.moveDown(1);
-//     doc.fillColor("#1E3A8A")
-//       .fontSize(10)
-//       .text("This is a computer-generated salary slip by LabourPro", { align: "center" });
-
-//     doc.end();
-//   });
-// };
-
 // ✅ Route to download all manager salary slips in ONE PDF
 const downloadAllSalaries = async (req, res) => {
   try {
-    const salaries = await ManagerSalary.find().populate("managerId", "name"); // populate manager name
+    const { month, year } = req.params;
 
-    // PDF setup
-    const doc = new PDFDocument({ margin: 50, size: "A4" });
+    // 🔍 Apply filters
+    let filter = {};
+    if (month) filter.month = month;
+    if (year) filter.year = year;
 
+    const salaries = await ManagerSalary.find(filter).populate("managerId", "name");
+
+    if (!salaries || salaries.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No salaries found for given month/year" });
+    }
+
+    // ✅ PDF setup
+    const doc = new PDFDocument({ margin: 40, size: "A4" });
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", "attachment; filename=All_Manager_Salaries.pdf");
-
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=Manager_Salaries_${month || "All"}_${year || "All"
+      }.pdf`
+    );
     doc.pipe(res);
 
-    // Loop through each salary and add a new page
-    for (let i = 0; i < salaries.length; i++) {
-      const salary = salaries[i];
+    // 🔷 Header banner
+    doc.rect(0, 0, doc.page.width, 60).fill("#004aad");
+    doc.fillColor("white").fontSize(20).text("LabourPro - Manager Salaries", 50, 20);
 
-      // 🔷 Blue Header
-      doc.rect(0, 0, doc.page.width, 60).fill("#004aad");
-      doc.fillColor("white").fontSize(20).text("LabourPro - Manager Salary Slip", 50, 20);
+    doc.moveDown(2);
+    doc.fillColor("black");
 
-      // Reset text color
-      doc.fillColor("black").fontSize(12);
+    // 🔷 Title
+    doc
+      .fontSize(14)
+      .fillColor("#004aad")
+      .text(
+        `Salaries for ${month ? month : "All Months"} / ${year ? year : "All Years"
+        }`,
+        { align: "left" }
+      );
 
-      // Manager & Period
-      doc.moveDown(2);
-      doc.text(`Manager: ${salary.managerId?.name || "N/A"}`);
-      doc.text(`Month/Year: ${salary.month}/${salary.year}`);
-      doc.text(`Generated: ${new Date().toLocaleDateString()}`);
+    doc.moveDown(1);
 
-      // Salary details
-      doc.moveDown().fontSize(14).text("Salary Details", { underline: true });
-      doc.moveDown(0.5);
+    // Table setup
+    const headers = [
+      "Manager",
+      "Base Salary",
+      "Advance",
+      "Loan Taken",
+      "Loan Paid",
+      "Remaining Loan",
+      "Final Salary",
+    ];
 
-      const details = [
-        ["Base Salary", salary.baseSalary],
-        ["Advance", salary.advance],
-        ["Loan Taken", salary.loanTaken],
-        ["Loan Paid", salary.loanPaid],
-        ["Remaining Loan", (salary.loanTaken || 0) - (salary.loanPaid || 0)],
-        ["Final Salary", salary.finalSalary],
+    const startX = 40;
+    const tableWidth = doc.page.width - startX * 2;
+    const colWidth = tableWidth / headers.length;
+    let y = doc.y + 20;
+
+    // Draw table border (outer rectangle)
+    const rowHeight = 35;
+    const totalRows = salaries.length + 1; // +1 for header
+    const tableHeight = totalRows * rowHeight;
+
+    doc
+      .lineWidth(1)
+      .rect(startX, y, tableWidth, tableHeight)
+      .stroke(); // full border
+
+    // Draw column dividers
+    for (let i = 1; i < headers.length; i++) {
+      const colX = startX + i * colWidth;
+      doc.moveTo(colX, y).lineTo(colX, y + tableHeight).stroke();
+    }
+
+    // Draw row dividers
+    for (let j = 1; j <= totalRows; j++) {
+      const rowY = y + j * rowHeight;
+      doc.moveTo(startX, rowY).lineTo(startX + tableWidth, rowY).stroke();
+    }
+
+    // ✅ Table Headers
+    doc.fontSize(12).fillColor("black").font("Helvetica-Bold");
+    headers.forEach((header, i) => {
+      doc.text(header, startX + i * colWidth + 5, y + 7, {
+        width: colWidth - 10,
+        align: "left",
+      });
+    });
+
+    // ✅ Table Rows
+    doc.font("Helvetica");
+    salaries.forEach((salary, rowIndex) => {
+      const values = [
+        salary.managerId?.name || "N/A",
+        `${salary.baseSalary || 0}`,
+        `${salary.advance || 0}`,
+        `${salary.loanTaken || 0}`,
+        `${salary.loanPaid || 0}`,
+        `${(salary.loanTaken || 0) - (salary.loanPaid || 0)}`,
+        `${salary.finalSalary || 0}`,
       ];
 
-      details.forEach(([label, value]) => {
-        doc.fontSize(12).text(`${label}: ₹${value}`);
+      values.forEach((val, colIndex) => {
+        doc.text(val.toString(), startX + colIndex * colWidth + 5, y + (rowIndex + 1) * rowHeight + 7, {
+          width: colWidth - 10,
+          align: "left",
+        });
       });
+    });
 
-      // Footer
-      doc.moveDown(2);
-      doc.fontSize(10).fillColor("gray").text("This is a system-generated salary slip.", {
+    // 🔷 Footer
+    doc.moveDown(2);
+    doc
+      .fontSize(10)
+      .fillColor("gray")
+      .text("This is a system-generated salary report.", {
         align: "center",
       });
-
-      // Add page if not last
-      if (i < salaries.length - 1) doc.addPage();
-    }
 
     doc.end();
   } catch (error) {
     console.error("PDF generation error:", error);
     res.status(500).json({ message: "Error generating salary slips PDF" });
   }
-}
+};
+
 
 
 // Worker Salary Controllers
@@ -514,6 +517,138 @@ const deleteWorkerSalary = async (req, res) => {
   }
 };
 
+// ✅ Download All Worker Salaries
+const downloadAllWorkerSalaries = async (req, res) => {
+  try {
+    const { month, year } = req.params;
+
+    let filter = {};
+    if (month) filter.month = month;
+    if (year) filter.year = year;
+
+    const salaries = await WorkerSalary.find(filter).populate("workerId", "name");
+
+    if (!salaries || salaries.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No worker salaries found for given month/year" });
+    }
+
+    // PDF setup
+    const doc = new PDFDocument({ margin: 40, size: "A4" });
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=Worker_Salaries_${month || "All"}_${year || "All"}.pdf`
+    );
+    doc.pipe(res);
+
+    // Header
+    doc.rect(0, 0, doc.page.width, 60).fill("#004aad");
+    doc.fillColor("white").fontSize(20).text("LabourPro - Worker Salaries", 50, 20);
+    doc.moveDown(2);
+    doc.fillColor("black");
+
+    doc.fontSize(14).fillColor("#004aad").text(
+      `Worker Salaries for ${month ? month : "All Months"} / ${year ? year : "All Years"}`,
+      { align: "left" }
+    );
+    doc.moveDown(1);
+
+    // Table setup
+    const headers = [
+      "Worker",
+      "Base Salary",
+      "Advance",
+      "Loan Taken",
+      "Loan Paid",
+      "Remain Loan",
+      "Total Hours",
+      "Days Worked",
+      "Final Salary",
+    ];
+
+    const startX = 40;
+    const topMargin = doc.y + 20;
+    const bottomMargin = 50;
+    const tableWidth = doc.page.width - startX * 2;
+    const colWidth = tableWidth / headers.length;
+    let y = topMargin;
+    const rowHeight = 35;
+
+    const drawTableHeaders = () => {
+      doc.fontSize(12).fillColor("black").font("Helvetica-Bold");
+      headers.forEach((header, i) => {
+        doc.text(header, startX + i * colWidth + 5, y + 7, {
+          width: colWidth - 10,
+          align: "left",
+        });
+      });
+
+      // Draw header row border
+      doc.lineWidth(1);
+      doc.rect(startX, y, tableWidth, rowHeight).stroke();
+      y += rowHeight;
+    };
+
+    drawTableHeaders();
+
+    // Draw rows
+    doc.font("Helvetica");
+    salaries.forEach((salary, rowIndex) => {
+      // Add page if exceeding
+      if (y + rowHeight > doc.page.height - bottomMargin) {
+        doc.addPage();
+        y = topMargin;
+        drawTableHeaders();
+      }
+
+      const values = [
+        salary.workerId?.name || "N/A",
+        `${salary.baseSalary || 0}`,
+        `${salary.advance || 0}`,
+        `${salary.loanTaken || 0}`,
+        `${salary.loanPaid || 0}`,
+        `${(salary.loanTaken || 0) - (salary.loanPaid || 0)}`,
+        `${salary.totalHours || 0}`,
+        `${salary.daysWorked || 0}`,
+        `${salary.finalSalary || 0}`,
+      ];
+
+      // Draw outer row border
+      doc.rect(startX, y, tableWidth, rowHeight).stroke();
+
+      // Draw column dividers
+      for (let i = 1; i < headers.length; i++) {
+        const colX = startX + i * colWidth;
+        doc.moveTo(colX, y).lineTo(colX, y + rowHeight).stroke();
+      }
+
+      // Draw cell values
+      values.forEach((val, colIndex) => {
+        doc.text(val.toString(), startX + colIndex * colWidth + 5, y + 7, {
+          width: colWidth - 10,
+          align: "left",
+        });
+      });
+
+      y += rowHeight;
+    });
+
+    // Footer
+    doc.moveDown(2);
+    doc.fontSize(10).fillColor("gray").text("This is a system-generated worker salary report.", {
+      align: "center",
+    });
+
+    doc.end();
+  } catch (error) {
+    console.error("PDF generation error:", error);
+    res.status(500).json({ message: "Error generating worker salary PDF" });
+  }
+};
+
+
 module.exports = {
   addSalary,
   updateSalary,
@@ -525,5 +660,6 @@ module.exports = {
   getWorkerSalary,
   downloadSalaryPDF,
   downloadAllSalaries,
-  downloadWorkerSalaryPDF
+  downloadWorkerSalaryPDF,
+  downloadAllWorkerSalaries
 };
