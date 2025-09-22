@@ -457,27 +457,32 @@ const ManagerSalary = () => {
 
   const handleDownload = async () => {
     try {
-      const token = localStorage.getItem("token"); // if you are using auth
+      const token = localStorage.getItem("token");
       const response = await axios.get(
         `https://labourpro-backend.onrender.com/api/salary/downloadAll/${month}/${year}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-          responseType: "blob", // important for PDF
+          responseType: "blob", // crucial for PDF download!
         }
       );
 
-      // Create download link
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const pdfBlob = new Blob([response.data], { type: "application/pdf" });
+      const url = window.URL.createObjectURL(pdfBlob);
+
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `Manager_Salaries_${month}_${year}.pdf`);
+      link.download = `Manager_Salaries_${month}_${year}.pdf`;
       document.body.appendChild(link);
       link.click();
       link.remove();
+
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000); // delayed cleanup (for better browser compatibility)
     } catch (error) {
       console.error("Download error:", error);
+      alert("Failed to download PDF. Check console for details.");
     }
   };
+
 
   return (
     <div className="flex min-h-screen bg-gray-50">

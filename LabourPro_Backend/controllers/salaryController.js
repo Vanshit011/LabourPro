@@ -180,131 +180,228 @@ const downloadAllSalaries = async (req, res) => {
   try {
     const { month, year } = req.params;
 
-    // 🔍 Apply filters
-    let filter = {};
+    const filter = {};
     if (month) filter.month = month;
     if (year) filter.year = year;
 
-    const salaries = await ManagerSalary.find(filter).populate("managerId", "name");
-
+    const salaries = await ManagerSalary.find(filter).populate('managerId', 'name');
     if (!salaries || salaries.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "No salaries found for given month/year" });
+      return res.status(404).json({ message: 'No salaries found for given month/year' });
     }
 
-    // ✅ PDF setup
-    const doc = new PDFDocument({ margin: 40, size: "A4" });
-    res.setHeader("Content-Type", "application/pdf");
+    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(
-      "Content-Disposition",
-      `attachment; filename=Manager_Salaries_${month || "All"}_${year || "All"
-      }.pdf`
+      'Content-Disposition',
+      `attachment; filename=Manager_Salaries_${month || 'All'}_${year || 'All'}.pdf`
     );
     doc.pipe(res);
 
-    // 🔷 Header banner
-    doc.rect(0, 0, doc.page.width, 60).fill("#004aad");
-    doc.fillColor("white").fontSize(20).text("LabourPro - Manager Salaries", 50, 20);
-
+    // Page header bar
+    doc.rect(0, 0, doc.page.width, 60).fill('#004aad');
+    doc.fillColor('white').fontSize(20).text('LabourPro - Manager Salaries', 50, 20);
     doc.moveDown(2);
-    doc.fillColor("black");
-
-    // 🔷 Title
-    doc
+    doc.fillColor('#004aad')
       .fontSize(14)
-      .fillColor("#004aad")
-      .text(
-        `Salaries for ${month ? month : "All Months"} / ${year ? year : "All Years"
-        }`,
-        { align: "left" }
-      );
-
+      .text(`Salaries for ${month || 'All Months'} / ${year || 'All Years'}`, 50);
     doc.moveDown(1);
 
-    // Table setup
-    const headers = [
-      "Manager",
-      "Base Salary",
-      "Advance",
-      "Loan Taken",
-      "Loan Paid",
-      "Remaining Loan",
-      "Final Salary",
-    ];
+    // Layout constants
+    const startY = doc.y;
+    const rowHeight = 25;
+    const colWidth = (doc.page.width - 100) / 2; // two columns
+    const labelWidth = 120;
+    const leftX = 50;
+    const rightX = leftX + colWidth + 10;
+    const headerSafeTop = 80; // keep content below blue header band
+    const bottomMargin = doc.page.margins.bottom || 40;
 
-    const startX = 40;
-    const tableWidth = doc.page.width - startX * 2;
-    const colWidth = tableWidth / headers.length;
-    let y = doc.y + 20;
+    let y = startY;
+    let isLeft = true;
 
-    // Draw table border (outer rectangle)
-    const rowHeight = 35;
-    const totalRows = salaries.length + 1; // +1 for header
-    const tableHeight = totalRows * rowHeight;
+    const totals = {
+      base: 0,
+      advance: 0,
+      loanTaken: 0,
+      loanPaid: 0,
+      remaining: 0,
+      final: 0,
+    };
 
-    doc
-      .lineWidth(1)
-      .rect(startX, y, tableWidth, tableHeight)
-      .stroke(); // full border
+    // Render managers in two columns, page-break aware
+    salaries.forEach((salary) => {
+      const managerHeight = 6 * rowHeight + 20; // 5 rows + final row + title gap
 
-    // Draw column dividers
-    for (let i = 1; i < headers.length; i++) {
-      const colX = startX + i * colWidth;
-      doc.moveTo(colX, y).lineTo(colX, y + tableHeight).stroke();
-    }
+      // If starting left column and not enough space, new page
+      if (isLeft && y + managerHeight > doc.page.height - bottomMargin - 80) {
+        doc.addPage();
+        y = headerSafeTop;
+      }
 
-    // Draw row dividers
-    for (let j = 1; j <= totalRows; j++) {
-      const rowY = y + j * rowHeight;
-      doc.moveTo(startX, rowY).lineTo(startX + tableWidth, rowY).stroke();
-    }
+      const currentX = isLeft ? leftX : rightX;
 
-    // ✅ Table Headers
-    doc.fontSize(12).fillColor("black").font("Helvetica-Bold");
-    headers.forEach((header, i) => {
-      doc.text(header, startX + i * colWidth + 5, y + 7, {
-        width: colWidth - 10,
-        align: "left",
-      });
-    });
+      // Manager title
+      doc.fontSize(12).fillColor('#004aad').font('Helvetica-Bold')
+        .text(`Manager: ${salary.managerId?.name || 'N/A'}`, currentX, y);
 
-    // ✅ Table Rows
-    doc.font("Helvetica");
-    salaries.forEach((salary, rowIndex) => {
-      const values = [
-        salary.managerId?.name || "N/A",
-        `${salary.baseSalary || 0}`,
-        `${salary.advance || 0}`,
-        `${salary.loanTaken || 0}`,
-        `${salary.loanPaid || 0}`,
-        `${(salary.loanTaken || 0) - (salary.loanPaid || 0)}`,
-        `${salary.finalSalary || 0}`,
+      const tableY = y + 20;
+
+      const managerData = [
+        ['Base Salary', salary.baseSalary || 0],
+        ['Advance', salary.advance || 0],
+        ['Loan Taken', salary.loanTaken || 0],
+        ['Loan Paid', salary.loanPaid || 0],
+        ['Remaining Loan', (salary.loanTaken || 0) - (salary.loanPaid || 0)],
       ];
 
-      values.forEach((val, colIndex) => {
-        doc.text(val.toString(), startX + colIndex * colWidth + 5, y + (rowIndex + 1) * rowHeight + 7, {
-          width: colWidth - 10,
-          align: "left",
-        });
+      // Outer table box (includes final salary row)
+      doc.lineWidth(1)
+        .rect(currentX, tableY, colWidth, managerData.length * rowHeight + rowHeight)
+        .stroke();
+
+      // Body rows
+      managerData.forEach((row, rIndex) => {
+        const rowY = tableY + rIndex * rowHeight;
+        // row line
+        doc.moveTo(currentX, rowY).lineTo(currentX + colWidth, rowY).stroke();
+        // middle vertical
+        doc.moveTo(currentX + labelWidth, rowY)
+          .lineTo(currentX + labelWidth, rowY + rowHeight).stroke();
+        // text
+        doc.font('Helvetica').fillColor('black');
+        doc.text(row[0], currentX + 5, rowY + 7, { width: labelWidth - 10 });
+        doc.text(
+          (row[1] ?? 0).toString(),
+          currentX + labelWidth + 5,
+          rowY + 7,
+          { width: colWidth - labelWidth - 10 }
+        );
+      });
+
+      // Final Salary row
+      const finalRowY = tableY + managerData.length * rowHeight;
+      doc.moveTo(currentX, finalRowY).lineTo(currentX + colWidth, finalRowY).stroke();
+      doc.moveTo(currentX + labelWidth, finalRowY)
+        .lineTo(currentX + labelWidth, finalRowY + rowHeight).stroke();
+
+      doc.font('Helvetica-Bold').fillColor('#004aad');
+      doc.text('Final Salary', currentX + 5, finalRowY + 7, { width: labelWidth - 10 });
+      doc.text(
+        (salary.finalSalary || 0).toString(),
+        currentX + labelWidth + 5,
+        finalRowY + 7,
+        { width: colWidth - labelWidth - 10 }
+      );
+
+      // Update totals
+      totals.base += salary.baseSalary || 0;
+      totals.advance += salary.advance || 0;
+      totals.loanTaken += salary.loanTaken || 0;
+      totals.loanPaid += salary.loanPaid || 0;
+      totals.remaining += (salary.loanTaken || 0) - (salary.loanPaid || 0);
+      totals.final += salary.finalSalary || 0;
+
+      // Advance Y only when we have filled both columns for the row
+      if (!isLeft) y += managerHeight + 20;
+      isLeft = !isLeft;
+    });
+
+    // ===== Grand Total anchored to bottom of page, without overlap =====
+    const headers = [
+      'Base Salary',
+      'Advance',
+      'Loan Taken',
+      'Loan Paid',
+      'Remaining Loan',
+      'Final Salary',
+    ];
+    const totalColWidth = doc.page.width - 100; // 50 left + 50 right
+    const colWidthTotal = totalColWidth / (headers.length + 1);
+    const titleH = 25;
+    const totalsBlockH = titleH + rowHeight * 2;
+
+    // If remaining space is too small, add a fresh page
+    const remaining = doc.page.height - bottomMargin - doc.y;
+    if (remaining < totalsBlockH + 10) {
+      doc.addPage();
+      doc.y = headerSafeTop;
+    }
+
+    // Compute top so the block bottom sits at page bottom
+    let totalsTopY = doc.page.height - bottomMargin - totalsBlockH;
+
+    // Ensure it doesn't overlap the current flow or header band
+    if (totalsTopY < Math.max(doc.y, headerSafeTop)) {
+      doc.addPage();
+      doc.y = headerSafeTop;
+      totalsTopY = doc.page.height - bottomMargin - totalsBlockH;
+    }
+
+    // Title
+    doc.fontSize(10).fillColor('#004aad').font('Helvetica-Bold')
+      .text('Grand Salary Summary', 50, totalsTopY);
+
+    let yTotals = totalsTopY + titleH;
+
+    // Outer box for 2 rows (headers + values)
+    doc.lineWidth(1).rect(50, yTotals, totalColWidth, rowHeight * 2).stroke();
+
+    // Vertical separators
+    for (let i = 1; i <= headers.length; i++) {
+      const colX = 50 + i * colWidthTotal;
+      doc.moveTo(colX, yTotals).lineTo(colX, yTotals + rowHeight * 2).stroke();
+    }
+
+    // Header row
+    doc.font('Helvetica-Bold').fillColor('black');
+    doc.text('TOTAL', 55, yTotals + 7, { width: colWidthTotal - 10 });
+    headers.forEach((header, i) => {
+      doc.text(header, 55 + (i + 1) * colWidthTotal, yTotals + 7, { width: colWidthTotal - 10 });
+    });
+
+    // Values row (blue)
+    const totalRowY = yTotals + rowHeight;
+    doc.rect(50, totalRowY, totalColWidth, rowHeight).fill('#004aad');
+    doc.lineWidth(1).rect(50, totalRowY, totalColWidth, rowHeight).stroke();
+    for (let i = 1; i <= headers.length; i++) {
+      const colX = 50 + i * colWidthTotal;
+      doc.moveTo(colX, totalRowY).lineTo(colX, totalRowY + rowHeight).stroke();
+    }
+
+    doc.font('Helvetica-Bold').fillColor('white');
+    doc.text('TOTAL', 55, totalRowY + 7, { width: colWidthTotal - 10 });
+
+    const totalValues = [
+      totals.base,
+      totals.advance,
+      totals.loanTaken,
+      totals.loanPaid,
+      totals.remaining,
+      totals.final,
+    ];
+
+    totalValues.forEach((val, i) => {
+      doc.text(String(val ?? 0), 55 + (i + 1) * colWidthTotal, totalRowY + 7, {
+        width: colWidthTotal - 10,
       });
     });
 
-    // 🔷 Footer
-    doc.moveDown(2);
-    doc
-      .fontSize(10)
-      .fillColor("gray")
-      .text("This is a system-generated salary report.", {
-        align: "center",
-      });
+    // Optional footer note centered above bottom margin
+    doc.fontSize(10).fillColor('gray')
+      .text(
+        'This is a system-generated salary report.',
+        50,
+        doc.page.height - bottomMargin - 12,
+        { width: totalColWidth, align: 'center' }
+      );
 
     doc.end();
   } catch (error) {
-    console.error("PDF generation error:", error);
-    res.status(500).json({ message: "Error generating salary slips PDF" });
+    console.error('PDF generation error:', error);
+    res.status(500).json({ message: 'Error generating salary slips PDF' });
   }
 };
+
 
 
 
@@ -395,7 +492,7 @@ const addWorkerSalary = async (req, res) => {
       loanTaken: 0,
       loanPaid: 0,
       loanRemaining: carryForwardLoan, // just carry forward
-      finalSalary: summary.totalRojEarned - carryForwardLoan, // deduct only here
+      finalSalary: summary.totalRojEarned, // deduct only here
       totalHours: summary.totalHours,
       daysWorked: summary.daysWorked,
     });
@@ -429,7 +526,7 @@ const updateWorkerSalary = async (req, res) => {
     salary.loanPaid += loanPaid;
 
     // Recalculate final salary
-    salary.finalSalary = salary.baseSalary - salary.advance - salary.loanRemaining;
+    salary.finalSalary = salary.baseSalary - salary.advance - salary.loanPaid;
 
     await salary.save();
 
@@ -518,136 +615,229 @@ const deleteWorkerSalary = async (req, res) => {
 };
 
 // ✅ Download All Worker Salaries
+// Generate A4 PDF with two compact worker tables per row and a grand totals table
 const downloadAllWorkerSalaries = async (req, res) => {
   try {
     const { month, year } = req.params;
 
-    let filter = {};
+    const filter = {};
     if (month) filter.month = month;
     if (year) filter.year = year;
 
-    const salaries = await WorkerSalary.find(filter).populate("workerId", "name");
-
+    const salaries = await WorkerSalary.find(filter).populate('workerId', 'name');
     if (!salaries || salaries.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "No worker salaries found for given month/year" });
+      return res.status(404).json({ message: 'No worker salaries found for given month/year' });
     }
 
     // PDF setup
-    const doc = new PDFDocument({ margin: 40, size: "A4" });
-    res.setHeader("Content-Type", "application/pdf");
+    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(
-      "Content-Disposition",
-      `attachment; filename=Worker_Salaries_${month || "All"}_${year || "All"}.pdf`
+      'Content-Disposition',
+      `attachment; filename=Worker_Salaries_${month || 'All'}_${year || 'All'}.pdf`
     );
     doc.pipe(res);
 
-    // Header
-    doc.rect(0, 0, doc.page.width, 60).fill("#004aad");
-    doc.fillColor("white").fontSize(20).text("LabourPro - Worker Salaries", 50, 20);
-    doc.moveDown(2);
-    doc.fillColor("black");
+    // Layout constants
+    const margin = 40;
+    const pageWidth = doc.page.width;
+    const pageHeight = doc.page.height;
+    const printableWidth = pageWidth - margin * 2; // 595 - 80 = 515
+    const headerBandH = 60;
+    const bottomMargin = doc.page.margins.bottom || margin;
 
-    doc.fontSize(14).fillColor("#004aad").text(
-      `Worker Salaries for ${month ? month : "All Months"} / ${year ? year : "All Years"}`,
-      { align: "left" }
-    );
-    doc.moveDown(1);
+    // Header band
+    doc.rect(0, 0, pageWidth, headerBandH).fill('#004aad');
+    doc.fillColor('white').fontSize(20).text('LabourPro - Worker Salaries', margin + 10, 20);
 
-    // Table setup
-    const headers = [
-      "Worker",
-      "Base Salary",
-      "Advance",
-      "Loan Taken",
-      "Loan Paid",
-      "Remain Loan",
-      "Total Hours",
-      "Days Worked",
-      "Final Salary",
-    ];
+    // Subtitle placed explicitly below header, then safeTop below subtitle to avoid overlap
+    const subtitleY = headerBandH + 8;
+    doc.fillColor('#004aad').fontSize(14)
+      .text(`Worker Salaries for ${month || 'All Months'} / ${year || 'All Years'}`, margin + 10, subtitleY);
 
-    const startX = 40;
-    const topMargin = doc.y + 20;
-    const bottomMargin = 50;
-    const tableWidth = doc.page.width - startX * 2;
-    const colWidth = tableWidth / headers.length;
-    let y = topMargin;
-    const rowHeight = 35;
+    const safeTop = subtitleY + 18; // start tables below subtitle
+    let y = safeTop;
 
-    const drawTableHeaders = () => {
-      doc.fontSize(12).fillColor("black").font("Helvetica-Bold");
-      headers.forEach((header, i) => {
-        doc.text(header, startX + i * colWidth + 5, y + 7, {
-          width: colWidth - 10,
-          align: "left",
-        });
-      });
+    // FINAL COMPACT TABLE DIMENSIONS (fits two per row within A4 margins)
+    const rowH = 24;
+    const labelColW = 120;
+    const valueColW = 125;
+    const tableW = labelColW + valueColW; // 245
+    const gapX = 15;
+    const leftX = margin + 10;            // 50
+    const rightX = leftX + tableW + gapX; // 310
+    // Right table right edge = 310 + 245 = 555 = pageWidth - margin (fits exactly)
 
-      // Draw header row border
-      doc.lineWidth(1);
-      doc.rect(startX, y, tableWidth, rowHeight).stroke();
-      y += rowHeight;
+    const textOffsetY = Math.floor((rowH - 10) / 2); // center for 10pt font
+
+    // Totals init
+    const totals = {
+      base: 0, advance: 0, loanTaken: 0, loanPaid: 0,
+      remaining: 0, totalHours: 0, daysWorked: 0, final: 0
     };
 
-    drawTableHeaders();
-
-    // Draw rows
-    doc.font("Helvetica");
-    salaries.forEach((salary, rowIndex) => {
-      // Add page if exceeding
-      if (y + rowHeight > doc.page.height - bottomMargin) {
-        doc.addPage();
-        y = topMargin;
-        drawTableHeaders();
-      }
-
-      const values = [
-        salary.workerId?.name || "N/A",
-        `${salary.baseSalary || 0}`,
-        `${salary.advance || 0}`,
-        `${salary.loanTaken || 0}`,
-        `${salary.loanPaid || 0}`,
-        `${(salary.loanTaken || 0) - (salary.loanPaid || 0)}`,
-        `${salary.totalHours || 0}`,
-        `${salary.daysWorked || 0}`,
-        `${salary.finalSalary || 0}`,
+    // Iterate workers (two tables per row)
+    let placeLeft = true;
+    for (let idx = 0; idx < salaries.length; idx++) {
+      const salary = salaries[idx];
+      const rows = [
+        ['Base Salary', salary.baseSalary || 0],
+        ['Advance', salary.advance || 0],
+        ['Loan Taken', salary.loanTaken || 0],
+        ['Loan Paid', salary.loanPaid || 0],
+        ['Remaining Loan', (salary.loanTaken || 0) - (salary.loanPaid || 0)],
+        ['Total Hours', salary.totalHours || 0],
+        ['Days Worked', salary.daysWorked || 0],
+        ['Final Salary', salary.finalSalary || 0],
       ];
+      const tableH = rows.length * rowH + 16; // compact title spacing
 
-      // Draw outer row border
-      doc.rect(startX, y, tableWidth, rowHeight).stroke();
+      // Ensure we're below subtitle at least a bit
+      if (y < safeTop) y = safeTop;
 
-      // Draw column dividers
-      for (let i = 1; i < headers.length; i++) {
-        const colX = startX + i * colWidth;
-        doc.moveTo(colX, y).lineTo(colX, y + rowHeight).stroke();
+      // If starting a new row (left) and not enough space -> new page
+      if (placeLeft && y + tableH > pageHeight - bottomMargin - 40) {
+        doc.addPage();
+        // redraw subtitle on new page (optional)
+        doc.fillColor('#004aad').fontSize(14)
+          .text(`Worker Salaries for ${month || 'All Months'} / ${year || 'All Years'}`, margin + 10, subtitleY);
+        y = safeTop;
       }
 
-      // Draw cell values
-      values.forEach((val, colIndex) => {
-        doc.text(val.toString(), startX + colIndex * colWidth + 5, y + 7, {
-          width: colWidth - 10,
-          align: "left",
-        });
+      const x = placeLeft ? leftX : rightX;
+
+      // If placing right and would overflow -> move to next line or page
+      if (!placeLeft && y + tableH > pageHeight - bottomMargin - 40) {
+        placeLeft = true;
+        if (y + tableH > pageHeight - bottomMargin - 40) {
+          doc.addPage();
+          // redraw subtitle on new page (optional)
+          doc.fillColor('#004aad').fontSize(14)
+            .text(`Worker Salaries for ${month || 'All Months'} / ${year || 'All Years'}`, margin + 10, subtitleY);
+          y = safeTop;
+        }
+      }
+
+      // Worker header
+      doc.fontSize(11).fillColor('#004aad').font('Helvetica-Bold')
+        .text(`Worker: ${salary.workerId?.name || 'N/A'}`, x, y);
+      const tableTop = y + 14;
+
+      // Table border
+      doc.lineWidth(1).rect(x, tableTop, tableW, rows.length * rowH).stroke();
+
+      // Rows
+      rows.forEach((row, rIdx) => {
+        const rowY = tableTop + rIdx * rowH;
+        // horizontal line
+        doc.moveTo(x, rowY).lineTo(x + tableW, rowY).stroke();
+        // vertical split
+        doc.moveTo(x + labelColW, rowY).lineTo(x + labelColW, rowY + rowH).stroke();
+
+        doc.font('Helvetica').fillColor('black').fontSize(10);
+        doc.text(row[0], x + 5, rowY + textOffsetY, { width: labelColW - 10, align: 'left' });
+        doc.text(String(row[1]), x + labelColW + 5, rowY + textOffsetY, { width: valueColW - 10, align: 'left' });
       });
 
-      y += rowHeight;
+      // Accumulate totals
+      totals.base += salary.baseSalary || 0;
+      totals.advance += salary.advance || 0;
+      totals.loanTaken += salary.loanTaken || 0;
+      totals.loanPaid += salary.loanPaid || 0;
+      totals.remaining += (salary.loanTaken || 0) - (salary.loanPaid || 0);
+      totals.totalHours += salary.totalHours || 0;
+      totals.daysWorked += salary.daysWorked || 0;
+      totals.final += salary.finalSalary || 0;
+
+      // After placing right column, move Y; else switch column
+      if (!placeLeft) {
+        y += rows.length * rowH + 20; // compact gap between rows
+      }
+      placeLeft = !placeLeft;
+    }
+
+    // If last placed on left, add a little spacing before totals
+    if (placeLeft === false) y += 12;
+
+    // ===== Grand Totals (compact) =====
+    const titleH = 20;
+    const totalsRowH = 30;
+    const totalsBlockH = titleH + totalsRowH * 2 + 6;
+
+    if (y + totalsBlockH > pageHeight - bottomMargin) {
+      doc.addPage();
+      // redraw subtitle on new page (optional)
+      doc.fillColor('#004aad').fontSize(14)
+        .text(`Worker Salaries for ${month || 'All Months'} / ${year || 'All Years'}`, margin + 10, subtitleY);
+      y = safeTop;
+    }
+
+    doc.fontSize(12).fillColor('#004aad').font('Helvetica-Bold')
+      .text('Grand Worker Salary Summary', margin + 10, y);
+    y += titleH;
+
+    const totalsX = margin + 10;
+    const totalsW = printableWidth - 20;
+    const headers = [
+      'Salary', 'Advance', 'Loan Taken', 'Loan Paid',
+      'Remaining Loan', 'Total Hours', 'Days Worked', 'Final Salary'
+    ];
+    const colW = totalsW / (headers.length + 1); // +1 for "TOTAL"
+    const headFont = 9;
+    const valFont = 10;
+    const headOffsetY = Math.floor((totalsRowH - headFont) / 2);
+    const valOffsetY = Math.floor((totalsRowH - valFont) / 2);
+
+    // Outer box
+    doc.lineWidth(1).rect(totalsX, y, totalsW, totalsRowH * 2).stroke();
+
+    // Vertical separators
+    for (let i = 1; i <= headers.length; i++) {
+      const colX = totalsX + i * colW;
+      doc.moveTo(colX, y).lineTo(colX, y + totalsRowH * 2).stroke();
+    }
+
+    // Header row
+    doc.font('Helvetica-Bold').fillColor('black').fontSize(headFont);
+    doc.text('TOTAL', totalsX + 6, y + headOffsetY, { width: colW - 12, align: 'left' });
+    headers.forEach((header, i) => {
+      doc.text(header, totalsX + (i + 1) * colW + 6, y + headOffsetY, { width: colW - 12, align: 'left' });
+    });
+
+    // Values row
+    const totalRowY = y + totalsRowH;
+    doc.rect(totalsX, totalRowY, totalsW, totalsRowH).fill('#004aad');
+    doc.lineWidth(1).rect(totalsX, totalRowY, totalsW, totalsRowH).stroke();
+    for (let i = 1; i <= headers.length; i++) {
+      const colX = totalsX + i * colW;
+      doc.moveTo(colX, totalRowY).lineTo(colX, totalRowY + totalsRowH).stroke();
+    }
+
+    doc.font('Helvetica-Bold').fillColor('white').fontSize(valFont);
+    doc.text('TOTAL', totalsX + 6, totalRowY + valOffsetY, { width: colW - 12, align: 'left' });
+
+    const totalValues = [
+      totals.base, totals.advance, totals.loanTaken, totals.loanPaid,
+      totals.remaining, totals.totalHours, totals.daysWorked, totals.final
+    ];
+    totalValues.forEach((val, i) => {
+      doc.text(String(val ?? 0), totalsX + (i + 1) * colW + 6, totalRowY + valOffsetY, {
+        width: colW - 12, align: 'left',
+      });
     });
 
     // Footer
-    doc.moveDown(2);
-    doc.fontSize(10).fillColor("gray").text("This is a system-generated worker salary report.", {
-      align: "center",
-    });
+    doc.fontSize(9).fillColor('gray')
+      .text('This is a system-generated worker salary report.', margin, pageHeight - bottomMargin - 12, {
+        width: printableWidth, align: 'center',
+      });
 
     doc.end();
   } catch (error) {
-    console.error("PDF generation error:", error);
-    res.status(500).json({ message: "Error generating worker salary PDF" });
+    console.error('PDF generation error:', error);
+    res.status(500).json({ message: 'Error generating worker salary PDF' });
   }
 };
-
 
 module.exports = {
   addSalary,
