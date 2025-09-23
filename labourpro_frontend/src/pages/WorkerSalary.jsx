@@ -436,7 +436,7 @@ const WorkerSalary = () => {
             </h2>
 
             {/* Card */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6">
+            <div className="bg-white rounded-2xl shadow-lg p-4 sm:p-6 space-y-4 sm:space-y-6 w-full">
               {/* Worker Dropdown */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Worker</label>
@@ -478,7 +478,7 @@ const WorkerSalary = () => {
               </div>
 
               {/* Salary Inputs */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Base Salary</label>
                   <input
@@ -518,7 +518,7 @@ const WorkerSalary = () => {
               </div>
 
               {/* Buttons */}
-              <div className="flex justify-end gap-4">
+              <div className="flex flex-wrap justify-end gap-3">
                 <button
                   onClick={handleDownload}
                   className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-green-700"
@@ -561,7 +561,7 @@ const WorkerSalary = () => {
                 <h3 className="text-xl font-semibold mb-4 flex items-center">
                   <span className="mr-2">📊</span> Salary Details
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-gray-800">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 text-gray-800">
                   <p className="bg-gray-50 p-3 rounded-lg"><b>Base Salary:</b> {salaryData.baseSalary}</p>
                   <p className="bg-gray-50 p-3 rounded-lg"><b>Advance:</b> {salaryData.advance}</p>
                   <p className="bg-gray-50 p-3 rounded-lg"><b>Loan Taken:</b> {salaryData.loanTaken}</p>
