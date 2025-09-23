@@ -1,5 +1,6 @@
 const Attendance = require("../models/Attendance");
 const Worker = require("../models/Worker");
+const WorkerSalary = require("../models/WorkerSalary");
 // const mongoose = require('mongoose');
 
 // Add attendance
@@ -147,27 +148,83 @@ const deleteAttendance = async (req, res) => {
 };
 
 //get monthly salary summary
+// const getMonthlySalary = async (req, res) => {
+//   try {
+//     const { month, year } = req.query;
+//     const companyId = req.user.companyId;
+
+//     // console.log("CompanyId from token:", companyId);
+
+//     if (!month || !year) {
+//       return res.status(400).json({ message: "month and year are required" });
+//     }
+
+//     // if (!mongoose.Types.ObjectId.isValid(companyId)) {
+//     //   return res.status(400).json({ message: "Invalid companyId" });
+//     // }
+//     const monthStr = month.toString().padStart(2, "0");
+
+//     // handle rollover (Dec → Jan next year)
+//     const nextMonth = (Number(month) % 12) + 1;
+//     const nextMonthYear = Number(month) === 12 ? Number(year) + 1 : Number(year);
+//     const nextMonthStr = nextMonth.toString().padStart(2, "0");
+
+//     const summary = await Attendance.aggregate([
+//       {
+//         $match: {
+//           companyId,
+//           date: {
+//             $gte: `${year}-${monthStr}-01`,
+//             $lt: `${nextMonthYear}-${nextMonthStr}-01`,
+//           },
+//         },
+//       },
+//       {
+//         $group: {
+//           _id: "$workerId",
+//           workerName: { $first: "$workerName" },
+//           totalHours: { $sum: "$totalHours" },
+//           totalRojEarned: { $sum: "$totalRojEarned" },
+//           daysWorked: { $sum: 1 },
+//         },
+//       },
+//       {
+//         $project: {
+//           _id: 0,
+//           workerId: "$_id",
+//           workerName: 1,
+//           totalHours: 1,
+//           totalRojEarned: 1,
+//           daysWorked: 1,
+//         },
+//       },
+//       {
+//         $sort: { workerName: 1 },
+//       },
+//     ]);
+
+//     return res.json({ month, year, summary });
+//   } catch (error) {
+//     console.error("Monthly Salary API Error:", error.message, error.stack);
+//     return res.status(500).json({ message: "Server error", error: error.message });
+//   }
+// };
+
 const getMonthlySalary = async (req, res) => {
   try {
     const { month, year } = req.query;
     const companyId = req.user.companyId;
 
-    // console.log("CompanyId from token:", companyId);
-
     if (!month || !year) {
       return res.status(400).json({ message: "month and year are required" });
     }
 
-    // if (!mongoose.Types.ObjectId.isValid(companyId)) {
-    //   return res.status(400).json({ message: "Invalid companyId" });
-    // }
     const monthStr = month.toString().padStart(2, "0");
-
-    // handle rollover (Dec → Jan next year)
     const nextMonth = (Number(month) % 12) + 1;
     const nextMonthYear = Number(month) === 12 ? Number(year) + 1 : Number(year);
     const nextMonthStr = nextMonth.toString().padStart(2, "0");
 
+    // Step 1: Get attendance summary
     const summary = await Attendance.aggregate([
       {
         $match: {
@@ -187,25 +244,69 @@ const getMonthlySalary = async (req, res) => {
           daysWorked: { $sum: 1 },
         },
       },
-      {
-        $project: {
-          _id: 0,
-          workerId: "$_id",
-          workerName: 1,
-          totalHours: 1,
-          totalRojEarned: 1,
-          daysWorked: 1,
-        },
-      },
-      {
-        $sort: { workerName: 1 },
-      },
     ]);
 
-    return res.json({ month, year, summary });
+    // Step 2: Upsert into WorkerSalary
+    const workerSalaries = [];
+    for (const worker of summary) {
+      // fetch existing salary if any
+      let existing = await WorkerSalary.findOne({
+        workerId: worker._id,
+        companyId,
+        month,
+        year,
+      });
+
+      const baseSalary = worker.totalRojEarned;
+      const totalHours = worker.totalHours;
+      const daysWorked = worker.daysWorked;
+
+      // keep previous values if exist, else 0
+      const advance = existing?.advance || 0;
+      const loanTaken = existing?.loanTaken || 0;
+      const loanPaid = existing?.loanPaid || 0;
+      const loanRemaining = existing?.loanRemaining || 0;
+
+      // recalc final salary
+      const finalSalary = baseSalary - advance - loanPaid;
+
+      const updated = await WorkerSalary.findOneAndUpdate(
+        {
+          workerId: worker._id,
+          companyId,
+          month,
+          year,
+        },
+        {
+          $set: {
+            workerName: worker.workerName,
+            baseSalary,
+            totalHours,
+            daysWorked,
+            advance,
+            loanTaken,
+            loanPaid,
+            loanRemaining,
+            finalSalary,
+          },
+        },
+        { upsert: true, new: true }
+      );
+
+      workerSalaries.push(updated);
+    }
+
+    return res.json({
+      message: "Monthly salary summary updated ✅",
+      month,
+      year,
+      salaries: workerSalaries,
+    });
   } catch (error) {
     console.error("Monthly Salary API Error:", error.message, error.stack);
-    return res.status(500).json({ message: "Server error", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Server error", error: error.message });
   }
 };
 

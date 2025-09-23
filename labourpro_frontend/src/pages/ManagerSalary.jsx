@@ -58,21 +58,27 @@ const ManagerSalary = () => {
   };
 
   const fetchSalary = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await axios.get(
-        `https://labourpro-backend.onrender.com/api/salary/${managerId}/${month}/${year}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+  try {
+    const token = localStorage.getItem("token");
+    const res = await axios.get(
+      `https://labourpro-backend.onrender.com/api/salary/${managerId}/${month}/${year}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-      setSalaryData(res.data);
-      setBaseSalary(res.data.baseSalary?.toString() || "");
-    } catch (err) {
-      setSalaryData(null);
-      setBaseSalary("");
-      console.warn("⚠️ No salary found for this manager/month/year");
+    // Round finalSalary
+    let salaryData = res.data;
+    if (salaryData?.finalSalary !== undefined && salaryData?.finalSalary !== null) {
+      salaryData.finalSalary = Math.round(salaryData.finalSalary);
     }
-  };
+
+    setSalaryData(salaryData);
+    setBaseSalary(salaryData.baseSalary?.toString() || "");
+  } catch (err) {
+    setSalaryData(null);
+    setBaseSalary("");
+    console.warn("⚠️ No salary found for this manager/month/year");
+  }
+};
 
   const fetchPreviousSalary = async () => {
     const { prevMonth, prevYear } = getPreviousPeriod();

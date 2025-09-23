@@ -22,7 +22,7 @@ const MonthlySalaryView = () => {
         `https://labourpro-backend.onrender.com/api/attendance/monthly-salary?month=${month}&year=${year}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      // console.log("Monthly Salary Data:", res.data);
+      console.log("Monthly Salary Data:", res.data);
       setSummary(res.data.summary || []);
     } catch (err) {
       setError("Failed to fetch monthly salary data.");

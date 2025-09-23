@@ -54,12 +54,6 @@ const WorkerSalary = () => {
         fetchPreviousSalary();
       }
     };
-
-    window.addEventListener("attendanceUpdated", handleAttendanceUpdate);
-
-    return () => {
-      window.removeEventListener("attendanceUpdated", handleAttendanceUpdate);
-    };
   }, [workerId, month, year]);
 
   // Helper to get previous month/year
@@ -105,6 +99,38 @@ const WorkerSalary = () => {
       console.warn("⚠️ No previous salary found");
     }
   };
+
+
+  // ✅ Refresh Salary API (attendance monthly calculation)
+  const handleRefreshSalary = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        console.error("❌ No token found in localStorage");
+        return;
+      }
+
+      const res = await axios.get(
+        `https://labourpro-backend.onrender.com/api/attendance/monthly-salary?month=${month}&year=${year}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,   // ✅ send token
+          },
+        }
+      );
+
+      console.log("✅ Salary refresh triggered:", res.data);
+      fetchSalary(); // refresh worker salary data
+    } catch (err) {
+      console.error(
+        "❌ Error refreshing salary:",
+        err.response?.data || err.message
+      );
+    }
+  };
+
+
 
   // ✅ Add new salary (manual, if no record exists for selected month/year)
   const handleAddSalary = async () => {
@@ -499,6 +525,17 @@ const WorkerSalary = () => {
                 >
                   Download All Worker Salaries
                 </button>
+
+                {/* ✅ Refresh Salary Button */}
+                <div className="flex justify-end mb-4">
+                  <button
+                    onClick={handleRefreshSalary}
+                    className="bg-yellow-500 text-white px-6 py-2 rounded-lg shadow hover:bg-yellow-600 transition duration-200"
+                  >
+                    🔄 Refresh Salary
+                  </button>
+                </div>
+
                 {!salaryData ? (
                   <button
                     onClick={handleAddSalary}

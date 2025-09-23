@@ -416,37 +416,37 @@ const addWorkerSalary = async (req, res) => {
   try {
     const { workerId, month, year } = req.body;
 
+    // Validate worker
     const worker = await Worker.findById(workerId);
     if (!worker) {
       return res.status(404).json({ error: "Worker not found" });
     }
-
     const companyId = worker.companyId;
 
-    // Format month/year
+    // Format month/year and define date range
     const monthStr = month.toString().padStart(2, "0");
     const nextMonth = (Number(month) % 12) + 1;
     const nextMonthYear = Number(month) === 12 ? Number(year) + 1 : Number(year);
     const nextMonthStr = nextMonth.toString().padStart(2, "0");
 
-    const startDate = new Date(`${year}-${monthStr}-01`);
-    const endDate = new Date(`${nextMonthYear}-${nextMonthStr}-01`);
+    const startDate = new Date(`${year}-${monthStr}-01T00:00:00Z`);
+    const endDate = new Date(`${nextMonthYear}-${nextMonthStr}-01T00:00:00Z`);
 
+    // Aggregate attendance for the month (fixed)
     const attendanceSummary = await Attendance.aggregate([
-      { $addFields: { dateObj: { $dateFromString: { dateString: "$date" } } } },
       {
         $match: {
           companyId,
           workerId: new mongoose.Types.ObjectId(workerId),
-          dateObj: { $gte: startDate, $lt: endDate },
+          date: { $gte: startDate, $lt: endDate }, // compare Date directly
         },
       },
       {
         $group: {
           _id: "$workerId",
           workerName: { $first: "$workerName" },
-          totalHours: { $sum: "$totalHours" },
-          totalRojEarned: { $sum: "$totalRojEarned" },
+          totalHours: { $sum: { $ifNull: ["$totalHours", 0] } },
+          totalRojEarned: { $sum: { $ifNull: ["$totalRojEarned", 0] } },
           daysWorked: { $sum: 1 },
         },
       },
@@ -465,7 +465,7 @@ const addWorkerSalary = async (req, res) => {
     const summary =
       attendanceSummary[0] || { totalHours: 0, totalRojEarned: 0, daysWorked: 0 };
 
-    // Prevent duplicate
+    // Prevent duplicate salary entry
     const exists = await WorkerSalary.findOne({ workerId, month, year });
     if (exists) {
       return res
@@ -473,35 +473,35 @@ const addWorkerSalary = async (req, res) => {
         .json({ error: "Salary already exists for this worker in this month" });
     }
 
-    // Get last month’s loan balance
+    // Get last month’s loan remaining
     const lastSalary = await WorkerSalary.findOne({ workerId }).sort({
       year: -1,
       month: -1,
     });
+    const carryForwardLoan = lastSalary?.loanRemaining || 0;
 
-    let carryForwardLoan = lastSalary?.loanRemaining || 0;
-
-    // New salary record
+    // Create new salary record
     const newSalary = new WorkerSalary({
       companyId,
       workerId,
       month,
       year,
+      workerName: summary.workerName,
       baseSalary: summary.totalRojEarned,
+      hoursWorked: summary.totalHours,
+      daysWorked: summary.daysWorked,
       advance: 0,
       loanTaken: 0,
       loanPaid: 0,
-      loanRemaining: carryForwardLoan, // just carry forward
-      finalSalary: summary.totalRojEarned, // deduct only here
-      totalHours: summary.totalHours,
-      daysWorked: summary.daysWorked,
+      loanRemaining: carryForwardLoan,
+      finalSalary: summary.totalRojEarned - 0 , // adjust if needed
     });
 
     await newSalary.save();
 
-    res.json({ message: "Salary added successfully", salary: newSalary });
+    res.json({ message: "Salary added successfully ✅", salary: newSalary });
   } catch (error) {
-    console.error("Add Salary Error:", error.message);
+    console.error("Add Salary Error:", error.message, error.stack);
     res.status(500).json({ error: error.message });
   }
 };
