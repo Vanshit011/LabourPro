@@ -82,7 +82,7 @@ const WorkerSalary = () => {
         `https://labourpro-backend.onrender.com/api/salary/worker/${workerId}/${month}/${year}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
+console.log("✅ Fetched salary:", res.data);
       setSalaryData(res.data);
       setBaseSalary(res.data.baseSalary?.toString() || "");
     } catch (err) {
@@ -589,7 +589,7 @@ const WorkerSalary = () => {
                   <p className="bg-gray-50 p-3 rounded-lg"><b>Advance:</b> {salaryData.advance}</p>
                   <p className="bg-gray-50 p-3 rounded-lg"><b>Loan Taken:</b> {salaryData.loanTaken}</p>
                   <p className="bg-gray-50 p-3 rounded-lg"><b>Loan Paid:</b> {salaryData.loanPaid}</p>
-                  <p className="bg-gray-50 p-3 rounded-lg"><b>Remaining Loan:</b> {(salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)}</p>
+                  <p className="bg-gray-50 p-3 rounded-lg"><b>Remaining Loan:</b> {salaryData.loanRemaining ?? 0}</p>
                   <p className="bg-gray-50 p-3 rounded-lg"><b>Final Salary:</b> {salaryData.finalSalary}</p>
                   <p className="bg-gray-50 p-3 rounded-lg"><b>Total Hours:</b> {salaryData.totalHours}</p>
                   <p className="bg-gray-50 p-3 rounded-lg"><b>Days Worked:</b> {salaryData.daysWorked}</p>

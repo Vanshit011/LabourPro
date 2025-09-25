@@ -139,10 +139,35 @@ const updateAttendance = async (req, res) => {
 
 const deleteAttendance = async (req, res) => {
   try {
-    const attendance = await Attendance.findByIdAndDelete(req.params.id);
-    if (!attendance) return res.status(404).json({ msg: "Not found" });
-    res.json({ success: true });
+    // 1. Find the attendance first
+    const attendance = await Attendance.findById(req.params.id);
+    if (!attendance) return res.status(404).json({ msg: "Attendance not found" });
+
+    const { workerId, month, year, hoursWorked, dayWorked, wage } = attendance;
+
+    // 2. Delete the attendance
+    await attendance.deleteOne();
+
+    // 3. Find corresponding salary record
+    let salary = await WorkerSalary.findOne({ workerId, month, year });
+    if (salary) {
+      // Deduct hours, days, and base salary
+      salary.totalHours = Math.max(0, (salary.totalHours || 0) - (hoursWorked || 0));
+      salary.daysWorked = Math.max(0, (salary.daysWorked || 0) - (dayWorked ? 1 : 0));
+      salary.baseSalary = Math.max(0, (salary.baseSalary || 0) - (wage || 0));
+
+      // Optionally recalc finalSalary
+      salary.finalSalary = Math.max(
+        0,
+        salary.baseSalary - (salary.advance || 0) - (salary.loanTaken || 0) + (salary.loanPaid || 0)
+      );
+
+      await salary.save();
+    }
+
+    res.json({ success: true, message: "Attendance deleted and salary updated ✅", salary });
   } catch (err) {
+    console.error("❌ Error deleting attendance:", err);
     res.status(500).json({ msg: "Error deleting attendance" });
   }
 };
