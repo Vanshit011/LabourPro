@@ -54,7 +54,14 @@ const WorkerSalary = () => {
         fetchPreviousSalary();
       }
     };
+
+    window.addEventListener("attendanceUpdated", handleAttendanceUpdate);
+
+    return () => {
+      window.removeEventListener("attendanceUpdated", handleAttendanceUpdate);
+    };
   }, [workerId, month, year]);
+
 
   // Helper to get previous month/year
   const getPreviousPeriod = () => {
@@ -100,7 +107,6 @@ const WorkerSalary = () => {
     }
   };
 
-
   // ✅ Refresh Salary API (attendance monthly calculation)
   const handleRefreshSalary = async () => {
     try {
@@ -130,8 +136,6 @@ const WorkerSalary = () => {
     }
   };
 
-
-
   // ✅ Add new salary (manual, if no record exists for selected month/year)
   const handleAddSalary = async () => {
     try {
@@ -140,57 +144,76 @@ const WorkerSalary = () => {
         return;
       }
 
-      // Pre-check for attempting to add new loan when previous is incomplete
-      const userLoanTakenInc = parseFloat(additionalLoanTaken) || 0;
-      const prevRemaining = previousSalary ? (previousSalary.loanTaken || 0) - (previousSalary.loanPaid || 0) : 0;
-      if (prevRemaining > 0 && userLoanTakenInc > 0) {
-        alert("⚠️ Cannot add new loan until previous month's loan is complete.");
-        return;
-      }
-
       const token = localStorage.getItem("token");
+
+      console.log("➡️ Sending request to add salary for:", {
+        workerId,
+        month,
+        year,
+        additionalAdvance,
+        additionalLoanTaken,
+        additionalLoanPaid,
+      });
+
+      // Add salary for next month (backend carries forward loanRemaining)
       const res = await axios.post(
         "https://labourpro-backend.onrender.com/api/salary/worker/add",
         { workerId, month, year },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      console.log("⬅️ Response from add salary API:", res.data);
+
       let newSalary = res.data.salary;
 
-      // Prepare updates for carry-over and user additionals
-      let updates = { advance: 0, loanTaken: 0, loanPaid: 0 };
+      // Show all properties of the salary object clearly
+      console.table({
+        BaseSalary: newSalary.baseSalary,
+        Advance: newSalary.advance,
+        LoanTaken: newSalary.loanTaken,
+        LoanPaid: newSalary.loanPaid,
+        LoanRemaining: newSalary.loanRemaining,
+        FinalSalary: newSalary.finalSalary,
+        Month: newSalary.month,
+        Year: newSalary.year,
+      });
 
-      // Carry over previous remaining loan
-      if (previousSalary && prevRemaining !== 0) {
-        updates.loanTaken = prevRemaining > 0 ? prevRemaining : 0;
-        updates.loanPaid = prevRemaining < 0 ? -prevRemaining : 0;
-      }
+      // Only send user inputs; do not touch carry-forward
+      const updates = {
+        advance: parseFloat(additionalAdvance) || 0,
+        loanTaken: parseFloat(additionalLoanTaken) || 0,
+        loanPaid: parseFloat(additionalLoanPaid) || 0,
+      };
 
-      // Add user additionals (loanTaken already checked)
-      updates.advance += parseFloat(additionalAdvance) || 0;
-      updates.loanTaken += userLoanTakenInc;
-      updates.loanPaid += parseFloat(additionalLoanPaid) || 0;
-
-      // If there are updates, perform the update
       if (updates.advance !== 0 || updates.loanTaken !== 0 || updates.loanPaid !== 0) {
         const updateRes = await axios.put(
           `https://labourpro-backend.onrender.com/api/salary/worker/${newSalary._id}/update`,
           updates,
           { headers: { Authorization: `Bearer ${token}` } }
         );
+        console.log("⬅️ Response from update salary API:", updateRes.data);
         newSalary = updateRes.data.salary;
+
+        console.table({
+          BaseSalary: newSalary.baseSalary,
+          Advance: newSalary.advance,
+          LoanTaken: newSalary.loanTaken,
+          LoanPaid: newSalary.loanPaid,
+          LoanRemaining: newSalary.loanRemaining,
+          FinalSalary: newSalary.finalSalary,
+          Month: newSalary.month,
+          Year: newSalary.year,
+        });
       }
 
-      // After adding/updating salary
       window.dispatchEvent(new Event("attendanceUpdated"));
-
-      // Clear additional inputs
       setAdditionalAdvance("");
       setAdditionalLoanTaken("");
       setAdditionalLoanPaid("");
 
       alert("✅ Salary Added");
       setSalaryData(newSalary);
-      fetchSalary(); // Refresh display
+
     } catch (err) {
       console.error("❌ Error adding salary:", err.response?.data || err.message);
       alert("❌ " + (err.response?.data?.error || "Error adding salary"));
