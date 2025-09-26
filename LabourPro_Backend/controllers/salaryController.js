@@ -156,14 +156,14 @@ const downloadSalaryPDF = async (req, res) => {
     doc.moveDown();
     doc.fontSize(14).text(`Worker: ${salary.workerName}`);
     doc.text(`Month/Year: ${month}/${year}`);
-    doc.text(`Base Salary: ₹${salary.baseSalary}`);
-    doc.text(`Advance: ₹${salary.advance}`);
-    doc.text(`Loan Taken: ₹${salary.loanTaken}`);
-    doc.text(`Loan Paid: ₹${salary.loanPaid}`);
-    doc.text(`Remaining Loan: ₹${(salary.loanTaken || 0) - (salary.loanPaid || 0)}`);
+    doc.text(`Base Salary: ${salary.baseSalary}`);
+    doc.text(`Advance: ${salary.advance}`);
+    doc.text(`Loan Taken: ${salary.loanTaken}`);
+    doc.text(`Loan Paid: ${salary.loanPaid}`);
+    doc.text(`Remaining Loan: ${(salary.loanTaken || 0) - (salary.loanPaid || 0)}`);
     doc.text(`Total Hours Worked: ${salary.totalHours}`);
     doc.text(`Days Worked: ${salary.daysWorked}`);
-    doc.text(`Final Salary: ₹${salary.finalSalary}`);
+    doc.text(`Final Salary: ${salary.finalSalary}`);
     doc.moveDown();
 
     doc.text(`Generated on: ${new Date().toLocaleDateString()}`, { align: "right" });
@@ -580,14 +580,14 @@ const downloadWorkerSalaryPDF = async (req, res) => {
     // 📝 Salary details
     doc.fontSize(14).text(`Worker: ${salary.workerId?.name || "N/A"}`);
     doc.text(`Month/Year: ${month}/${year}`);
-    doc.text(`Base Salary: ₹${salary.baseSalary}`);
-    doc.text(`Advance: ₹${salary.advance}`);
-    doc.text(`Loan Taken: ₹${salary.loanTaken}`);
-    doc.text(`Loan Paid: ₹${salary.loanPaid}`);
-    doc.text(`Remaining Loan: ₹${(salary.loanTaken || 0) - (salary.loanPaid || 0)}`);
+    doc.text(`Base Salary: ${salary.baseSalary}`);
+    doc.text(`Advance: ${salary.advance}`);
+    doc.text(`Loan Taken: ${salary.loanTaken}`);
+    doc.text(`Loan Paid: ${salary.loanPaid}`);
+    doc.text(`Remaining Loan: ${(salary.loanTaken || 0) - (salary.loanPaid || 0)}`);
     doc.text(`Total Hours Worked: ${salary.totalHours}`);
     doc.text(`Days Worked: ${salary.daysWorked}`);
-    doc.text(`Final Salary: ₹${salary.finalSalary}`);
+    doc.text(`Final Salary: ${salary.finalSalary}`);
     doc.moveDown();
 
     // 📅 Footer

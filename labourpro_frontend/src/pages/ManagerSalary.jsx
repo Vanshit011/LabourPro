@@ -252,7 +252,7 @@ const ManagerSalary = () => {
     }
 
     const formatCurrency = (val) =>
-      val !== undefined && val !== null ? `₹${val}` : "-";
+      val !== undefined && val !== null ? `${val}` : "-";
 
     const personName =
       salaryData.workerName ||
