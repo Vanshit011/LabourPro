@@ -550,14 +550,14 @@ console.log("✅ Fetched salary:", res.data);
                 </button>
 
                 {/* ✅ Refresh Salary Button */}
-                <div className="flex justify-end mb-4">
+                {/* <div className="flex justify-end mb-4">
                   <button
                     onClick={handleRefreshSalary}
                     className="bg-yellow-500 text-white px-6 py-2 rounded-lg shadow hover:bg-yellow-600 transition duration-200"
                   >
                     🔄 Refresh Salary
                   </button>
-                </div>
+                </div> */}
 
                 {!salaryData ? (
                   <button
@@ -611,11 +611,11 @@ console.log("✅ Fetched salary:", res.data);
                   <b>Warning:</b> Remaining loan: {(salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)}. Cannot add new loans until cleared.
                 </p>
               )} */}
-                {((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)) < 0 && (
+                {/* {((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)) < 0 && (
                   <p className="mt-4 text-green-600 bg-green-50 p-3 rounded-lg">
                     <b>Note:</b> Overpaid by {-((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0))}.
                   </p>
-                )}
+                )} */}
               </div>
             )}
 

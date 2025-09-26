@@ -410,101 +410,106 @@ const downloadAllSalaries = async (req, res) => {
 const Worker = require("../models/Worker");
 const WorkerSalary = require("../models/WorkerSalary");
 const Attendance = require("../models/Attendance");
+const cron = require("node-cron");
 
-// POST /worker-salary/add
-const addWorkerSalary = async (req, res) => {
+// Your add salary function extracted from API
+const addWorkerSalary = async (month, year) => {
   try {
-    const { workerId, month, year } = req.body;
+    const workers = await Worker.find();
+    for (const worker of workers) {
+      const workerId = worker._id;
+      const companyId = worker.companyId;
 
-    // Validate worker
-    const worker = await Worker.findById(workerId);
-    if (!worker) {
-      return res.status(404).json({ error: "Worker not found" });
+      const monthStr = month.toString().padStart(2, "0");
+      const nextMonth = (Number(month) % 12) + 1;
+      const nextMonthYear =
+        Number(month) === 12 ? Number(year) + 1 : Number(year);
+      const nextMonthStr = nextMonth.toString().padStart(2, "0");
+
+      const startDate = new Date(`${year}-${monthStr}-01T00:00:00Z`);
+      const endDate = new Date(`${nextMonthYear}-${nextMonthStr}-01T00:00:00Z`);
+
+      // attendance summary
+      const attendanceSummary = await Attendance.aggregate([
+        {
+          $match: {
+            companyId,
+            workerId: new mongoose.Types.ObjectId(workerId),
+            date: { $gte: startDate, $lt: endDate },
+          },
+        },
+        {
+          $group: {
+            _id: "$workerId",
+            workerName: { $first: "$workerName" },
+            totalHours: { $sum: { $ifNull: ["$totalHours", 0] } },
+            totalRojEarned: { $sum: { $ifNull: ["$totalRojEarned", 0] } },
+            daysWorked: { $sum: 1 },
+          },
+        },
+      ]);
+
+      const summary =
+        attendanceSummary[0] || {
+          workerName: worker.name,
+          totalHours: 0,
+          totalRojEarned: 0,
+          daysWorked: 0,
+        };
+
+      // skip if already exists
+      const exists = await WorkerSalary.findOne({ workerId, month, year });
+      if (exists) continue;
+
+      const lastSalary = await WorkerSalary.findOne({ workerId }).sort({
+        year: -1,
+        month: -1,
+      });
+      const carryForwardLoan = lastSalary?.loanRemaining || 0;
+
+      const newSalary = new WorkerSalary({
+        companyId,
+        workerId,
+        month,
+        year,
+        workerName: summary.workerName,
+        baseSalary: summary.totalRojEarned,
+        hoursWorked: summary.totalHours,
+        daysWorked: summary.daysWorked,
+        advance: 0,
+        loanTaken: 0,
+        loanPaid: 0,
+        loanRemaining: carryForwardLoan,
+        finalSalary: summary.totalRojEarned - 0,
+      });
+
+      await newSalary.save();
     }
-    const companyId = worker.companyId;
-
-    // Format month/year and define date range
-    const monthStr = month.toString().padStart(2, "0");
-    const nextMonth = (Number(month) % 12) + 1;
-    const nextMonthYear = Number(month) === 12 ? Number(year) + 1 : Number(year);
-    const nextMonthStr = nextMonth.toString().padStart(2, "0");
-
-    const startDate = new Date(`${year}-${monthStr}-01T00:00:00Z`);
-    const endDate = new Date(`${nextMonthYear}-${nextMonthStr}-01T00:00:00Z`);
-
-    // Aggregate attendance for the month (fixed)
-    const attendanceSummary = await Attendance.aggregate([
-      {
-        $match: {
-          companyId,
-          workerId: new mongoose.Types.ObjectId(workerId),
-          date: { $gte: startDate, $lt: endDate }, // compare Date directly
-        },
-      },
-      {
-        $group: {
-          _id: "$workerId",
-          workerName: { $first: "$workerName" },
-          totalHours: { $sum: { $ifNull: ["$totalHours", 0] } },
-          totalRojEarned: { $sum: { $ifNull: ["$totalRojEarned", 0] } },
-          daysWorked: { $sum: 1 },
-        },
-      },
-      {
-        $project: {
-          _id: 0,
-          workerId: "$_id",
-          workerName: 1,
-          totalHours: 1,
-          totalRojEarned: 1,
-          daysWorked: 1,
-        },
-      },
-    ]);
-
-    const summary =
-      attendanceSummary[0] || { totalHours: 0, totalRojEarned: 0, daysWorked: 0 };
-
-    // Prevent duplicate salary entry
-    const exists = await WorkerSalary.findOne({ workerId, month, year });
-    if (exists) {
-      return res
-        .status(400)
-        .json({ error: "Salary already exists for this worker in this month" });
-    }
-
-    // Get last month’s loan remaining
-    const lastSalary = await WorkerSalary.findOne({ workerId }).sort({
-      year: -1,
-      month: -1,
-    });
-    const carryForwardLoan = lastSalary?.loanRemaining || 0;
-
-    // Create new salary record
-    const newSalary = new WorkerSalary({
-      companyId,
-      workerId,
-      month,
-      year,
-      workerName: summary.workerName,
-      baseSalary: summary.totalRojEarned,
-      hoursWorked: summary.totalHours,
-      daysWorked: summary.daysWorked,
-      advance: 0,
-      loanTaken: 0,
-      loanPaid: 0,
-      loanRemaining: carryForwardLoan,
-      finalSalary: summary.totalRojEarned - 0 , // adjust if needed
-    });
-
-    await newSalary.save();
-
-    res.json({ message: "Salary added successfully ✅", salary: newSalary });
-  } catch (error) {
-    console.error("Add Salary Error:", error.message, error.stack);
-    res.status(500).json({ error: error.message });
+    console.log(`✅ Salaries auto-added for ${month}/${year}`);
+  } catch (err) {
+    console.error("Auto Salary Error:", err.message);
   }
 };
+
+// CRON job: Runs on 1st day of month at 00:05
+cron.schedule("5 0 1 * *", async () => {
+  const now = new Date();
+  const month = now.getMonth() + 1; // JS month is 0-based
+  const year = now.getFullYear();
+
+  console.log("⏳ Running auto salary job...");
+  await addWorkerSalary(month, year);
+});
+
+// cron.schedule("* * * * *", async () => {
+//   const now = new Date();
+//   const month = now.getMonth() + 1;
+//   const year = now.getFullYear();
+
+//   console.log("⏳ Running test auto salary job...");
+//   await addWorkerSalary(month, year);
+// });
+
 
 // PUT /worker-salary/:id/update
 const updateWorkerSalary = async (req, res) => {

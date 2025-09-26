@@ -100,7 +100,8 @@ const MonthlySalaryView = () => {
         <p className="text-center text-lg text-red-600 bg-red-50 p-4 rounded-lg">{error}</p>
       ) : summary.length === 0 ? (
         <p className="text-center text-lg text-gray-600 bg-gray-50 p-4 rounded-lg">
-          No attendance/salary data found for selected month/year.
+          {/* No attendance/salary data found for selected month/year. */}
+          for refresh data ignore this
         </p>
       ) : (
         <div className="overflow-x-auto rounded-lg shadow-md border border-gray-200">

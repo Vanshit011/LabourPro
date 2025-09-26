@@ -106,17 +106,19 @@ const updateAttendance = async (req, res) => {
     let calcRate = rojRate || attendance.rojRate || 50; // Default to 50 if missing
     let calcRoj = totalRojEarned;
 
-    if (!totalHours || !totalRojEarned) {
+    if (totalHours === undefined || totalRojEarned === undefined) {
       const start = new Date(`${attendance.date}T${entryTime}`);
       const end = new Date(`${attendance.date}T${exitTime}`);
 
-      if (isNaN(start) || isNaN(end) || end <= start) {
+      if (isNaN(start) || isNaN(end) || end < start) {
         return res.status(400).json({ error: "Invalid time format or exit before entry" });
       }
 
-      calcHours = (end - start) / (1000 * 60 * 60); // ms to hours
+      let diff = (end - start) / (1000 * 60 * 60);
+      calcHours = Math.floor(diff * 100) / 100;  // round to 2 decimals
       calcRoj = calcHours * calcRate;
     }
+
 
     // Update fields
     attendance.entryTime = entryTime;
@@ -271,10 +273,19 @@ const getMonthlySalary = async (req, res) => {
       },
     ]);
 
-    // Step 2: Upsert into WorkerSalary
+    // Step 2: Get all workers in company
+    const allWorkers = await Worker.find({ companyId });
+
+    // Step 3: Merge attendance summary with workers
     const workerSalaries = [];
-    for (const worker of summary) {
-      // fetch existing salary if any
+    for (const worker of allWorkers) {
+      const summaryData = summary.find((s) => String(s._id) === String(worker._id));
+
+      const baseSalary = summaryData?.totalRojEarned || 0;
+      const totalHours = summaryData?.totalHours || 0;
+      const daysWorked = summaryData?.daysWorked || 0;
+
+      // check if already exists
       let existing = await WorkerSalary.findOne({
         workerId: worker._id,
         companyId,
@@ -282,29 +293,18 @@ const getMonthlySalary = async (req, res) => {
         year,
       });
 
-      const baseSalary = worker.totalRojEarned;
-      const totalHours = worker.totalHours;
-      const daysWorked = worker.daysWorked;
-
-      // keep previous values if exist, else 0
       const advance = existing?.advance || 0;
       const loanTaken = existing?.loanTaken || 0;
       const loanPaid = existing?.loanPaid || 0;
       const loanRemaining = existing?.loanRemaining || 0;
 
-      // recalc final salary
       const finalSalary = baseSalary - advance - loanPaid;
 
       const updated = await WorkerSalary.findOneAndUpdate(
-        {
-          workerId: worker._id,
-          companyId,
-          month,
-          year,
-        },
+        { workerId: worker._id, companyId, month, year },
         {
           $set: {
-            workerName: worker.workerName,
+            workerName: worker.name, // from Worker collection
             baseSalary,
             totalHours,
             daysWorked,
@@ -329,11 +329,10 @@ const getMonthlySalary = async (req, res) => {
     });
   } catch (error) {
     console.error("Monthly Salary API Error:", error.message, error.stack);
-    return res
-      .status(500)
-      .json({ message: "Server error", error: error.message });
+    return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 
 module.exports = {

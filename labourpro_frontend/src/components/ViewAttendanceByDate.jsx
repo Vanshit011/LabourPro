@@ -156,12 +156,12 @@ const ViewAttendanceByDate = () => {
                     >
                       Edit
                     </button>
-                    <button
+                    {/* <button
                       onClick={() => handleDelete(rec._id)}
                       className="text-red-600 hover:underline font-medium"
                     >
                       Delete
-                    </button>
+                    </button> */}
                   </td>
                 </tr>
               ))}
