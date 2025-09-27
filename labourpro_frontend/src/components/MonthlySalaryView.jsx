@@ -62,8 +62,8 @@ const MonthlySalaryView = () => {
           Month
           <select
             value={month}
-            onChange={(e) => setMonth(Number(e.target.value))}
-            className="mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+            disabled
+            className="mt-1 p-3 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
           >
             {monthNames.map((m, i) => (
               <option key={i} value={i + 1}>
@@ -77,20 +77,19 @@ const MonthlySalaryView = () => {
           Year
           <input
             type="number"
-            min="2000"
-            max="2100"
             value={year}
-            onChange={(e) => setYear(Number(e.target.value))}
-            className="mt-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+            readOnly
+            className="mt-1 p-3 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
           />
         </label>
 
         <button
-          onClick={fetchMonthlySalary}
-          className="w-full sm:w-auto bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-200 shadow"
+          disabled
+          className="w-full sm:w-auto bg-gray-400 text-white px-6 py-3 rounded-lg cursor-not-allowed shadow"
         >
           View
         </button>
+
       </div>
 
       {/* Content */}
