@@ -1,13 +1,17 @@
 import React from "react";
 import { motion } from "framer-motion";
+import HeroBg from "../assets/background.png";
 
 const Home = () => {
   return (
     <div className="w-full bg-gray-50">
       {/* Hero Section */}
-      <section className="relative flex flex-col items-center justify-center text-center min-h-screen bg-gradient-to-r from-blue-700 to-indigo-800 text-white px-4 sm:px-6 lg:px-8">
+      <section className="relative flex flex-col items-center justify-center text-center min-h-screen bg-gradient-to-r from-blue-600 to-indigo-800 text-white px-4 sm:px-6 lg:px-8">
         {/* Subtle Pattern Background */}
-        <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml,%3Csvg width=60 height=60 ... %3C/svg%3E')]"></div>
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-30"
+          style={{ backgroundImage: `url(${HeroBg})` }}
+        ></div>
 
         <div className="relative z-10 max-w-5xl mx-auto">
           <motion.div
@@ -27,7 +31,7 @@ const Home = () => {
             transition={{ delay: 0.3, duration: 1 }}
             className="mt-4 text-lg md:text-xl text-gray-200 max-w-3xl mx-auto"
           >
-            Simplify your labour management – track workers, salaries, attendance, and more with ease. 
+            Simplify your labour management – track workers, salaries, attendance, and more with ease.
             <span className="text-yellow-300 font-semibold"> Start your 14-day free trial today!</span>
           </motion.p>
 
@@ -67,13 +71,13 @@ const Home = () => {
               Why Choose LabourPro?
             </h2>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              A complete solution to manage your workforce with confidence and efficiency. 
+              A complete solution to manage your workforce with confidence and efficiency.
               From real-time tracking to automated reports, LabourPro streamlines your operations.
             </p>
           </motion.div>
 
           <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            <motion.div 
+            <motion.div
               className="p-6 bg-blue-100 rounded-2xl shadow-md hover:shadow-xl transition duration-300"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -89,7 +93,7 @@ const Home = () => {
               </p>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="p-6 bg-green-100 rounded-2xl shadow-md hover:shadow-xl transition duration-300"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -105,7 +109,7 @@ const Home = () => {
               </p>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="p-6 bg-purple-100 rounded-2xl shadow-md hover:shadow-xl transition duration-300"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -122,7 +126,7 @@ const Home = () => {
             </motion.div>
           </div>
 
-          <motion.div 
+          <motion.div
             className="mt-16 max-w-2xl mx-auto px-4 sm:px-6"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
