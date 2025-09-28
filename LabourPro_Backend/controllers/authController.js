@@ -64,32 +64,28 @@ exports.registerTrial = async (req, res) => {
 
 exports.registerPaid = async (req, res) => {
   try {
-    const {
-      name,
-      email,
-      password,
-      companyName,
-      planType,
-      amount,
-      razorpayOrderId,
-      razorpayPaymentId
-    } = req.body;
+    const { name, email, password, companyName, planType, amount } = req.body;
 
-    if (!name || !email || !password || !companyName || !planType || !amount || !razorpayOrderId || !razorpayPaymentId) {
+    // Validate all required fields
+    if (!name || !email || !password || !companyName || !planType || !amount) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
+    // Check if email already exists
     const existing = await Admin.findOne({ email });
     if (existing) {
       return res.status(400).json({ message: "Email already registered" });
     }
 
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
     const companyId = uuidv4();
 
+    // Calculate subscription expiry
     const days = planType === "yearly" ? 365 : 30;
     const subscriptionExpiry = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 
+    // Create admin
     const admin = await Admin.create({
       name,
       email,
@@ -101,15 +97,15 @@ exports.registerPaid = async (req, res) => {
       subscriptionExpiry,
     });
 
+    // Create subscription
     await Subscription.create({
       adminId: admin._id,
-      razorpayOrderId,
-      razorpayPaymentId,
       planType,
-      amount,
+      amount: Number(amount),
       endDate: subscriptionExpiry,
     });
 
+    // Generate JWT token
     const token = jwt.sign(
       { id: admin._id, companyId: admin.companyId, role: "admin" },
       process.env.JWT_SECRET,
@@ -125,9 +121,8 @@ exports.registerPaid = async (req, res) => {
         planType: admin.planType,
         subscriptionExpiry: admin.subscriptionExpiry,
         companyId: admin.companyId,
-      }
+      },
     });
-
   } catch (error) {
     console.error("Paid Registration Error:", error);
     res.status(500).json({ message: "Server error" });

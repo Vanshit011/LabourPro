@@ -1,110 +1,136 @@
-import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 
 const RegisterPaid = () => {
-  const [params] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Extract plan details from URL
-  const planType = params.get("plan");
-  const amount = params.get("amount");
+  // Form state
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [companyName, setCompanyName] = useState("");
+  const [planType, setPlanType] = useState("");
+  const [amount, setAmount] = useState(0);
 
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-    companyName: "",
-  });
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  // ✅ Get planType & amount from query params
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const plan = searchParams.get("plan");
+    const amt = searchParams.get("amount");
+
+    if (plan) setPlanType(plan);
+    if (amt) setAmount(amt);
+  }, [location.search]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
+    setSuccess("");
+
     try {
-      const res = await axios.post("https://labourpro-backend.onrender.com/api/auth/register-paid", {
-        ...form,
+      const payload = {
+        name,
+        email,
+        password,
+        companyName,
         planType,
         amount,
-      });
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("admin", JSON.stringify(res.data.admin));
-      navigate("/dashboard");
+      };
+
+      const { data } = await axios.post(
+        "https://labourpro-backend.onrender.com/api/auth/register-paid",
+        payload
+      );
+
+      // ✅ Store token
+      localStorage.setItem("token", data.token);
+
+      setSuccess(data.message);
+
+      // Redirect to dashboard or wherever
+      setTimeout(() => {
+        navigate("/dashboard"); // change to your dashboard route
+      }, 1500);
     } catch (err) {
-      setError(err.response?.data?.message || "Registration failed");
+      setError(err.response?.data?.message || "Something went wrong!");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-12">
-      <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 shadow-2xl">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-800 flex items-center justify-center gap-2">
-            <span className="text-blue-600 text-4xl">📝</span> Complete Registration
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">Finish setting up your paid account</p>
-        </div>
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg shadow-inner">
-          <p className="text-sm text-gray-700"><strong>Plan:</strong> {planType}</p>
-          <p className="text-sm text-gray-700"><strong>Amount:</strong> ₹{amount}</p>
-        </div>
-        {error && (
-          <p className="mb-4 text-center text-sm text-red-600 bg-red-50 p-2 rounded-lg">{error}</p>
-        )}
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white px-4">
+      <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
+        <h2 className="text-3xl font-bold text-gray-800 mb-6 text-center">
+          Complete Your Registration
+        </h2>
+
+        {error && <p className="text-red-500 mb-4">{error}</p>}
+        {success && <p className="text-green-600 mb-4">{success}</p>}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <label className="block text-gray-700 mb-1">Name</label>
             <input
-              name="name"
-              placeholder="Enter your name"
-              value={form.name}
-              onChange={handleChange}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+              type="text"
               required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-gray-700 mb-1">Email</label>
             <input
-              name="email"
-              placeholder="Enter your email"
-              value={form.email}
-              onChange={handleChange}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+              type="email"
               required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <label className="block text-gray-700 mb-1">Password</label>
             <input
               type="password"
-              name="password"
-              placeholder="Create a password"
-              value={form.password}
-              onChange={handleChange}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
               required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+            <label className="block text-gray-700 mb-1">Company Name</label>
             <input
-              name="companyName"
-              placeholder="Enter your company name"
-              value={form.companyName}
-              onChange={handleChange}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
+              type="text"
               required
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
+
+          {/* Display plan & amount */}
+          <div className="p-3 bg-gray-100 rounded-lg text-gray-800 font-medium">
+            Plan: {planType} | Amount: ₹{amount}
+          </div>
+
           <button
             type="submit"
-            className="w-full rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white shadow-md hover:bg-green-700 transition duration-300 ease-in-out"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-300 shadow"
           >
-            Register & Access Dashboard
+            {loading ? "Registering..." : "Complete Registration"}
           </button>
         </form>
       </div>

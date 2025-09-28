@@ -6,14 +6,6 @@ const subscriptionSchema = new mongoose.Schema({
     ref: "Admin",
     required: true,
   },
-  razorpayOrderId: {
-    type: String,
-    required: true,
-  },
-  razorpayPaymentId: {
-    type: String,
-    required: true,
-  },
   planType: {
     type: String,
     enum: ["monthly", "yearly"],
