@@ -7,7 +7,7 @@ const monthNames = [
 ];
 
 const MonthlySalaryView = () => {
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const [month, setMonth] = useState(8); // ✅ Default August
   const [year, setYear] = useState(new Date().getFullYear());
   const [summary, setSummary] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -62,7 +62,7 @@ const MonthlySalaryView = () => {
           Month
           <select
             value={month}
-            onChange={(e) => setMonth(e.target.value)}   // ✅ update state
+            onChange={(e) => setMonth(Number(e.target.value))}
             className="mt-1 p-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500"
           >
             {monthNames.map((m, i) => (
@@ -71,7 +71,6 @@ const MonthlySalaryView = () => {
               </option>
             ))}
           </select>
-
         </label>
 
         <label className="flex flex-col text-sm font-medium text-gray-700 w-full sm:w-auto">
