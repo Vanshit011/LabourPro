@@ -403,8 +403,6 @@ const downloadAllSalaries = async (req, res) => {
 };
 
 
-
-
 // Worker Salary Controllers
 // controllers/workerSalaryController.js
 const Worker = require("../models/Worker");
@@ -629,17 +627,19 @@ const downloadAllWorkerSalaries = async (req, res) => {
     if (month) filter.month = month;
     if (year) filter.year = year;
 
-    const salaries = await WorkerSalary.find(filter).populate('workerId', 'name');
+    const salaries = await WorkerSalary.find(filter).populate("workerId", "name");
     if (!salaries || salaries.length === 0) {
-      return res.status(404).json({ message: 'No worker salaries found for given month/year' });
+      return res
+        .status(404)
+        .json({ message: "No worker salaries found for given month/year" });
     }
 
     // PDF setup
-    const doc = new PDFDocument({ margin: 40, size: 'A4' });
-    res.setHeader('Content-Type', 'application/pdf');
+    const doc = new PDFDocument({ margin: 40, size: "A4" });
+    res.setHeader("Content-Type", "application/pdf");
     res.setHeader(
-      'Content-Disposition',
-      `attachment; filename=Worker_Salaries_${month || 'All'}_${year || 'All'}.pdf`
+      "Content-Disposition",
+      `attachment; filename=Worker_Salaries_${month || "All"}_${year || "All"}.pdf`
     );
     doc.pipe(res);
 
@@ -647,104 +647,111 @@ const downloadAllWorkerSalaries = async (req, res) => {
     const margin = 40;
     const pageWidth = doc.page.width;
     const pageHeight = doc.page.height;
-    const printableWidth = pageWidth - margin * 2; // 595 - 80 = 515
+    const printableWidth = pageWidth - margin * 2;
     const headerBandH = 60;
     const bottomMargin = doc.page.margins.bottom || margin;
 
     // Header band
-    doc.rect(0, 0, pageWidth, headerBandH).fill('#004aad');
-    doc.fillColor('white').fontSize(20).text('LabourPro - Worker Salaries', margin + 10, 20);
+    doc.rect(0, 0, pageWidth, headerBandH).fill("#004aad");
+    doc.fillColor("white").fontSize(20).text("LabourPro - Worker Salaries", margin + 10, 20);
 
-    // Subtitle placed explicitly below header, then safeTop below subtitle to avoid overlap
     const subtitleY = headerBandH + 8;
-    doc.fillColor('#004aad').fontSize(14)
-      .text(`Worker Salaries for ${month || 'All Months'} / ${year || 'All Years'}`, margin + 10, subtitleY);
+    doc.fillColor("#004aad")
+      .fontSize(14)
+      .text(
+        `Worker Salaries for ${month || "All Months"} / ${year || "All Years"}`,
+        margin + 10,
+        subtitleY
+      );
 
-    const safeTop = subtitleY + 18; // start tables below subtitle
+    const safeTop = subtitleY + 18;
     let y = safeTop;
 
-    // FINAL COMPACT TABLE DIMENSIONS (fits two per row within A4 margins)
+    // Table layout
     const rowH = 24;
     const labelColW = 120;
     const valueColW = 125;
-    const tableW = labelColW + valueColW; // 245
+    const tableW = labelColW + valueColW;
     const gapX = 15;
-    const leftX = margin + 10;            // 50
+    const leftX = margin + 10; // 50
     const rightX = leftX + tableW + gapX; // 310
-    // Right table right edge = 310 + 245 = 555 = pageWidth - margin (fits exactly)
+    const textOffsetY = Math.floor((rowH - 10) / 2);
 
-    const textOffsetY = Math.floor((rowH - 10) / 2); // center for 10pt font
-
-    // Totals init
+    // Totals
     const totals = {
-      base: 0, advance: 0, loanTaken: 0, loanPaid: 0,
-      remaining: 0, totalHours: 0, daysWorked: 0, final: 0
+      base: 0,
+      advance: 0,
+      loanTaken: 0,
+      loanPaid: 0,
+      remaining: 0,
+      totalHours: 0,
+      daysWorked: 0,
+      final: 0,
     };
 
-    // Iterate workers (two tables per row)
     let placeLeft = true;
-    for (let idx = 0; idx < salaries.length; idx++) {
-      const salary = salaries[idx];
+    salaries.forEach((salary, idx) => {
       const rows = [
-        ['Base Salary', salary.baseSalary || 0],
-        ['Advance', salary.advance || 0],
-        ['Loan Taken', salary.loanTaken || 0],
-        ['Loan Paid', salary.loanPaid || 0],
-        ['Remaining Loan', (salary.loanTaken || 0) - (salary.loanPaid || 0)],
-        ['Total Hours', salary.totalHours || 0],
-        ['Days Worked', salary.daysWorked || 0],
-        ['Final Salary', salary.finalSalary || 0],
+        ["Base Salary", salary.baseSalary || 0],
+        ["Advance", salary.advance || 0],
+        ["Loan Taken", salary.loanTaken || 0],
+        ["Loan Paid", salary.loanPaid || 0],
+        [
+          "Remaining Loan",
+          (salary.loanTaken || 0) - (salary.loanPaid || 0),
+        ],
+        ["Total Hours", salary.totalHours || 0],
+        ["Days Worked", salary.daysWorked || 0],
+        ["Final Salary", salary.finalSalary || 0],
       ];
-      const tableH = rows.length * rowH + 16; // compact title spacing
 
-      // Ensure we're below subtitle at least a bit
+      const tableH = rows.length * rowH + 16;
+
       if (y < safeTop) y = safeTop;
 
-      // If starting a new row (left) and not enough space -> new page
       if (placeLeft && y + tableH > pageHeight - bottomMargin - 40) {
         doc.addPage();
-        // redraw subtitle on new page (optional)
-        doc.fillColor('#004aad').fontSize(14)
-          .text(`Worker Salaries for ${month || 'All Months'} / ${year || 'All Years'}`, margin + 10, subtitleY);
+        doc.fillColor("#004aad")
+          .fontSize(14)
+          .text(
+            `Worker Salaries for ${month || "All Months"} / ${year || "All Years"}`,
+            margin + 10,
+            subtitleY
+          );
         y = safeTop;
       }
 
       const x = placeLeft ? leftX : rightX;
 
-      // If placing right and would overflow -> move to next line or page
-      if (!placeLeft && y + tableH > pageHeight - bottomMargin - 40) {
-        placeLeft = true;
-        if (y + tableH > pageHeight - bottomMargin - 40) {
-          doc.addPage();
-          // redraw subtitle on new page (optional)
-          doc.fillColor('#004aad').fontSize(14)
-            .text(`Worker Salaries for ${month || 'All Months'} / ${year || 'All Years'}`, margin + 10, subtitleY);
-          y = safeTop;
-        }
-      }
+ // Worker header (smaller, blue, bold)
+doc.fontSize(11).fillColor("#004aad").font("Helvetica-Bold")
+  .text(`Worker: ${salary.workerId?.name || "N/A"}`, x, y);
 
-      // Worker header
-      doc.fontSize(11).fillColor('#004aad').font('Helvetica-Bold')
-        .text(`Worker: ${salary.workerId?.name || 'N/A'}`, x, y);
-      const tableTop = y + 14;
+const tableTop = y + 18; // space between name and table
 
-      // Table border
-      doc.lineWidth(1).rect(x, tableTop, tableW, rows.length * rowH).stroke();
+// Outer table border (3px thick)
+doc.lineWidth(3).strokeColor("black")
+  .rect(x, tableTop, tableW, rows.length * rowH).stroke();
 
-      // Rows
-      rows.forEach((row, rIdx) => {
-        const rowY = tableTop + rIdx * rowH;
-        // horizontal line
-        doc.moveTo(x, rowY).lineTo(x + tableW, rowY).stroke();
-        // vertical split
-        doc.moveTo(x + labelColW, rowY).lineTo(x + labelColW, rowY + rowH).stroke();
+// Inner rows and vertical lines (1px thin)
+rows.forEach((row, rIdx) => {
+  const rowY = tableTop + rIdx * rowH;
 
-        doc.font('Helvetica').fillColor('black').fontSize(10);
-        doc.text(row[0], x + 5, rowY + textOffsetY, { width: labelColW - 10, align: 'left' });
-        doc.text(String(row[1]), x + labelColW + 5, rowY + textOffsetY, { width: valueColW - 10, align: 'left' });
-      });
+  // horizontal line
+  doc.lineWidth(1).moveTo(x, rowY).lineTo(x + tableW, rowY).stroke();
 
-      // Accumulate totals
+  // vertical split
+  doc.moveTo(x + labelColW, rowY).lineTo(x + labelColW, rowY + rowH).stroke();
+
+  // text (smaller font)
+  doc.font("Helvetica").fillColor("black").fontSize(9);
+  doc.text(row[0], x + 5, rowY + textOffsetY, { width: labelColW - 10, align: "left" });
+  doc.text(String(row[1]), x + labelColW + 5, rowY + textOffsetY, { width: valueColW - 10, align: "left" });
+});
+
+
+
+      // Totals calc
       totals.base += salary.baseSalary || 0;
       totals.advance += salary.advance || 0;
       totals.loanTaken += salary.loanTaken || 0;
@@ -754,93 +761,124 @@ const downloadAllWorkerSalaries = async (req, res) => {
       totals.daysWorked += salary.daysWorked || 0;
       totals.final += salary.finalSalary || 0;
 
-      // After placing right column, move Y; else switch column
+      // When both left+right filled → add line
       if (!placeLeft) {
-        y += rows.length * rowH + 20; // compact gap between rows
+        y += rows.length * rowH + 20;
+        doc.lineWidth(2).strokeColor("black");
+        doc.moveTo(leftX, y - 10).lineTo(pageWidth - margin, y - 10).stroke();
+        y += 15;
       }
+
+      // If last worker is left-only
+      if (idx === salaries.length - 1 && placeLeft) {
+        y += rows.length * rowH + 20;
+        doc.lineWidth(2).strokeColor("black");
+        doc.moveTo(leftX, y - 10).lineTo(pageWidth - margin, y - 10).stroke();
+        y += 15;
+      }
+
       placeLeft = !placeLeft;
-    }
+    });
 
-    // If last placed on left, add a little spacing before totals
-    if (placeLeft === false) y += 12;
-
-    // ===== Grand Totals (compact) =====
+    // ===== Totals =====
     const titleH = 20;
     const totalsRowH = 30;
     const totalsBlockH = titleH + totalsRowH * 2 + 6;
 
     if (y + totalsBlockH > pageHeight - bottomMargin) {
       doc.addPage();
-      // redraw subtitle on new page (optional)
-      doc.fillColor('#004aad').fontSize(14)
-        .text(`Worker Salaries for ${month || 'All Months'} / ${year || 'All Years'}`, margin + 10, subtitleY);
+      doc.fillColor("#004aad")
+        .fontSize(14)
+        .text(
+          `Worker Salaries for ${month || "All Months"} / ${year || "All Years"}`,
+          margin + 10,
+          subtitleY
+        );
       y = safeTop;
     }
 
-    doc.fontSize(12).fillColor('#004aad').font('Helvetica-Bold')
-      .text('Grand Worker Salary Summary', margin + 10, y);
+    doc.fontSize(12).fillColor("#004aad").font("Helvetica-Bold")
+      .text("Grand Worker Salary Summary", margin + 10, y);
     y += titleH;
 
     const totalsX = margin + 10;
     const totalsW = printableWidth - 20;
     const headers = [
-      'Salary', 'Advance', 'Loan Taken', 'Loan Paid',
-      'Remaining Loan', 'Total Hours', 'Days Worked', 'Final Salary'
+      "Salary",
+      "Advance",
+      "Loan Taken",
+      "Loan Paid",
+      "Remaining Loan",
+      "Total Hours",
+      "Days Worked",
+      "Final Salary",
     ];
-    const colW = totalsW / (headers.length + 1); // +1 for "TOTAL"
+    const colW = totalsW / (headers.length + 1);
     const headFont = 9;
     const valFont = 10;
     const headOffsetY = Math.floor((totalsRowH - headFont) / 2);
     const valOffsetY = Math.floor((totalsRowH - valFont) / 2);
 
-    // Outer box
     doc.lineWidth(1).rect(totalsX, y, totalsW, totalsRowH * 2).stroke();
 
-    // Vertical separators
     for (let i = 1; i <= headers.length; i++) {
       const colX = totalsX + i * colW;
       doc.moveTo(colX, y).lineTo(colX, y + totalsRowH * 2).stroke();
     }
 
-    // Header row
-    doc.font('Helvetica-Bold').fillColor('black').fontSize(headFont);
-    doc.text('TOTAL', totalsX + 6, y + headOffsetY, { width: colW - 12, align: 'left' });
+    doc.font("Helvetica-Bold").fillColor("black").fontSize(headFont);
+    doc.text("TOTAL", totalsX + 6, y + headOffsetY, {
+      width: colW - 12,
+      align: "left",
+    });
     headers.forEach((header, i) => {
-      doc.text(header, totalsX + (i + 1) * colW + 6, y + headOffsetY, { width: colW - 12, align: 'left' });
+      doc.text(header, totalsX + (i + 1) * colW + 6, y + headOffsetY, {
+        width: colW - 12,
+        align: "left",
+      });
     });
 
-    // Values row
     const totalRowY = y + totalsRowH;
-    doc.rect(totalsX, totalRowY, totalsW, totalsRowH).fill('#004aad');
+    doc.rect(totalsX, totalRowY, totalsW, totalsRowH).fill("#004aad");
     doc.lineWidth(1).rect(totalsX, totalRowY, totalsW, totalsRowH).stroke();
     for (let i = 1; i <= headers.length; i++) {
       const colX = totalsX + i * colW;
       doc.moveTo(colX, totalRowY).lineTo(colX, totalRowY + totalsRowH).stroke();
     }
 
-    doc.font('Helvetica-Bold').fillColor('white').fontSize(valFont);
-    doc.text('TOTAL', totalsX + 6, totalRowY + valOffsetY, { width: colW - 12, align: 'left' });
+    doc.font("Helvetica-Bold").fillColor("white").fontSize(valFont);
+    doc.text("TOTAL", totalsX + 6, totalRowY + valOffsetY, {
+      width: colW - 12,
+      align: "left",
+    });
 
     const totalValues = [
-      totals.base, totals.advance, totals.loanTaken, totals.loanPaid,
-      totals.remaining, totals.totalHours, totals.daysWorked, totals.final
+      totals.base,
+      totals.advance,
+      totals.loanTaken,
+      totals.loanPaid,
+      totals.remaining,
+      totals.totalHours,
+      totals.daysWorked,
+      totals.final,
     ];
     totalValues.forEach((val, i) => {
       doc.text(String(val ?? 0), totalsX + (i + 1) * colW + 6, totalRowY + valOffsetY, {
-        width: colW - 12, align: 'left',
+        width: colW - 12,
+        align: "left",
       });
     });
 
-    // Footer
-    doc.fontSize(9).fillColor('gray')
-      .text('This is a system-generated worker salary report.', margin, pageHeight - bottomMargin - 12, {
-        width: printableWidth, align: 'center',
+    doc.fontSize(9).fillColor("gray")
+      .text("This is a system-generated worker salary report.", margin, pageHeight - bottomMargin - 12, {
+        width: printableWidth,
+        align: "center",
       });
 
     doc.end();
   } catch (error) {
-    console.error('PDF generation error:', error);
-    res.status(500).json({ message: 'Error generating worker salary PDF' });
+    console.error("PDF generation error:", error);
+    res.status(500).json({ message: "Error generating worker salary PDF" });
   }
 };
 

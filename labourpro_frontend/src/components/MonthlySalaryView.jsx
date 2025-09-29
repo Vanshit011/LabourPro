@@ -62,8 +62,8 @@ const MonthlySalaryView = () => {
           Month
           <select
             value={month}
-            disabled
-            className="mt-1 p-3 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+            onChange={(e) => setMonth(e.target.value)}   // ✅ update state
+            className="mt-1 p-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500"
           >
             {monthNames.map((m, i) => (
               <option key={i} value={i + 1}>
@@ -71,6 +71,7 @@ const MonthlySalaryView = () => {
               </option>
             ))}
           </select>
+
         </label>
 
         <label className="flex flex-col text-sm font-medium text-gray-700 w-full sm:w-auto">

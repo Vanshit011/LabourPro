@@ -82,7 +82,7 @@ const WorkerSalary = () => {
         `https://labourpro-backend.onrender.com/api/salary/worker/${workerId}/${month}/${year}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-console.log("✅ Fetched salary:", res.data);
+      console.log("✅ Fetched salary:", res.data);
       setSalaryData(res.data);
       setBaseSalary(res.data.baseSalary?.toString() || "");
     } catch (err) {
@@ -402,7 +402,7 @@ console.log("✅ Fetched salary:", res.data);
       doc.text(field[0], col1X, y);
       doc.text(field[1]?.toString() || "-", col2X, y);
     });
-
+    
     // Footer
     doc.setFontSize(10);
     doc.setFont("helvetica", "italic");
@@ -430,6 +430,7 @@ console.log("✅ Fetched salary:", res.data);
       link.setAttribute("download", `Worker_Salaries_${month}_${year}.pdf`);
       document.body.appendChild(link);
       link.click();
+      // console.log("✅ Download initiated");
     } catch (error) {
       console.error("Download error:", error);
     }
