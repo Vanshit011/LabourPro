@@ -7,7 +7,7 @@ const monthNames = [
 ];
 
 const MonthlySalaryView = () => {
-  const [month, setMonth] = useState(8); // ✅ Default August
+  const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
   const [summary, setSummary] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -72,6 +72,7 @@ const MonthlySalaryView = () => {
             ))}
           </select>
         </label>
+
 
         <label className="flex flex-col text-sm font-medium text-gray-700 w-full sm:w-auto">
           Year

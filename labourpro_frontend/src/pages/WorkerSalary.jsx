@@ -604,9 +604,9 @@ const WorkerSalary = () => {
                   📄 Download PDF
                 </button>
 
-                {/* <button onClick={() => deleteSalary(salaryData._id)} className="bg-red-600 text-white px-6 py-2 rounded-lg shadow hover:bg-red-700 transition duration-200 ml-4">
+                <button onClick={() => deleteSalary(salaryData._id)} className="bg-red-600 text-white px-6 py-2 rounded-lg shadow hover:bg-red-700 transition duration-200 ml-4">
                   🗑️ Delete Salary
-                </button> */}
+                </button>
                 {/* {((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)) > 0 && (
                 <p className="mt-4 text-red-600 bg-red-50 p-3 rounded-lg">
                   <b>Warning:</b> Remaining loan: {(salaryData.loanTaken || 0) - (salaryData.loanPaid || 0)}. Cannot add new loans until cleared.
