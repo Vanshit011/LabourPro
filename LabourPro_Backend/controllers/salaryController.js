@@ -489,8 +489,7 @@ const addWorkerSalary = async (month, year) => {
   }
 };
 
-// CRON job: Runs on 1st day of month at 00:05
-cron.schedule("5 0 1 * *", async () => {
+cron.schedule("20 0 1 * *", async () => {
   const now = new Date();
   const month = now.getMonth() + 1; // JS month is 0-based
   const year = now.getFullYear();
@@ -498,6 +497,17 @@ cron.schedule("5 0 1 * *", async () => {
   console.log("⏳ Running auto salary job...");
   await addWorkerSalary(month, year);
 });
+
+
+// CRON job: Runs on 1st day of month at 00:05
+// cron.schedule("5 0 1 * *", async () => {
+//   const now = new Date();
+//   const month = now.getMonth() + 1; // JS month is 0-based
+//   const year = now.getFullYear();
+
+//   console.log("⏳ Running auto salary job...");
+//   await addWorkerSalary(month, year);
+// });
 
 // cron.schedule("* * * * *", async () => {
 //   const now = new Date();
