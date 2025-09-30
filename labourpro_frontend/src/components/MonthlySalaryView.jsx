@@ -61,9 +61,9 @@ const MonthlySalaryView = () => {
         <label className="flex flex-col text-sm font-medium text-gray-700 w-full sm:w-auto">
           Month
           <select
-            value={month}
-            onChange={(e) => setMonth(Number(e.target.value))}
-            className="mt-1 p-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500"
+            value={new Date().getMonth() + 1} // ✅ Always current month
+            disabled // ✅ Not editable
+            className="mt-1 p-3 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
           >
             {monthNames.map((m, i) => (
               <option key={i} value={i + 1}>
@@ -72,7 +72,6 @@ const MonthlySalaryView = () => {
             ))}
           </select>
         </label>
-
 
         <label className="flex flex-col text-sm font-medium text-gray-700 w-full sm:w-auto">
           Year
