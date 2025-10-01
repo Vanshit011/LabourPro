@@ -408,26 +408,28 @@ const downloadAllSalaries = async (req, res) => {
 const Worker = require("../models/Worker");
 const WorkerSalary = require("../models/WorkerSalary");
 const Attendance = require("../models/Attendance");
-const cron = require("node-cron");
 
 // Your add salary function extracted from API
-const addWorkerSalary = async (month, year) => {
+const addWorkerSalary = async (req, res) => {
   try {
+    let { month, year } = req.body;
+
+    if (!month || !year)
+      return res.status(400).json({ message: "Month and Year are required" });
+
+    month = Number(month);
+    year = Number(year);
+
     const workers = await Worker.find();
+    const addedSalaries = []; // Store all created salary objects
+
     for (const worker of workers) {
       const workerId = worker._id;
       const companyId = worker.companyId;
 
-      const monthStr = month.toString().padStart(2, "0");
-      const nextMonth = (Number(month) % 12) + 1;
-      const nextMonthYear =
-        Number(month) === 12 ? Number(year) + 1 : Number(year);
-      const nextMonthStr = nextMonth.toString().padStart(2, "0");
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 1);
 
-      const startDate = new Date(`${year}-${monthStr}-01T00:00:00Z`);
-      const endDate = new Date(`${nextMonthYear}-${nextMonthStr}-01T00:00:00Z`);
-
-      // attendance summary
       const attendanceSummary = await Attendance.aggregate([
         {
           $match: {
@@ -449,13 +451,13 @@ const addWorkerSalary = async (month, year) => {
 
       const summary =
         attendanceSummary[0] || {
-          workerName: worker.name,
+          workerName: worker.name || "Unknown",
           totalHours: 0,
           totalRojEarned: 0,
           daysWorked: 0,
         };
 
-      // skip if already exists
+      // Skip if salary exists
       const exists = await WorkerSalary.findOne({ workerId, month, year });
       if (exists) continue;
 
@@ -478,46 +480,22 @@ const addWorkerSalary = async (month, year) => {
         loanTaken: 0,
         loanPaid: 0,
         loanRemaining: carryForwardLoan,
-        finalSalary: summary.totalRojEarned - 0,
+        finalSalary: summary.totalRojEarned,
       });
 
-      await newSalary.save();
+      const savedSalary = await newSalary.save();
+      addedSalaries.push(savedSalary);
     }
-    console.log(`✅ Salaries auto-added for ${month}/${year}`);
+
+    res.status(200).json({
+      message: `Salaries added for ${month}/${year}`,
+      salaries: addedSalaries, // Return all newly created salaries
+    });
   } catch (err) {
-    console.error("Auto Salary Error:", err.message);
+    console.error("💥 Auto Salary Error:", err);
+    res.status(500).json({ message: "Error adding salaries", error: err.message });
   }
 };
-
-cron.schedule("20 0 1 * *", async () => {
-  const now = new Date();
-  const month = now.getMonth() + 1; // JS month is 0-based
-  const year = now.getFullYear();
-
-  console.log("⏳ Running auto salary job...");
-  await addWorkerSalary(month, year);
-});
-
-
-// CRON job: Runs on 1st day of month at 00:05
-// cron.schedule("5 0 1 * *", async () => {
-//   const now = new Date();
-//   const month = now.getMonth() + 1; // JS month is 0-based
-//   const year = now.getFullYear();
-
-//   console.log("⏳ Running auto salary job...");
-//   await addWorkerSalary(month, year);
-// });
-
-// cron.schedule("* * * * *", async () => {
-//   const now = new Date();
-//   const month = now.getMonth() + 1;
-//   const year = now.getFullYear();
-
-//   console.log("⏳ Running test auto salary job...");
-//   await addWorkerSalary(month, year);
-// });
-
 
 // PUT /worker-salary/:id/update
 const updateWorkerSalary = async (req, res) => {
@@ -733,31 +711,31 @@ const downloadAllWorkerSalaries = async (req, res) => {
 
       const x = placeLeft ? leftX : rightX;
 
- // Worker header (smaller, blue, bold)
-doc.fontSize(11).fillColor("#004aad").font("Helvetica-Bold")
-  .text(`Worker: ${salary.workerId?.name || "N/A"}`, x, y);
+      // Worker header (smaller, blue, bold)
+      doc.fontSize(11).fillColor("#004aad").font("Helvetica-Bold")
+        .text(`Worker: ${salary.workerId?.name || "N/A"}`, x, y);
 
-const tableTop = y + 18; // space between name and table
+      const tableTop = y + 18; // space between name and table
 
-// Outer table border (3px thick)
-doc.lineWidth(3).strokeColor("black")
-  .rect(x, tableTop, tableW, rows.length * rowH).stroke();
+      // Outer table border (3px thick)
+      doc.lineWidth(3).strokeColor("black")
+        .rect(x, tableTop, tableW, rows.length * rowH).stroke();
 
-// Inner rows and vertical lines (1px thin)
-rows.forEach((row, rIdx) => {
-  const rowY = tableTop + rIdx * rowH;
+      // Inner rows and vertical lines (1px thin)
+      rows.forEach((row, rIdx) => {
+        const rowY = tableTop + rIdx * rowH;
 
-  // horizontal line
-  doc.lineWidth(1).moveTo(x, rowY).lineTo(x + tableW, rowY).stroke();
+        // horizontal line
+        doc.lineWidth(1).moveTo(x, rowY).lineTo(x + tableW, rowY).stroke();
 
-  // vertical split
-  doc.moveTo(x + labelColW, rowY).lineTo(x + labelColW, rowY + rowH).stroke();
+        // vertical split
+        doc.moveTo(x + labelColW, rowY).lineTo(x + labelColW, rowY + rowH).stroke();
 
-  // text (smaller font)
-  doc.font("Helvetica").fillColor("black").fontSize(9);
-  doc.text(row[0], x + 5, rowY + textOffsetY, { width: labelColW - 10, align: "left" });
-  doc.text(String(row[1]), x + labelColW + 5, rowY + textOffsetY, { width: valueColW - 10, align: "left" });
-});
+        // text (smaller font)
+        doc.font("Helvetica").fillColor("black").fontSize(9);
+        doc.text(row[0], x + 5, rowY + textOffsetY, { width: labelColW - 10, align: "left" });
+        doc.text(String(row[1]), x + labelColW + 5, rowY + textOffsetY, { width: valueColW - 10, align: "left" });
+      });
 
 
 

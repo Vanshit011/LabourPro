@@ -137,88 +137,24 @@ const WorkerSalary = () => {
   };
 
   // ✅ Add new salary (manual, if no record exists for selected month/year)
-  const handleAddSalary = async () => {
+  const handleAddAllSalaries = async () => {
     try {
-      if (salaryData) {
-        alert("⚠️ Salary already exists for this month/year.");
-        return;
-      }
-
       const token = localStorage.getItem("token");
 
-      console.log("➡️ Sending request to add salary for:", {
-        workerId,
-        month,
-        year,
-        additionalAdvance,
-        additionalLoanTaken,
-        additionalLoanPaid,
-      });
-
-      // Add salary for next month (backend carries forward loanRemaining)
       const res = await axios.post(
         "https://labourpro-backend.onrender.com/api/salary/worker/add",
-        { workerId, month, year },
+        { month, year },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log("⬅️ Response from add salary API:", res.data);
-
-      let newSalary = res.data.salary;
-
-      // Show all properties of the salary object clearly
-      console.table({
-        BaseSalary: newSalary.baseSalary,
-        Advance: newSalary.advance,
-        LoanTaken: newSalary.loanTaken,
-        LoanPaid: newSalary.loanPaid,
-        LoanRemaining: newSalary.loanRemaining,
-        FinalSalary: newSalary.finalSalary,
-        Month: newSalary.month,
-        Year: newSalary.year,
-      });
-
-      // Only send user inputs; do not touch carry-forward
-      const updates = {
-        advance: parseFloat(additionalAdvance) || 0,
-        loanTaken: parseFloat(additionalLoanTaken) || 0,
-        loanPaid: parseFloat(additionalLoanPaid) || 0,
-      };
-
-      if (updates.advance !== 0 || updates.loanTaken !== 0 || updates.loanPaid !== 0) {
-        const updateRes = await axios.put(
-          `https://labourpro-backend.onrender.com/api/salary/worker/${newSalary._id}/update`,
-          updates,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        console.log("⬅️ Response from update salary API:", updateRes.data);
-        newSalary = updateRes.data.salary;
-
-        console.table({
-          BaseSalary: newSalary.baseSalary,
-          Advance: newSalary.advance,
-          LoanTaken: newSalary.loanTaken,
-          LoanPaid: newSalary.loanPaid,
-          LoanRemaining: newSalary.loanRemaining,
-          FinalSalary: newSalary.finalSalary,
-          Month: newSalary.month,
-          Year: newSalary.year,
-        });
-      }
-
-      window.dispatchEvent(new Event("attendanceUpdated"));
-      setAdditionalAdvance("");
-      setAdditionalLoanTaken("");
-      setAdditionalLoanPaid("");
-
-      alert("✅ Salary Added");
-      setSalaryData(newSalary);
-
+      console.log("Added salaries:", res.data.salaries);
+      alert(res.data.message || "Salaries added successfully!");
     } catch (err) {
-      console.error("❌ Error adding salary:", err.response?.data || err.message);
-      alert("❌ " + (err.response?.data?.error || "Error adding salary"));
+      console.error("Error adding salaries:", err.response?.data || err.message);
+      alert("Error adding salaries: " + (err.response?.data?.error || err.message));
     }
   };
+
 
   // ✅ Update salary (calculate increments and send to backend)
   const handleUpdateSalary = async () => {
@@ -402,7 +338,7 @@ const WorkerSalary = () => {
       doc.text(field[0], col1X, y);
       doc.text(field[1]?.toString() || "-", col2X, y);
     });
-    
+
     // Footer
     doc.setFontSize(10);
     doc.setFont("helvetica", "italic");
@@ -562,11 +498,12 @@ const WorkerSalary = () => {
 
                 {!salaryData ? (
                   <button
-                    onClick={handleAddSalary}
-                    className="bg-green-600 text-white px-6 py-2 rounded-lg shadow hover:bg-green-700 transition duration-200 flex items-center"
+                    onClick={handleAddAllSalaries}
+                    className="bg-green-600 text-white px-6 py-2 rounded-lg shadow hover:bg-green-700 transition duration-200"
                   >
-                    <span className="mr-2">➕</span> Add Salary
+                    ➕ Add All Workers Salary
                   </button>
+
                 ) : (
                   <button
                     onClick={handleUpdateSalary}
