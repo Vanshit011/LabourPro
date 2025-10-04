@@ -11,6 +11,8 @@ const getToday = () => {
 
 const AttendancePage = () => {
   const [workers, setWorkers] = useState([]);
+  const [selectedWorkers, setSelectedWorkers] = useState([]);
+  const [mode, setMode] = useState("single"); // "single" or "multiple"
   const [form, setForm] = useState({
     workerId: "",
     date: getToday(),
@@ -40,27 +42,60 @@ const AttendancePage = () => {
     }));
   };
 
+  const handleWorkerSelect = (e) => {
+    const selectedOptions = Array.from(e.target.selectedOptions).map((opt) => opt.value);
+    setSelectedWorkers(selectedOptions);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      await axios.post("https://labourpro-backend.onrender.com/api/attendance", form, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
 
-      // trigger salary update
+    if (mode === "single" && !form.workerId) {
+      alert("Please select a worker");
+      return;
+    }
+
+    if (mode === "multiple" && selectedWorkers.length === 0) {
+      alert("Please select at least one worker");
+      return;
+    }
+
+    try {
+      if (mode === "single") {
+        await axios.post(
+          "https://labourpro-backend.onrender.com/api/attendance",
+          form,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+      } else {
+        for (let workerId of selectedWorkers) {
+          await axios.post(
+            "https://labourpro-backend.onrender.com/api/attendance",
+            { ...form, workerId },
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+        }
+      }
+
       window.dispatchEvent(new Event("attendanceUpdated"));
 
-      setForm({
-        workerId: "",
-        date: getToday(),
-        entryTime: "",
-        exitTime: "",
-      });
+      // Reset form
+      setForm({ workerId: "", date: getToday(), entryTime: "", exitTime: "" });
+      setSelectedWorkers([]);
 
       const popup = document.createElement("div");
-      popup.innerText = "✅ Attendance added successfully!";
+      popup.innerText =
+        mode === "single"
+          ? "✅ Attendance added successfully!"
+          : "✅ Attendance added for selected workers!";
       popup.className =
         "fixed top-5 right-5 bg-green-600 text-white px-4 py-2 rounded shadow z-50 animate-bounce";
       document.body.appendChild(popup);
@@ -79,10 +114,8 @@ const AttendancePage = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar (fixed left) */}
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
-      {/* Overlay for mobile */}
       {sidebarOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
@@ -90,97 +123,133 @@ const AttendancePage = () => {
         />
       )}
 
-      {/* Main content */}
       <div className="flex-1 flex flex-col pt-14 md:p-8 overflow-y-auto h-screen">
         <div className="max-w-6xl mx-auto space-y-8 pb-10 w-full px-4 sm:px-6 md:px-0">
-          
-          {/* Add Attendance Form */}
+          {/* Attendance Form */}
           <div className="bg-white shadow-lg rounded-2xl p-6">
-            <h2 className="text-xl md:text-2xl font-bold text-center text-blue-700 mb-6 flex items-center justify-center gap-2">
-              <span className="text-2xl ml-1">📝</span> Add Attendance
+            <h2 className="text-xl md:text-2xl font-bold text-center text-blue-700 mb-6">
+              📝 Add Attendance
             </h2>
 
-            <form
-              onSubmit={handleSubmit}
-              className="grid grid-cols-1 sm:grid-cols-2 gap-5"
-            >
-              {/* Worker */}
+            {/* Mode Selector */}
+            <div className="flex justify-center gap-6 mb-6">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="mode"
+                  value="single"
+                  checked={mode === "single"}
+                  onChange={(e) => setMode(e.target.value)}
+                />
+                <span className="text-gray-700 text-sm font-medium">Single Worker</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="mode"
+                  value="multiple"
+                  checked={mode === "multiple"}
+                  onChange={(e) => setMode(e.target.value)}
+                />
+                <span className="text-gray-700 text-sm font-medium">Multiple Workers</span>
+              </label>
+            </div>
+
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {/* Worker Selection */}
               <div className="sm:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Select Worker
+                  {mode === "single" ? "Select Worker" : "Select Multiple Workers(Hold Ctrl or Cmd to select multiple)"}
                 </label>
-                <select
-                  name="workerId"
-                  value={form.workerId}
-                  onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 text-sm sm:text-base"
-                  required
-                >
-                  <option value="">-- Select Worker --</option>
-                  {workers.length > 0 ? (
-                    workers.map((w) => (
-                      <option key={w._id} value={w._id}>
-                        {w.name}
-                      </option>
-                    ))
-                  ) : (
-                    <option disabled>No workers found</option>
-                  )}
-                </select>
+
+                {mode === "single" ? (
+                  <select
+                    name="workerId"
+                    value={form.workerId}
+                    onChange={handleChange}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+                    required
+                  >
+                    <option value="">-- Select Worker --</option>
+                    {workers.length > 0 ? (
+                      workers.map((w) => (
+                        <option key={w._id} value={w._id}>
+                          {w.name}
+                        </option>
+                      ))
+                    ) : (
+                      <option disabled>No workers found</option>
+                    )}
+                  </select>
+                ) : (
+                  <select
+                    multiple
+                    name="workerId"
+                    value={selectedWorkers}
+                    onChange={handleWorkerSelect}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 h-32 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+                    required
+                  >
+                    {workers.length > 0 ? (
+                      workers.map((w) => (
+                        <option key={w._id} value={w._id}>
+                          {w.name}
+                        </option>
+                      ))
+                    ) : (
+                      <option disabled>No workers found</option>
+                    )}
+                  </select>
+                )}
               </div>
 
               {/* Date */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
                 <input
                   type="date"
                   name="date"
                   value={form.date}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
 
               {/* Entry Time */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Entry Time
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Entry Time</label>
                 <input
                   type="time"
                   name="entryTime"
                   value={form.entryTime}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
 
               {/* Exit Time */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Exit Time
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Exit Time</label>
                 <input
                   type="time"
                   name="exitTime"
                   value={form.exitTime}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
               </div>
 
-              {/* Submit */}
               <div className="sm:col-span-2">
                 <button
                   type="submit"
-                  className="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition duration-300 shadow text-sm sm:text-base"
+                  className="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition duration-300 shadow"
                 >
-                  Submit Attendance
+                  {mode === "single"
+                    ? "Submit Attendance"
+                    : "Submit Attendance for All Selected"}
                 </button>
               </div>
             </form>

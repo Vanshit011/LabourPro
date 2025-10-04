@@ -112,7 +112,7 @@ const ViewAttendanceByDate = () => {
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-6 bg-white rounded-2xl shadow-lg">
       <h2 className="text-2xl font-bold text-blue-700 text-center mb-6 flex items-center justify-center gap-2">
-        <span className="text-3xl">📅</span>check Attendance 
+        <span className="text-3xl">📅</span>check Attendance
       </h2>
 
       <div className="flex flex-col sm:flex-row items-center gap-4 mb-8 justify-center">
@@ -150,18 +150,54 @@ const ViewAttendanceByDate = () => {
                   <td className="px-4 py-3 text-left">{rec.totalHours || "N/A"}</td>
                   <td className="px-4 py-3 text-left">{rec.totalRojEarned || "N/A"}</td>
                   <td className="px-4 py-3 text-left space-x-2">
-                    <button
-                      onClick={() => handleEdit(rec)}
-                      className="text-blue-600 hover:underline font-medium"
-                    >
-                      Edit
-                    </button>
-                    {/* <button
-                      onClick={() => handleDelete(rec._id)}
-                      className="text-red-600 hover:underline font-medium"
-                    >
-                      Delete
-                    </button> */}
+                    <div className="flex space-x-3">
+                      <button
+                        onClick={() => handleEdit(rec)}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600 transition duration-200 ease-in-out"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M11 5h2m2 0h2a2 2 0 012 2v2m0 2v2m0 2v2a2 2 0 01-2 2h-2m-2 0h-2m-2 0H7a2 2 0 01-2-2v-2m0-2v-2m0-2V7a2 2 0 012-2h2"
+                          />
+                        </svg>
+                        Edit
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          if (window.confirm("Are you sure you want to delete this record?")) {
+                            handleDelete(rec._id);
+                          }
+                        }}
+                        className="flex items-center gap-1 px-3 py-1.5 bg-red-500 text-white rounded-lg shadow hover:bg-red-600 transition duration-200 ease-in-out"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                        Delete
+                      </button>
+                    </div>
+
                   </td>
                 </tr>
               ))}
