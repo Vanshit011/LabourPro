@@ -11,7 +11,8 @@ const app = express();
 // Middleware
 const allowedOrigins = [
   "http://localhost:5173",   // local dev
-  "https://labourpro.netlify.app" // deployed frontend
+  "https://labourpro.netlify.app",
+  "http://labourpro.in" // deployed frontend
 ];
 
 app.use(cors({
