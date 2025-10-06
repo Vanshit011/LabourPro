@@ -1,6 +1,6 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
+// import Footer from "./components/Footer";
 
 // Public Pages
 import Home from "./pages/Home";
@@ -49,7 +49,7 @@ function App() {
 
   return (
     <>
-      {!shouldHide && <Navbar />}
+      {!shouldHide }
       <ScrollToTop />
       <main className="flex-grow container mx-auto">
         <Routes>
@@ -124,7 +124,7 @@ function App() {
           />
         </Routes>
       </main>
-      {!shouldHide && <Footer />}
+      {!shouldHide }
     </>
   );
 }
