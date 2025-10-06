@@ -305,7 +305,7 @@ const WorkerSalary = () => {
       ["Advance", formatCurrency(salaryData.advance)],
       ["Loan Taken", formatCurrency(salaryData.loanTaken)],
       ["Loan Paid", formatCurrency(salaryData.loanPaid)],
-      ["Remaining Loan", formatCurrency((salaryData.loanTaken || 0) - (salaryData.loanPaid || 0))],
+      ["Remaining Loan", formatCurrency(salaryData.loanRemaining)],
       ["Total Hours", salaryData.totalHours || "-"],
       ["Days Worked", salaryData.daysWorked || "-"],
       ["Final Salary", formatCurrency(salaryData.finalSalary)],
