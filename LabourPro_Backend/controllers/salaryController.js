@@ -251,7 +251,7 @@ const downloadAllSalaries = async (req, res) => {
         ['Advance', salary.advance || 0],
         ['Loan Taken', salary.loanTaken || 0],
         ['Loan Paid', salary.loanPaid || 0],
-        ['Remaining Loan', (salary.loanRemaining || 0)],
+        ['Remaining Loan', (Number(salary.loanTaken || 0) - Number(salary.loanPaid || 0))],
       ];
 
       // Outer table box (includes final salary row)
@@ -298,7 +298,7 @@ const downloadAllSalaries = async (req, res) => {
       totals.advance += salary.advance || 0;
       totals.loanTaken += salary.loanTaken || 0;
       totals.loanPaid += salary.loanPaid || 0;
-      totals.remaining += (salary.loanRemaining || 0);
+      totals.remaining += (Number(salary.loanTaken || 0) - Number(salary.loanPaid || 0));
       totals.final += salary.finalSalary || 0;
 
       // Advance Y only when we have filled both columns for the row
