@@ -192,7 +192,10 @@ const ManagerDashboard = () => {
           { title: "Advance", value: `₹${salary.advance || 0}` },
           { title: "Loan Taken", value: `₹${salary.loanTaken || 0}` },
           { title: "Loan Paid", value: `₹${salary.loanPaid || 0}` },
-          { title: "Remaining Loan", value: `₹${salary.loanRemaining || 0}` },
+          {
+            title: "Remaining Loan",
+            value: `₹${(Number(salary.loanTaken || 0) - Number(salary.loanPaid || 0))}`
+          },
           { title: "Final Salary", value: `₹${salary.finalSalary || 0}` },
         ].map((item) => (
           <div key={item.title} className="p-4 bg-gradient-to-br from-white to-blue-50 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-blue-100">
