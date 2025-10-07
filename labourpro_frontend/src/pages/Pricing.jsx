@@ -66,13 +66,17 @@ const Pricing = () => {
     setSelectedAmount(amount);
 
     if (amount === 0) {
-      navigate(`/register-paid?plan=${planType}&amount=${amount}`);
+      // 👉 For Free Trial
+      navigate(`/register-trial?plan=${planType}&amount=${amount}`);
     } else if (isMobile) {
+      // 👉 For Mobile UPI
       handleUPIClick(amount, planType);
     } else {
+      // 👉 For Desktop Payment Modal
       setShowPaymentModal(true);
     }
   };
+
 
   const handleUPIClick = (amount, plan) => {
     const upiId = "vanshitpatel10@okaxis";
@@ -171,8 +175,8 @@ const Pricing = () => {
                   <button
                     onClick={() => handlePlanClick(plan.price, plan.name.toLowerCase().replace(' ', '-'))}
                     className={`w-full py-4 rounded-xl font-semibold transition-all duration-300 ${plan.popular
-                        ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl'
-                        : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                      ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl'
+                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
                       }`}
                   >
                     {plan.price === 0 ? 'Start Free Trial' : 'Get Started'}
