@@ -7,12 +7,18 @@ const monthNames = [
 ];
 
 const MonthlySalaryView = () => {
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
-  const [year, setYear] = useState(new Date().getFullYear());
+  const today = new Date();
+  const currentMonth = today.getMonth() + 1; // 1–12
+  const currentYear = today.getFullYear();
+
+  // 🧭 State for filters
+  const [month, setMonth] = useState(currentMonth);
+  const [year, setYear] = useState(currentYear);
   const [summary, setSummary] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // 🧠 Fetch monthly salary data
   const fetchMonthlySalary = async () => {
     setLoading(true);
     setError(null);
@@ -32,28 +38,25 @@ const MonthlySalaryView = () => {
     }
   };
 
-  // Fetch salary when month/year changes
+  // 🔄 Fetch when month or year changes
   useEffect(() => {
     fetchMonthlySalary();
   }, [month, year]);
 
-  // ✅ Auto-refresh on attendance added
+  // 🔁 Auto-refresh when attendance added
   useEffect(() => {
     const handleAttendanceUpdate = () => {
-      fetchMonthlySalary(); // refresh table
+      fetchMonthlySalary();
     };
 
     window.addEventListener("attendanceUpdated", handleAttendanceUpdate);
-
-    return () => {
-      window.removeEventListener("attendanceUpdated", handleAttendanceUpdate);
-    };
+    return () => window.removeEventListener("attendanceUpdated", handleAttendanceUpdate);
   }, [month, year]);
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6 bg-white rounded-2xl shadow-lg font-sans text-gray-800">
       <h2 className="text-2xl font-bold mb-6 text-blue-700 flex items-center justify-center gap-2">
-        <span className="text-3xl">📅</span> View Monthly
+        <span className="text-3xl">📅</span> View Monthly Salary
       </h2>
 
       {/* Filters */}
@@ -61,12 +64,16 @@ const MonthlySalaryView = () => {
         <label className="flex flex-col text-sm font-medium text-gray-700 w-full sm:w-auto">
           Month
           <select
-            value={new Date().getMonth() + 1} // ✅ Always current month
-            disabled // ✅ Not editable
-            className="mt-1 p-3 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+            value={month}
+            onChange={(e) => setMonth(Number(e.target.value))}
+            className="mt-1 p-3 border border-gray-300 rounded-lg bg-white shadow-sm"
           >
             {monthNames.map((m, i) => (
-              <option key={i} value={i + 1}>
+              <option
+                key={i}
+                value={i + 1}
+                disabled={i + 1 > currentMonth && year === currentYear} // 🚫 Disable future months
+              >
                 {m}
               </option>
             ))}
@@ -84,12 +91,11 @@ const MonthlySalaryView = () => {
         </label>
 
         <button
-          disabled
-          className="w-full sm:w-auto bg-gray-400 text-white px-6 py-3 rounded-lg cursor-not-allowed shadow"
+          onClick={fetchMonthlySalary}
+          className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-md transition"
         >
           View
         </button>
-
       </div>
 
       {/* Content */}
@@ -99,8 +105,7 @@ const MonthlySalaryView = () => {
         <p className="text-center text-lg text-red-600 bg-red-50 p-4 rounded-lg">{error}</p>
       ) : summary.length === 0 ? (
         <p className="text-center text-lg text-gray-600 bg-gray-50 p-4 rounded-lg">
-          {/* No attendance/salary data found for selected month/year. */}
-          for refresh data ignore this
+          No attendance or salary data found for this month.
         </p>
       ) : (
         <div className="overflow-x-auto rounded-lg shadow-md border border-gray-200">
@@ -115,10 +120,7 @@ const MonthlySalaryView = () => {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {summary.map((item, idx) => (
-                <tr
-                  key={item.workerId || idx}
-                  className={idx % 2 === 0 ? "bg-blue-50" : "bg-white"}
-                >
+                <tr key={item.workerId || idx} className={idx % 2 === 0 ? "bg-blue-50" : "bg-white"}>
                   <td className="py-4 px-4 md:px-6 font-medium text-gray-800">{item.workerName}</td>
                   <td className="py-4 px-4 md:px-6">{item.totalHours.toFixed(2)}</td>
                   <td className="py-4 px-4 md:px-6">₹{item.totalRojEarned.toFixed(2)}</td>

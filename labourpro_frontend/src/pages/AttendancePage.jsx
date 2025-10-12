@@ -15,9 +15,9 @@ const AttendancePage = () => {
   const [mode, setMode] = useState("single"); // "single" or "multiple"
   const [form, setForm] = useState({
     workerId: "",
-    date: getToday(),
-    entryTime: "",
-    exitTime: "",
+    date: localStorage.getItem("attendanceDate") || getToday(), // ✅ load last selected or today's date
+    entryTime: localStorage.getItem("attendanceEntryTime") || "08:00", // ✅ Default 8:00 AM
+    exitTime: localStorage.getItem("attendanceExitTime") || "20:00",   // ✅ Default 8:00 PM
   });
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -36,10 +36,16 @@ const AttendancePage = () => {
   };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: value,
     }));
+
+    // persist date and times so they stay even if you navigate away
+    if (name === "date") localStorage.setItem("attendanceDate", value);
+    if (name === "entryTime") localStorage.setItem("attendanceEntryTime", value);
+    if (name === "exitTime") localStorage.setItem("attendanceExitTime", value);
   };
 
   const handleWorkerSelect = (e) => {
@@ -88,8 +94,17 @@ const AttendancePage = () => {
       window.dispatchEvent(new Event("attendanceUpdated"));
 
       // Reset form
-      setForm({ workerId: "", date: getToday(), entryTime: "", exitTime: "" });
+      // ✅ Reset form correctly after submit
+      setForm({
+        workerId: "",
+        date: form.date,              // ✅ Keep same selected date
+        entryTime: "08:00",           // ✅ Reset to default entry time
+        exitTime: "20:00",            // ✅ Reset to default exit time
+      });
+
+      // ✅ Also clear selected multiple workers
       setSelectedWorkers([]);
+
 
       const popup = document.createElement("div");
       popup.innerText =
