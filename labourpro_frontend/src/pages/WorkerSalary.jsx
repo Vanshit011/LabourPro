@@ -82,7 +82,7 @@ const WorkerSalary = () => {
         `https://labourpro-backend.onrender.com/api/salary/worker/${workerId}/${month}/${year}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      console.log("✅ Fetched salary:", res.data);
+      // console.log("✅ Fetched salary:", res.data);
       setSalaryData(res.data);
       setBaseSalary(res.data.baseSalary?.toString() || "");
     } catch (err) {
@@ -126,7 +126,7 @@ const WorkerSalary = () => {
         }
       );
 
-      console.log("✅ Salary refresh triggered:", res.data);
+      // console.log("✅ Salary refresh triggered:", res.data);
       fetchSalary(); // refresh worker salary data
     } catch (err) {
       console.error(
@@ -147,7 +147,7 @@ const WorkerSalary = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log("Added salaries:", res.data.salaries);
+      // console.log("Added salaries:", res.data.salaries);
       alert(res.data.message || "Salaries added successfully!");
     } catch (err) {
       console.error("Error adding salaries:", err.response?.data || err.message);
@@ -452,6 +452,7 @@ const WorkerSalary = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Additional Advance</label>
                   <input
                     type="number"
+                    placeholder="Advance"
                     value={additionalAdvance}
                     onChange={(e) => setAdditionalAdvance(e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
@@ -461,6 +462,7 @@ const WorkerSalary = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Additional Loan Taken</label>
                   <input
                     type="number"
+                    placeholder="Loan Taken"
                     value={additionalLoanTaken}
                     onChange={(e) => setAdditionalLoanTaken(e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
@@ -470,6 +472,7 @@ const WorkerSalary = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Additional Loan Paid</label>
                   <input
                     type="number"
+                    placeholder="Loan Paid"
                     value={additionalLoanPaid}
                     onChange={(e) => setAdditionalLoanPaid(e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
